@@ -86,7 +86,7 @@ def build_installer(payload: Path, output: Path, vpk: Path, *, version: str | No
                     "--channel", CHANNEL, "--runtime", "win-x64", "--noPortable",
                     "--shortcuts", "Desktop,StartMenuRoot", "--outputDir", str(output)], check=True)
     assets = validate_feed(output, version)
-    generated = output / f"{PACKAGE_ID}-Setup.exe"
+    generated = output / f"{PACKAGE_ID}-{CHANNEL}-Setup.exe"
     if not generated.is_file() or generated.stat().st_size == 0:
         raise ValueError("Velopack did not produce its setup executable.")
     installer = output / INSTALLER_NAME

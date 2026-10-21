@@ -72,7 +72,7 @@ class InstallerBuildTests(unittest.TestCase):
             if command[-1] == "-H":
                 return SimpleNamespace(stdout="Velopack CLI 1.2.161", stderr="")
             self.make_feed()
-            (self.output / f"{build.PACKAGE_ID}-Setup.exe").write_bytes(b"synthetic setup")
+            (self.output / f"{build.PACKAGE_ID}-{build.CHANNEL}-Setup.exe").write_bytes(b"synthetic setup")
             (self.output / "assets.win.json").write_text("deployment-only")
             return SimpleNamespace(stdout="", stderr="")
 
