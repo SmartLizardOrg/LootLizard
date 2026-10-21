@@ -3,6 +3,20 @@
 LANGUAGES = {"en": "English", "hu": "Magyar"}
 
 HU = {
+    "Finishing the current task before restarting…": "Újraindítás előtt befejezi az aktuális feladatot…",
+    "An app update check is already running.": "Az alkalmazásfrissítés ellenőrzése már folyamatban van.",
+    "App updates": "Alkalmazásfrissítés",
+    "Automatic app updates": "Az alkalmazás automatikus frissítése",
+    "Restart to update": "Újraindítás a frissítéshez",
+    "Download installer": "Telepítő letöltése",
+    "Install LootLizard to enable automatic app updates.": "Az automatikus alkalmazásfrissítéshez telepítsd a LootLizardot.",
+    "LootLizard {version} is ready. Restart when you are finished playing.": "A LootLizard {version} készen áll. Indítsd újra, ha befejezted a játékot.",
+    "Checking and downloading app updates…": "Alkalmazásfrissítés keresése és letöltése…",
+    "App update unavailable. Try again later.": "Az alkalmazásfrissítés nem érhető el. Próbáld újra később.",
+    "Automatic app updates are off.": "Az automatikus alkalmazásfrissítés kikapcsolva.",
+    "LootLizard {version} is up to date.": "A LootLizard {version} naprakész.",
+    "LootLizard {version} · checks at startup and every 6 hours": "LootLizard {version} · ellenőrzés induláskor és 6 óránként",
+    "App update status: {name}\nVersion: {version}\n{reason}": "Alkalmazásfrissítés állapota: {name}\nVerzió: {version}\n{reason}",
     "Map data unavailable": "A térképadat nem érhető el",
     "Check map updates or import data in Settings.": "Ellenőrizd a térképadat-frissítést, vagy importálj adatot a Beállításokban.",
     "Map updates": "Térképadat-frissítés",

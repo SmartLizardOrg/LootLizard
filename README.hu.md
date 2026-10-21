@@ -1,12 +1,12 @@
-# LootLizard 0.7.0 — Magyar gyorsindító
+# LootLizard 0.8.0 — Magyar gyorsindító
 
 [English documentation](README.md)
 
 Kísérleti, nyílt forrású Windows-program a [SmartLizardOrg](https://github.com/SmartLizardOrg) alatt, amely kérésre készült PUBG-képen jelöli az ismert titkosszoba-koordinátákat a második kijelzőn. A **Ctrl+Shift+B** a kiválasztott monitorról kér képet, és a képfeldolgozás helyben, offline fut. A közösségi pontadatok frissítése GitHub HTTPS-kéréseket használ; képet nem küld el. Nem folyamatos követés; a következő képkérésig az előző állapotot látod.
 
-A **0.7.0** saját, helyi teljes térképminták katalógusának betöltésével azonosítja a minták közt szereplő pályát, és támogatott nagyítás/mozgatás után is a helyére vetíti a pontokat. Automatikus nézésitölcsér-keresés és opcionális városnév-olvasás is elérhető. **A pincejelöléshez nem kötelező saját ikonmintát betanítani.** A csomag **15 Erangel- és 12 Taego-koordinátát** tartalmaz. Mindkét közösségi adatsor ellenőrizetlen; a Taego-lista kifejezetten hiányos. Játéktérképképet vagy személyes profilt nem mellékelünk.
+A **0.8.0** telepítőt és opcionális automatikus alkalmazásfrissítést ad a korábbi funkciókhoz. Saját, helyi teljes térképminták katalógusával azonosítja a minták közt szereplő pályát, és támogatott nagyítás/mozgatás után is a helyére vetíti a pontokat. Automatikus nézésitölcsér-keresés és opcionális városnév-olvasás is elérhető. **A pincejelöléshez nem kötelező saját ikonmintát betanítani.** A csomag **15 Erangel- és 12 Taego-koordinátát** tartalmaz. Mindkét közösségi adatsor ellenőrizetlen; a Taego-lista kifejezetten hiányos. Játéktérképképet vagy személyes profilt nem mellékelünk.
 
-A Windows-csomagok helye a [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Pontjavítást vagy új pályaadatot pull requesttel küldhetsz: [CONTRIBUTING.md](CONTRIBUTING.md).
+**[LootLizard-Setup.exe letöltése Windowshoz](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — a legújabb stabil, felhasználónként települő változat. Nem kell Python vagy rendszergazdai jogosultság. További csomagok: [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Pontjavítást vagy új pályaadatot pull requesttel küldhetsz: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 A 0.6 új felületén a térkép kapja a főszerepet: apró, pontos borostyánsárga helyjelölők mellett kis számozott címkék, türkiz **YOU** (magyarul **TE**) sajátjelölő, szélesebb célpontlista és külön Beállítások ablak. Minden látható ismert pincét megjelöl; a kör és a távolság határozza meg a sorrendet. A számcímke mérete **Settings > General > Marker size** alatt Large vagy Medium lehet; alapértelmezés a Large. A helyet mutató apró pont mindkét méretnél változatlan.
 
@@ -14,7 +14,11 @@ Az opcionális ikonminta megjelenést ismer fel, nem játékosazonosságot. Más
 
 ## Indítás és nyelv
 
-A teljes ZIP-et bontsd ki, majd indítsd a `LootLizard.exe` fájlt. Az `_internal` könyvtár maradjon mellette. A `start-pubg.cmd` a companion mellett Steamen keresztül a PUBG indítását is kéri. Nincs telepítő vagy kódaláíró tanúsítvány.
+Indítsd a [LootLizard-Setup.exe](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe) fájlt, majd használd a Start menü vagy az asztal LootLizard-parancsikonját. A program helye `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; a beállítások, profilok és pontgyorsítótár külön, `%LOCALAPPDATA%\LootLizard` alatt maradnak, eltávolításkor is megőrizve.
+
+A Windows-kiadás **nincs kódaláírással ellátva**; a SmartScreen ismeretlen kiadóra figyelmeztethet. A közzétett SHA-256 sértetlenséget ellenőriz, nem kódaláíró tanúsítvány. A projekt saját kiadási oldaláról töltsd le.
+
+Az opcionális ZIP hordozható, kézzel frissítendő változat: bontsd ki az egészet, az `_internal` maradjon a `LootLizard.exe` mellett. A `start-pubg.cmd` Steamen a PUBG-t is indítja. **Korábbi ZIP-es/forrásból futtatott változatról egyszer futtatni kell a telepítőt az alkalmazás önfrissítéséhez.** A kompatibilis helyi beállítások és profilok megmaradnak.
 
 Forrásból Windows és Python 3.12 vagy újabb, Tkintert is tartalmazó telepítés kell. A projekt könyvtárában, PowerShellből:
 
@@ -25,6 +29,14 @@ py -3.12 -m venv .venv
 ```
 
 A felület alapértelmezett nyelve **English**. A **Settings > General > Language > Magyar** választással azonnal magyarra vált; a beállítást helyben megjegyzi. A nyelvváltás megőrzi a képet, beállítási lépést és eredményt. Az alábbi gombnevek az angol felület nevei. A **Settings > General > Help** a beépített útmutatót nyitja meg.
+
+## Az alkalmazás automatikus frissítése
+
+Telepített változatnál **Settings > General > App updates > Automatic app updates** alapértelmezetten bekapcsolva marad. Induláskor és hatóránként ellenőrzi a projekt stabil GitHub-kiadásait, és külön háttérszálon letölti az új programcsomagot. A **Check now** kézi ellenőrzés. Ez a kiadók által közzétett programkód; a csomagellenőrző összeg sérülést észlel, nem a kiadói fiók esetleges kompromittálódását.
+
+A letöltés nem zárja be a programot és nem szakítja meg a játékot. A kész frissítés a LootLizard szokásos bezárása után, újraindítás nélkül alkalmazható; a **Restart to update** külön kérésre újraindítja a LootLizardot. A PUBG-t nem indítja újra. A kért újraindítás megvárja az aktuális háttérfeladat végét; szokásos bezáráskor még futó feladat vagy hiányos letöltés esetén a telepítést későbbi futásra/ellenőrzésre halasztja.
+
+Az **Automatic app updates** kikapcsolása az ütemezett ellenőrzést **és a szokásos kilépéskori automatikus alkalmazást** is leállítja. A kézi **Check now** és a külön **Restart to update** továbbra is használható. A részletes hibák **Settings > Diagnostics** alatt vannak; hálózati hiba nem törli a térképes találatot. ZIP-es/forrásváltozatnál telepítést kérő állapot és **Download installer** gomb jelenik meg. A külön **Map updates** pontadat-frissítés továbbra is körülbelül percenként fut.
 
 ## Közösségi pontadatok automatikus frissítése
 
@@ -129,7 +141,7 @@ A szintetikus egység- és GUI-tesztek ellenőrzik többek közt a transzformác
 
 ## Helyi adatok, indítás és licenc
 
-A normál képkérések és eredmények memóriában maradnak, nincs képfeltöltés, telemetria, fiók vagy API-kulcs. Az adatfrissítő csak a GitHub nyilvános pontkatalógusát kéri le; képet, OCR-szöveget, profilt vagy helyi térképmintát nem küld. A kiválasztott monitor más látható tartalma is belekerülhet a képbe. Importkor az eredeti fájlt nem módosítja.
+A normál képkérések és eredmények memóriában maradnak, nincs képfeltöltés, telemetria, fiók vagy API-kulcs. A bekapcsolt/kézi frissítések a GitHub nyilvános pontkatalógusát, telepített változatnál a stabil kiadásokat és programcsomagokat kérik le. A **Download installer** a rögzített telepítőhivatkozást nyitja meg böngészőben. Képet, OCR-szöveget, profilt vagy helyi térképmintát nem küld. A kiválasztott monitor más látható tartalma is belekerülhet a képbe. Importkor az eredeti fájlt nem módosítja.
 
 Az explicit ikonbeállítás mentett kivétele: `%LOCALAPPDATA%\LootLizard\profiles\<hashed-map-id>\` alatt a kiválasztott `reference.png`, `mask.png` és `profile.json`. A mappanév hash-elése nem anonimizálja a képet. Az új profil az adott pálya korábbi fájljait felülírja. A teljes beállítási képernyőképet ez a lépés nem menti. Katalógusimportkor a meglévő képeket olvassa, és csak a katalógus útját menti a nyelvi/kijelzőbeállítások mellé: `%LOCALAPPDATA%\LootLizard\settings.json`. A katalógus kikapcsolása nem törli a képeidet.
 
@@ -138,5 +150,7 @@ A `--launch-pubg` kapcsolós parancsikon a companion mellett Steamen keresztül 
 Ha új LootLizard-beállítás még nincs, a korábbi `%LOCALAPPDATA%\BasementCompanion\settings.json` kompatibilis beállításait beolvashatja. Új profil hiányában a régi profilokat az eredeti helyükön olvassa; nem mozgatja, másolja vagy törli őket. A későbbi mentések a LootLizard mappájába kerülnek.
 
 A 15 Erangel- és 12 Taego-pont pontos forrása, módosításai és teljes MIT licence: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Pontosságuk, teljességük és aktuális érvényességük ellenőrizetlen; a Taego-lista hiányos. A normalizált koordináták mindig a teljes térképhez tartoznak. Az 8192 forrásképpont nem 8192 méter; a mellékelt 8000 méteres méretarány becslés.
+
+A telepítő és az alkalmazásfrissítés Velopack Python SDK **1.2.161**-et használ, ugyanilyen verziójú .NET `vpk` csomagolóval. A tényleges buildscript [scripts/build_installer.py](scripts/build_installer.py); forrást és függőségi licenceket is csomagol. A buildhez szükséges Python/.NET eszközöket a felhasználónak nem kell telepítenie. A helyi teszt nem bizonyít sikeres telepítést/frissítést másik gépen; a fej nélküli telepítő-CI sem ellenőrzi a valódi játékot, fókuszt vagy a GUI háttérszálainak leállási versenyhelyzetét. A tényleges CI-eredmény az [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) oldalon látható.
 
 A programkód [MIT licence](LICENSE) nem ad jogot a PUBG képeihez vagy védjegyeihez. **Játékképeket, privát képes tesztadatot, helyi katalógust vagy személyes profilt nem terjesztünk a csomaggal.** A képernyőkép-alapú működés önmagában nem bizonyít hivatalos engedélyt vagy anti-cheat kompatibilitást. A program nem olvas játékfolyamat-memóriát vagy játékfájlokat, nem injektál és nem automatizál játékmenetet. A teljes leírás, pont-JSON formátum, fordítás és csomagolás az [angol README-ben](README.md) található.

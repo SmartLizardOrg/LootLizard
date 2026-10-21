@@ -148,8 +148,10 @@ def package_release(binary: Path, output: Path, label: str) -> tuple[Path, Path]
     with (ROOT / "pyproject.toml").open("rb") as source_file:
         application_version = tomllib.load(source_file)["project"]["version"]
     # Fail early when the caller is not using the build environment.
-    for name in ("Pillow", "PyInstaller", "opencv-python-headless", "numpy"):
+    for name in ("Pillow", "PyInstaller", "opencv-python-headless", "numpy", "velopack"):
         metadata.distribution(name)
+    if metadata.version("velopack") != "1.2.161":
+        raise ValueError("The release build requires velopack==1.2.161.")
 
     output.mkdir(parents=True, exist_ok=True)
     shutil.copytree(binary_directory, bundle)
@@ -173,9 +175,14 @@ def package_release(binary: Path, output: Path, label: str) -> tuple[Path, Path]
     pyinstaller_version = copy_distribution_licenses("PyInstaller", licenses)
     opencv_version = copy_distribution_licenses("opencv-python-headless", licenses)
     numpy_version = copy_distribution_licenses("numpy", licenses)
+    # The 1.2.161 Windows wheel omits a LICENSE file. Retain the upstream
+    # full MIT text in our notices instead of silently omitting its license.
+    copy_license(ROOT / "THIRD_PARTY_NOTICES.md", licenses / "Velopack" / "THIRD_PARTY_NOTICES.md")
+    velopack_version = metadata.version("velopack")
     (licenses / "README.txt").write_text(
         "Licenses copied from the Python/Tcl/Tk runtime and Pillow/PyInstaller,\n"
         "OpenCV-headless and NumPy distributions used by this build.\n"
+        "Velopack's full MIT notice is retained in Velopack/THIRD_PARTY_NOTICES.md.\n"
         "Pillow's license file also contains notices for its bundled libraries.\n"
         "PyInstaller is a build\n"
         "tool; its license includes the bootloader distribution exception.\n"
@@ -187,6 +194,7 @@ def package_release(binary: Path, output: Path, label: str) -> tuple[Path, Path]
         "pyinstaller": pyinstaller_version,
         "opencv-python-headless": opencv_version,
         "numpy": numpy_version,
+        "velopack": velopack_version,
     }
     (bundle / "BUILD_DEPENDENCIES.json").write_text(
         json.dumps(dependencies, indent=2) + "\n", encoding="utf-8")
@@ -200,6 +208,9 @@ def package_release(binary: Path, output: Path, label: str) -> tuple[Path, Path]
         "pyinstaller": pyinstaller_version,
         "opencv-python-headless": opencv_version,
         "numpy": numpy_version,
+        "velopack": velopack_version,
+        "installer_package_id": "SmartLizardOrg.LootLizard",
+        "update_channel": "win",
         "packaging_platform": platform.platform(),
         "target": target,
         "bundle_mode": "onedir",

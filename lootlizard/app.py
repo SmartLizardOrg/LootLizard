@@ -10,6 +10,8 @@ import re
 import tempfile
 import time
 import threading
+from types import SimpleNamespace
+import webbrowser
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -84,6 +86,18 @@ class Companion:
         self.map_update_token = 0
         self.map_update_next_at = 0.
         self.map_update_stop = threading.Event()
+        self.app_updates_enabled = self.settings.get("automatic_app_updates") is not False
+        self.app_update_client = None
+        self.app_update_future = None
+        self.app_update_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="app-release-update")
+        self.app_update_token = 0
+        self.app_update_next_at = 0.
+        self.app_update_stop = threading.Event()
+        self.app_update_status = "unavailable"
+        self.app_update_version = None
+        self.app_update_reason = ""
+        self.app_update_ready = False
+        self._app_restart_waiting = False
         self.image: Image.Image | None = None
         self.image_is_capture = False
         self.photo = None
@@ -108,6 +122,7 @@ class Companion:
         self.recognition_id = 0
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="marker-recognition")
         self.future = None
+        self._recognition_futures = set()
         self.marker_photo = None
         self.transform = (0.0, 0.0, 1.0, 1.0)
         self.events: queue.SimpleQueue = queue.SimpleQueue()
@@ -122,6 +137,7 @@ class Companion:
         self.target_index = self._saved_display("output_monitor", next((i for i, m in enumerate(self.displays) if not m.primary), 0))
         self._build_ui()
         self._initialize_map_updates()
+        self._initialize_app_updates()
         if not smoke_test:
             self._load_profile()
             saved_catalog = self.settings.get("reference_catalog")
@@ -266,6 +282,135 @@ class Companion:
         self._configure(self.map_update_diagnostic_label, text=self.t(
             "Map update status: {name}\nRevision: {revision}\n{reason}", name=status,
             revision=revision or "—", reason=raw))
+
+    def _initialize_app_updates(self):
+        if not self.smoke_test:
+            try:
+                from .app_updates import AppUpdateClient
+                self.app_update_client = AppUpdateClient()
+                self.app_update_status = "idle" if self.app_update_client.installed else "unavailable"
+                self.app_update_reason = getattr(self.app_update_client, "reason", "")
+            except Exception as error:
+                self.app_update_reason = str(error)
+                self.app_update_status = "unavailable"
+        self._update_app_feedback()
+
+    def _automatic_app_updates_changed(self):
+        self.app_updates_enabled = bool(self.automatic_app_updates.get())
+        self.settings["automatic_app_updates"] = self.app_updates_enabled
+        self._persist()
+        self.app_update_token += 1
+        if self.app_update_future is not None:
+            self.app_update_future.cancel()
+        self.app_update_next_at = 0. if self.app_updates_enabled else float("inf")
+        if not self.app_updates_enabled and not self.app_update_ready:
+            self.app_update_status = "idle"
+        self._update_app_feedback()
+
+    def _check_app_updates(self, *, force=False):
+        client = self.app_update_client
+        if self.closed or self.smoke_test or client is None or not client.installed:
+            return False
+        if self.app_update_ready:
+            return False
+        if not force and (not self.app_updates_enabled or time.monotonic() < self.app_update_next_at):
+            return False
+        if self.app_update_future is not None and not self.app_update_future.done():
+            return False
+        token, stop = self.app_update_token, self.app_update_stop
+        self.app_update_status = "checking"
+        self.app_update_next_at = time.monotonic() + 6 * 60 * 60
+        self._update_app_feedback()
+        def fetch():
+            try:
+                result = client.check_and_download()
+            except Exception as error:
+                result = SimpleNamespace(status="error", version=None, reason=str(error))
+            if not stop.is_set() and not self.closed:
+                self.events.put(("app_update", token, result))
+        self.app_update_future = self.app_update_executor.submit(fetch)
+        return True
+
+    def _accept_app_update(self, token, result):
+        if self.closed or token != self.app_update_token:
+            return
+        self.app_update_status = result.status
+        self.app_update_version = result.version
+        self.app_update_reason = result.reason
+        self.app_update_ready = result.status == "ready"
+        self.app_update_next_at = time.monotonic() + 6 * 60 * 60
+        self._update_app_feedback()
+
+    def _restart_for_app_update(self):
+        if not self.app_update_ready or self.closed:
+            return False
+        if self._background_tasks_busy():
+            if not getattr(self, "_app_restart_waiting", False):
+                self._app_restart_waiting = True
+                self._update_app_feedback()
+                self.root.after(200, self._retry_app_restart)
+            return False
+        self.close(restart_for_update=True)
+        return True
+
+    def _retry_app_restart(self):
+        self._app_restart_waiting = False
+        if not self.closed and self.app_update_ready:
+            self._restart_for_app_update()
+
+    def _background_tasks_busy(self):
+        futures = list(getattr(self, "_recognition_futures", ()))
+        futures.extend(getattr(self, name, None) for name in
+                       ("future", "map_update_future", "app_update_future"))
+        return any(future is not None and not future.done() and not future.cancelled()
+                   for future in futures)
+
+    def _remember_recognition_work(self, future):
+        # A newer capture can replace self.future while older native work runs.
+        self._recognition_futures = {item for item in getattr(self, "_recognition_futures", ()) if not item.done()}
+        self._recognition_futures.add(future)
+
+    def open_app_releases(self):
+        try:
+            from .app_updates import INSTALLER_URL
+            if not webbrowser.open(INSTALLER_URL):
+                raise OSError("Could not open release downloads")
+        except Exception as error:
+            self.app_update_reason = str(error)
+            self._update_app_feedback()
+
+    def _update_app_feedback(self):
+        if not hasattr(self, "app_update_label"):
+            return
+        client = getattr(self, "app_update_client", None)
+        installed = client is not None and client.installed
+        status = getattr(self, "app_update_status", "unavailable")
+        ready = getattr(self, "app_update_ready", False)
+        version = getattr(self, "app_update_version", None) or __version__
+        if not installed or status == "unavailable":
+            summary = self.t("Install LootLizard to enable automatic app updates.")
+        elif ready and getattr(self, "_app_restart_waiting", False):
+            summary = self.t("Finishing the current task before restarting…")
+        elif ready:
+            summary = self.t("LootLizard {version} is ready. Restart when you are finished playing.", version=version)
+        elif status == "checking":
+            summary = self.t("Checking and downloading app updates…")
+        elif status == "busy":
+            summary = self.t("An app update check is already running.")
+        elif status == "error":
+            summary = self.t("App update unavailable. Try again later.")
+        elif not self.app_updates_enabled:
+            summary = self.t("Automatic app updates are off.")
+        elif status == "current":
+            summary = self.t("LootLizard {version} is up to date.", version=version)
+        else:
+            summary = self.t("LootLizard {version} · checks at startup and every 6 hours", version=version)
+        self._configure(self.app_update_label, text=summary)
+        self.app_update_check_button.configure(state="normal" if installed and status != "checking" and not ready else "disabled")
+        self.app_restart_button.configure(state="normal" if ready and not getattr(self, "_app_restart_waiting", False) else "disabled")
+        self._configure(self.app_update_diagnostic_label, text=self.t(
+            "App update status: {name}\nVersion: {version}\n{reason}", name=status,
+            version=version, reason=getattr(self, "app_update_reason", "")))
 
     def _saved_display(self, key, default):
         name = self.settings.get(key)
@@ -509,6 +654,7 @@ class Companion:
         self._update_age()
         self._update_hotkey_feedback()
         self._update_map_feedback()
+        self._update_app_feedback()
         self.draw()
 
     def _build_ui(self):
@@ -724,6 +870,7 @@ class Companion:
                 zone = ZoneDetection(None, 0.0, "Safe-zone detection failed; circle priority is unavailable.")
             self.events.put(("recognized", ticket, result, zone))
         self.future = self.executor.submit(analyze)
+        self._remember_recognition_work(self.future)
 
     def _start_registration(self, *, zone_only=False, quiet=False):
         ticket = self.recognition_id
@@ -772,6 +919,7 @@ class Companion:
             self.events.put(("registered", ticket, registration, marker, zone, text_evidence))
 
         self.future = self.executor.submit(analyze)
+        self._remember_recognition_work(self.future)
 
     def _accept_registration(self, ticket, registration, marker_result=None, zone_result=None, text_result=None):
         if ticket != self.recognition_id or self.closed:
@@ -1224,6 +1372,8 @@ class Companion:
                 self._accept_registration(*event[1:])
             elif isinstance(event, tuple) and event[0] == "map_update":
                 self._accept_map_update(event[1], event[2])
+            elif isinstance(event, tuple) and event[0] == "app_update":
+                self._accept_app_update(event[1], event[2])
         if self.hotkey and self.hotkey.ready.is_set():
             if self.hotkey.error:
                 self.hotkey_failure = self.hotkey.error
@@ -1236,6 +1386,8 @@ class Companion:
         self._update_age()
         if getattr(self, "map_update_client", None) is not None:
             self._check_map_updates()
+        if getattr(self, "app_update_client", None) is not None:
+            self._check_app_updates()
         self.root.after(100, self._tick)
 
     def _update_age(self):
@@ -1252,11 +1404,23 @@ class Companion:
             self._configure(self.age_label, text=self.t('No position selected yet.'), fg=MUTED)
         self._refresh_presentation()
 
-    def close(self):
+    def close(self, *, restart_for_update=False):
         if self.closed:
             return
+        update_client = getattr(self, "app_update_client", None)
+        # Only a result accepted by Tk proves the complete package is ready.
+        # A download still in flight is left for the next installed-app run.
+        apply_update = (getattr(self, "app_update_ready", False) and update_client is not None
+                        and (getattr(self, "app_updates_enabled", True) or restart_for_update))
         self.closed = True
         self.recognition_id += 1
+        if hasattr(self, "app_update_stop"):
+            self.app_update_stop.set()
+            self.app_update_token += 1
+        if getattr(self, "app_update_future", None) is not None:
+            self.app_update_future.cancel()
+        if hasattr(self, "app_update_executor"):
+            self.app_update_executor.shutdown(wait=False, cancel_futures=True)
         if hasattr(self, "map_update_stop"):
             self.map_update_stop.set()
             self.map_update_token += 1
@@ -1268,6 +1432,12 @@ class Companion:
             self.hotkey.close()
         self.executor.shutdown(wait=False, cancel_futures=True)
         self.root.destroy()
+        if apply_update and not self._background_tasks_busy():
+            try:
+                update_client.apply_on_exit(restart=bool(restart_for_update))
+            except Exception as error:
+                # Tk has been destroyed. Never reopen a window from exit cleanup.
+                self.app_update_status, self.app_update_reason = "error", str(error)
 
 
 def _smoke(app: Companion):

@@ -1,10 +1,12 @@
-# LootLizard 0.7.0
+# LootLizard 0.8.0
 
 [Magyar gyorsindító](README.hu.md)
 
 An experimental, open-source Windows companion by [SmartLizardOrg](https://github.com/SmartLizardOrg) that projects known PUBG: BATTLEGROUNDS secret-room coordinates onto a requested screenshot on a second display. **Ctrl+Shift+B** captures one selected monitor. Image recognition runs locally; community point updates use GitHub HTTPS. No account or AI API key is needed.
 
-Get packaged Windows builds from [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Contribute corrections or new point datasets through a pull request: [CONTRIBUTING.md](CONTRIBUTING.md).
+**[Download LootLizard-Setup.exe for Windows](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — the latest stable per-user installer. No Python installation or administrator rights are required. Other assets are on [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Contribute corrections or new point datasets through a pull request: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Version **0.8.0** adds an installer and optional automatic **application updates** from stable GitHub Releases. These are separate from the community coordinate updates below. Downloads do not close LootLizard or interrupt play; a ready program update is applied only after you close the app or explicitly choose **Restart to update**.
 
 Version 0.7 introduces the **LootLizard** name and automatic community point-data updates. The app checks at startup and approximately every 60 seconds while open; GitHub workflow execution, CDN caching and retry/backoff can delay delivery. These updates contain coordinates and attribution only, never application code or map images.
 
@@ -18,7 +20,11 @@ Both icon methods estimate appearance, not player identity. A changed squad colo
 
 ## Start and choose a language
 
-For a packaged build, extract the entire ZIP and run `LootLizard.exe`. Keep `_internal` beside it. `start-pubg.cmd` starts the companion and requests a Steam launch of PUBG. There is no installer or code-signing certificate.
+Run [LootLizard-Setup.exe](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe), then open LootLizard from its Start menu or desktop shortcut. The application is installed per user under `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; settings, profiles and map cache stay separately under `%LOCALAPPDATA%\LootLizard` and are retained on uninstall.
+
+Windows builds are **unsigned**. Windows SmartScreen may show an unknown-publisher warning; a published SHA-256 is an integrity check, not a code-signing certificate. Download from this project's release page.
+
+The optional ZIP remains a portable/manual-update build: extract the entire ZIP, keep `_internal` beside `LootLizard.exe`, and run it. `start-pubg.cmd` also requests a Steam launch of PUBG. **Existing ZIP/source users must run the installer once to enable application self-updates.** Their compatible local settings and profiles remain usable.
 
 To run from source on Windows with Python 3.12 or newer, including Tkinter:
 
@@ -28,9 +34,17 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m lootlizard
 ```
 
-Installation includes Pillow, `opencv-python-headless` and NumPy. The installed command is `lootlizard`. Windows capture, the global hotkey and two-monitor placement are the supported target; other operating systems are not tested.
+Source dependencies include Pillow, `opencv-python-headless`, NumPy and, on Windows, Velopack 1.2.161. The source command is `lootlizard`. Windows capture, the global hotkey and two-monitor placement are the supported target; other operating systems are not tested.
 
 The interface starts in **English**. Choose **Settings > General > Language > Magyar** for Hungarian. Language changes apply immediately, preserve the current image/setup/result, and are saved locally. The instructions below use English control labels. **Settings > General > Help** opens the in-app guide.
+
+## Application updates
+
+In an installed build, **Settings > General > App updates > Automatic app updates** is on by default. It checks stable releases from [SmartLizardOrg/LootLizard](https://github.com/SmartLizardOrg/LootLizard/releases) at startup and every six hours, downloading a newer verified package in a separate worker. **Check now** requests a manual check. This is program code from the project's release publishers; package checksums detect corruption, not a compromised publisher account.
+
+A ready update applies after an ordinary **Close**, without restarting, or after you select **Restart to update**. Nothing forces the app to close while you play, and PUBG is not restarted. Explicit restart waits for current background work to finish. If work is still running at ordinary Close, application is deferred to a later run/check; a partially downloaded update is never applied.
+
+Turning **Automatic app updates** off disables scheduled checks **and normal-exit automatic application**. Manual **Check now** and explicit **Restart to update** remain available. Detailed failures are in **Settings > Diagnostics**; update/network failures leave the current map view intact. Source/portable builds instead show **Install LootLizard to enable automatic app updates** and **Download installer**. Community **Map updates** is a separate control and still checks roughly every 60 seconds.
 
 ## Local map catalog: optional icon, supported zoom and pan
 
@@ -158,7 +172,7 @@ Capture uses [Pillow ImageGrab](https://pillow.readthedocs.io/en/stable/referenc
 
 **Catalog import reads your existing local reference images** and saves only the catalog path in `%LOCALAPPDATA%\LootLizard\settings.json`, alongside language/display preferences. It does not copy them or grant redistribution rights. Dataset export writes to your chosen location. Disabling a catalog removes its saved preference, not your image files.
 
-Image recognition is offline. The app's network client checks only the public GitHub point-data feed when automatic updates are enabled or you choose **Check now**. Screenshots, OCR text, profiles and local references are not sent. There is no telemetry, account or API key. Installing dependencies can use the internet, and launching PUBG opens Steam with its own network behavior. The app does not read game memory/files, intercept game traffic, inject code or automate gameplay input. Screenshot operation alone does not establish KRAFTON permission, anti-cheat compatibility or authorization for in-match use; review the current [PUBG Rules of Conduct](https://pubg.com/en/clause/rules_of_conduct).
+Image recognition is offline. Enabled/manual update checks access the public GitHub point-data feed and, for installed builds, stable GitHub Releases and their package downloads. **Download installer** opens the fixed release download in your browser. Screenshots, OCR text, profiles and local references are not sent. There is no telemetry, account or API key. Installing dependencies can use the internet, and launching PUBG opens Steam with its own network behavior. The app does not read game memory/files, intercept game traffic, inject code or automate gameplay input. Screenshot operation alone does not establish KRAFTON permission, anti-cheat compatibility or authorization for in-match use; review the current [PUBG Rules of Conduct](https://pubg.com/en/clause/rules_of_conduct).
 
 When no new LootLizard settings exist, compatible earlier `%LOCALAPPDATA%\BasementCompanion\settings.json` settings can be read. Legacy profiles are read in place if no new LootLizard profile exists. The app does not move, copy or delete those old files; future settings/profile/cache writes use LootLizard's directory.
 
@@ -198,13 +212,15 @@ Build a Windows directory bundle in the same environment:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install "pyinstaller>=6.11,<7"
-.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onedir --windowed --name LootLizard --add-data 'data;data' --collect-all PIL --collect-all cv2 --collect-all numpy --distpath dist --workpath build --specpath . launcher.py
-.\.venv\Scripts\python.exe scripts/package_release.py --binary dist/LootLizard --output release --label 0.7.0
+.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onedir --windowed --name LootLizard --add-data 'data;data' --collect-all PIL --collect-all cv2 --collect-all numpy --collect-all velopack --distpath dist --workpath build --specpath . launcher.py
+.\.venv\Scripts\python.exe scripts/package_release.py --binary dist/LootLizard --output release --label 0.8.0
 ```
 
 `--binary` accepts the onedir directory or its `LootLizard.exe`. Packaging refuses to replace an existing bundle/ZIP. Use the build environment so runtime versions/licenses match. Local builds are `local-unpublished` with null repository/commit fields; byte-for-byte reproducibility is not claimed. Source packaging includes code, tests, point JSON and notices, not local screenshots/references/profiles.
 
-The `check` workflow validates community data and runs unit tests on Windows for main pushes and pull requests. The separate `metadata` workflow publishes validated point snapshots after relevant main changes or manual dispatch. It never runs a write-enabled job for a pull request. A `v*` tag triggers the release workflow to build and publish the Windows ZIP and checksums; see [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) and [Releases](https://github.com/SmartLizardOrg/LootLizard/releases) for actual run/publication status. Local test results do not establish a successful hosted CI run. Exercise capture, DPI/monitors, the hotkey, catalog reload, unknown rejection, optional profiles, Steam launch and shutdown on the supported setup before distributing a binary.
+Installer packaging uses [scripts/build_installer.py](scripts/build_installer.py) and matching **Velopack Python SDK / .NET `vpk` 1.2.161**. Building requires a compatible .NET SDK; end users do not need Python or the .NET build tools. Install the pinned tool with `dotnet tool install vpk --tool-path .build-tools --version 1.2.161`, then pass `--payload` (the enriched directory produced above), an empty `--output`, and `--vpk .build-tools/vpk.exe` to the script. The installer and full update package include source and dependency notices. The script validates the generated full-package feed/checksum and creates the stable `LootLizard-Setup.exe` alias; it does not install or publish anything.
+
+The `check` workflow validates community data and runs unit tests on Windows for main pushes and pull requests. The separate `metadata` workflow publishes validated point snapshots after relevant main changes or manual dispatch. It never runs a write-enabled job for a pull request. Tagged release automation packages the installer, full update feed/package, optional ZIP and checksums. Check [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) and [Releases](https://github.com/SmartLizardOrg/LootLizard/releases) for actual publication/test status. A local mock or packaging test does not establish a successful installed upgrade. Headless installer CI can verify install/download/apply/uninstall and retained user data, but does not exercise real gameplay, UI focus or the GUI worker-shutdown race. Exercise capture, DPI/monitors, the hotkey, catalog reload, unknown rejection, optional profiles, Steam launch and shutdown on the supported setup before distributing a binary.
 
 ## License and sources
 
