@@ -3,10 +3,105 @@
   "name": "Rondo",
   "size_m": 8000.0,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Rondo_Main_No_Text_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+    "license": "MIT",
+    "attribution": "Copyright (c) 2026 Axiom",
+    "notes": "15 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. The 15 source secret_room annotations represent community-listed key rooms; no market, shop or safe locations are included. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22. Stable id rondo-08 retains its original source record but has a documented individual factual correction to (0.69952, 0.74753), corroborated independently against an original authored map and recent public key-use observations; see the provenance audit.",
+    "additional_sources": [
+      "https://pubgstatistics.com/secretrooms",
+      "https://steamcommunity.com/sharedfiles/filedetails/?id=3583051048"
+    ]
   },
-  "points": []
+  "points": [
+    {
+      "id": "rondo-01",
+      "name": "Secret room 01",
+      "x": 0.1806640625,
+      "y": 0.1668701171875
+    },
+    {
+      "id": "rondo-02",
+      "name": "Secret room 02",
+      "x": 0.369873046875,
+      "y": 0.6314697265625
+    },
+    {
+      "id": "rondo-03",
+      "name": "Secret room 03",
+      "x": 0.4150390625,
+      "y": 0.8597412109375
+    },
+    {
+      "id": "rondo-04",
+      "name": "Secret room 04",
+      "x": 0.1751708984375,
+      "y": 0.3984375
+    },
+    {
+      "id": "rondo-05",
+      "name": "Secret room 05",
+      "x": 0.179443359375,
+      "y": 0.589111328125
+    },
+    {
+      "id": "rondo-06",
+      "name": "Secret room 06",
+      "x": 0.1568603515625,
+      "y": 0.794677734375
+    },
+    {
+      "id": "rondo-07",
+      "name": "Secret room 07",
+      "x": 0.606689453125,
+      "y": 0.9056396484375
+    },
+    {
+      "id": "rondo-08",
+      "name": "Secret room 08",
+      "x": 0.69952,
+      "y": 0.74753
+    },
+    {
+      "id": "rondo-09",
+      "name": "Secret room 09",
+      "x": 0.572509765625,
+      "y": 0.540283203125
+    },
+    {
+      "id": "rondo-10",
+      "name": "Secret room 10",
+      "x": 0.863037109375,
+      "y": 0.337646484375
+    },
+    {
+      "id": "rondo-11",
+      "name": "Secret room 11",
+      "x": 0.6182861328125,
+      "y": 0.25244140625
+    },
+    {
+      "id": "rondo-12",
+      "name": "Secret room 12",
+      "x": 0.7110595703125,
+      "y": 0.1121826171875
+    },
+    {
+      "id": "rondo-13",
+      "name": "Secret room 13",
+      "x": 0.372314453125,
+      "y": 0.11572265625
+    },
+    {
+      "id": "rondo-14",
+      "name": "Secret room 14",
+      "x": 0.4656982421875,
+      "y": 0.326416015625
+    },
+    {
+      "id": "rondo-15",
+      "name": "Secret room 15",
+      "x": 0.81298828125,
+      "y": 0.5247802734375
+    }
+  ]
 }

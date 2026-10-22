@@ -3,10 +3,151 @@
   "name": "Vikendi",
   "size_m": 8000.0,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Vikendi_Main_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+    "license": "MIT",
+    "attribution": "Copyright (c) 2026 Axiom",
+    "notes": "20 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. The ten key-locked security rooms and ten bear-cave entrances are separate kinds. Lab camps, crowbar points, vehicles and other unrelated categories are excluded. Bear caves are not key-locked rooms. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
-  "points": []
+  "points": [
+    {
+      "id": "vikendi-01",
+      "name": "Security room 01",
+      "x": 0.33740234375,
+      "y": 0.193359375,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-02",
+      "name": "Security room 02",
+      "x": 0.66455078125,
+      "y": 0.16259765625,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-03",
+      "name": "Security room 03",
+      "x": 0.768310546875,
+      "y": 0.302001953125,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-04",
+      "name": "Security room 04",
+      "x": 0.840576171875,
+      "y": 0.477783203125,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-05",
+      "name": "Security room 05",
+      "x": 0.746826171875,
+      "y": 0.7216796875,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-06",
+      "name": "Security room 06",
+      "x": 0.484619140625,
+      "y": 0.8031005859375,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-07",
+      "name": "Security room 07",
+      "x": 0.29150390625,
+      "y": 0.692138671875,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-08",
+      "name": "Security room 08",
+      "x": 0.1708984375,
+      "y": 0.47265625,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-09",
+      "name": "Security room 09",
+      "x": 0.504150390625,
+      "y": 0.39453125,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-10",
+      "name": "Security room 10",
+      "x": 0.57861328125,
+      "y": 0.60888671875,
+      "kind": "security_room"
+    },
+    {
+      "id": "vikendi-11",
+      "name": "Bear cave 11",
+      "x": 0.4609375,
+      "y": 0.7852783203125,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-12",
+      "name": "Bear cave 12",
+      "x": 0.44970703125,
+      "y": 0.808349609375,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-13",
+      "name": "Bear cave 13",
+      "x": 0.62841796875,
+      "y": 0.7403564453125,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-14",
+      "name": "Bear cave 14",
+      "x": 0.765625,
+      "y": 0.716064453125,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-15",
+      "name": "Bear cave 15",
+      "x": 0.80859375,
+      "y": 0.46923828125,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-16",
+      "name": "Bear cave 16",
+      "x": 0.72216796875,
+      "y": 0.349853515625,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-17",
+      "name": "Bear cave 17",
+      "x": 0.73681640625,
+      "y": 0.2152099609375,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-18",
+      "name": "Bear cave 18",
+      "x": 0.649658203125,
+      "y": 0.186279296875,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-19",
+      "name": "Bear cave 19",
+      "x": 0.342529296875,
+      "y": 0.1630859375,
+      "kind": "bear_cave"
+    },
+    {
+      "id": "vikendi-20",
+      "name": "Bear cave 20",
+      "x": 0.5791015625,
+      "y": 0.43701171875,
+      "kind": "bear_cave"
+    }
+  ]
 }

@@ -1,18 +1,295 @@
 {
   "schema_version": 1,
-  "revision": "db452b933b5216215eb20fb464628e7269c5105f",
+  "revision": "653910c9fb85745c516023ce2289617cc36705e0",
   "maps": [
     {
       "id": "deston",
       "name": "Deston",
       "size_m": 8000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Deston_Main_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Axiom; Copyright (c) 2026 Aleksei Reuk",
+        "additional_sources": [
+          "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js"
+        ],
+        "notes": "39 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. 34 ziphow security-room points are supplemented by five distinct adzpm points corroborated by recent public key-use detections. Drone-only rooms were not deliberately imported. Ripton has closely spaced/multilevel rooms: this two-dimensional map does not identify the floor, door or key availability, and the list may still be incomplete. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
       },
-      "points": []
+      "points": [
+        {
+          "id": "deston-01",
+          "name": "Security room 01",
+          "x": 0.2008056640625,
+          "y": 0.5562744140625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-02",
+          "name": "Security room 02",
+          "x": 0.749755859375,
+          "y": 0.516845703125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-03",
+          "name": "Security room 03",
+          "x": 0.7567138671875,
+          "y": 0.5172119140625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-04",
+          "name": "Security room 04",
+          "x": 0.7576904296875,
+          "y": 0.510986328125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-05",
+          "name": "Security room 05",
+          "x": 0.7711181640625,
+          "y": 0.5037841796875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-06",
+          "name": "Security room 06",
+          "x": 0.7935791015625,
+          "y": 0.4964599609375,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-07",
+          "name": "Security room 07",
+          "x": 0.8056640625,
+          "y": 0.5067138671875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-08",
+          "name": "Security room 08",
+          "x": 0.798095703125,
+          "y": 0.530517578125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-09",
+          "name": "Security room 09",
+          "x": 0.7821044921875,
+          "y": 0.5634765625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-10",
+          "name": "Security room 10",
+          "x": 0.751953125,
+          "y": 0.5753173828125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-11",
+          "name": "Security room 11",
+          "x": 0.73974609375,
+          "y": 0.5736083984375,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-12",
+          "name": "Security room 12",
+          "x": 0.7276611328125,
+          "y": 0.581787109375,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-13",
+          "name": "Security room 13",
+          "x": 0.80712890625,
+          "y": 0.5596923828125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-14",
+          "name": "Security room 14",
+          "x": 0.8021240234375,
+          "y": 0.567626953125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-15",
+          "name": "Security room 15",
+          "x": 0.80029296875,
+          "y": 0.5694580078125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-16",
+          "name": "Security room 16",
+          "x": 0.829833984375,
+          "y": 0.5535888671875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-17",
+          "name": "Security room 17",
+          "x": 0.8233642578125,
+          "y": 0.562255859375,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-18",
+          "name": "Security room 18",
+          "x": 0.5609130859375,
+          "y": 0.4989013671875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-19",
+          "name": "Security room 19",
+          "x": 0.468505859375,
+          "y": 0.5533447265625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-20",
+          "name": "Security room 20",
+          "x": 0.6226806640625,
+          "y": 0.239990234375,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-21",
+          "name": "Security room 21",
+          "x": 0.821533203125,
+          "y": 0.2305908203125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-22",
+          "name": "Security room 22",
+          "x": 0.235107421875,
+          "y": 0.1796875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-23",
+          "name": "Security room 23",
+          "x": 0.2296142578125,
+          "y": 0.1748046875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-24",
+          "name": "Security room 24",
+          "x": 0.2393798828125,
+          "y": 0.220947265625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-25",
+          "name": "Security room 25",
+          "x": 0.63623046875,
+          "y": 0.1099853515625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-26",
+          "name": "Security room 26",
+          "x": 0.339599609375,
+          "y": 0.0643310546875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-27",
+          "name": "Security room 27",
+          "x": 0.2138671875,
+          "y": 0.4132080078125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-28",
+          "name": "Security room 28",
+          "x": 0.4022216796875,
+          "y": 0.4385986328125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-29",
+          "name": "Security room 29",
+          "x": 0.5540771484375,
+          "y": 0.334716796875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-30",
+          "name": "Security room 30",
+          "x": 0.9014892578125,
+          "y": 0.385498046875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-31",
+          "name": "Security room 31",
+          "x": 0.281005859375,
+          "y": 0.5770263671875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-32",
+          "name": "Security room 32",
+          "x": 0.4622802734375,
+          "y": 0.6971435546875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-33",
+          "name": "Security room 33",
+          "x": 0.6990966796875,
+          "y": 0.7874755859375,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-34",
+          "name": "Security room 34",
+          "x": 0.1407470703125,
+          "y": 0.7703857421875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-35",
+          "name": "Security room 35",
+          "x": 0.3837890625,
+          "y": 0.3311767578125,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-36",
+          "name": "Security room 36",
+          "x": 0.7806396484375,
+          "y": 0.5576171875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-37",
+          "name": "Security room 37",
+          "x": 0.8116455078125,
+          "y": 0.606201171875,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-38",
+          "name": "Security room 38",
+          "x": 0.819580078125,
+          "y": 0.5162353515625,
+          "kind": "security_room"
+        },
+        {
+          "id": "deston-39",
+          "name": "Security room 39",
+          "x": 0.82568359375,
+          "y": 0.5303955078125,
+          "kind": "security_room"
+        }
+      ]
     },
     {
       "id": "erangel",
@@ -122,60 +399,605 @@
       "name": "Haven",
       "size_m": 1000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Haven_Main_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance. Availability depends on the game mode and rotation; this historical official asset is not a claim of current matchmaking availability."
+        "url": "https://www.inven.co.kr/board/battlegrounds/5074/3400",
+        "license": "MIT for LootLizard's factual coordinate annotations; original map artwork is not licensed by this import",
+        "attribution": "Original map: 핑핑위 / Nabae-_- / HwapYong (Inven); coordinate transcription: LootLizard contributors",
+        "notes": "22 independently transcribed possible Pillar Supply Cache building centres from an original community post dated 2020-12-10 with a map image revised 2021-03-25. The source reports only five active caches per match among possible buildings; activation/current-game validity is not verified. These are historical candidate BUILDING centres, not exact doors or guaranteed active caches. Marker centres were georegistered onto the bundled official 819x819 reference using 406 affine inliers (517 matches; median geometric residual 0.235 reference px, p95 1.161 px). These residuals describe image alignment, not entrance-location accuracy. Coordinates are normalized on the full reference, top-left origin, x right/east, y down/south. Native marked map uses a separate image size and affine transform, not an 8192-pixel divisor. No original map artwork or text is redistributed. Exact observed marker centres, transform, source URLs and uncertainty are recorded in data-sources/haven-candidate-buildings.json. Reviewed 2026-10-22; not verified in-game for LootLizard."
       },
-      "points": []
+      "points": [
+        {
+          "id": "haven-01",
+          "name": "Possible Pillar cache 01",
+          "x": 0.16928121,
+          "y": 0.23727376,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-02",
+          "name": "Possible Pillar cache 02",
+          "x": 0.55198895,
+          "y": 0.24213612,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-03",
+          "name": "Possible Pillar cache 03",
+          "x": 0.39507453,
+          "y": 0.25685162,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-04",
+          "name": "Possible Pillar cache 04",
+          "x": 0.43774373,
+          "y": 0.26485617,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-05",
+          "name": "Possible Pillar cache 05",
+          "x": 0.77651594,
+          "y": 0.31748893,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-06",
+          "name": "Possible Pillar cache 06",
+          "x": 0.56850313,
+          "y": 0.35665569,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-07",
+          "name": "Possible Pillar cache 07",
+          "x": 0.19157741,
+          "y": 0.36899456,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-08",
+          "name": "Possible Pillar cache 08",
+          "x": 0.28669515,
+          "y": 0.37611495,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-09",
+          "name": "Possible Pillar cache 09",
+          "x": 0.60751115,
+          "y": 0.51822458,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-10",
+          "name": "Possible Pillar cache 10",
+          "x": 0.73329701,
+          "y": 0.53625395,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-11",
+          "name": "Possible Pillar cache 11",
+          "x": 0.86983631,
+          "y": 0.53618099,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-12",
+          "name": "Possible Pillar cache 12",
+          "x": 0.60750858,
+          "y": 0.54639738,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-13",
+          "name": "Possible Pillar cache 13",
+          "x": 0.60750523,
+          "y": 0.58284464,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-14",
+          "name": "Possible Pillar cache 14",
+          "x": 0.34801016,
+          "y": 0.62591754,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-15",
+          "name": "Possible Pillar cache 15",
+          "x": 0.36430238,
+          "y": 0.65583378,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-16",
+          "name": "Possible Pillar cache 16",
+          "x": 0.25991503,
+          "y": 0.66931532,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-17",
+          "name": "Possible Pillar cache 17",
+          "x": 0.7907097,
+          "y": 0.71137011,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-18",
+          "name": "Possible Pillar cache 18",
+          "x": 0.583934,
+          "y": 0.73358862,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-19",
+          "name": "Possible Pillar cache 19",
+          "x": 0.79070769,
+          "y": 0.73359406,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-20",
+          "name": "Possible Pillar cache 20",
+          "x": 0.58446017,
+          "y": 0.862553,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-21",
+          "name": "Possible Pillar cache 21",
+          "x": 0.53111865,
+          "y": 0.88024805,
+          "kind": "supply_cache"
+        },
+        {
+          "id": "haven-22",
+          "name": "Possible Pillar cache 22",
+          "x": 0.66445554,
+          "y": 0.88018844,
+          "kind": "supply_cache"
+        }
+      ]
     },
     {
       "id": "karakin",
       "name": "Karakin",
       "size_m": 2000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Karakin_Main_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Axiom",
+        "notes": "22 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 2000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. These 22 source 'basement' annotations mark underground/tunnel entrances, not 22 distinct key-locked rooms; several entrances can lead to the same tunnel. Sticky Bomb access may be required. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
       },
-      "points": []
+      "points": [
+        {
+          "id": "karakin-01",
+          "name": "Tunnel entrance 01",
+          "x": 0.2230224609375,
+          "y": 0.370361328125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-02",
+          "name": "Tunnel entrance 02",
+          "x": 0.2403564453125,
+          "y": 0.3359375,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-03",
+          "name": "Tunnel entrance 03",
+          "x": 0.399658203125,
+          "y": 0.3656005859375,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-04",
+          "name": "Tunnel entrance 04",
+          "x": 0.581298828125,
+          "y": 0.318603515625,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-05",
+          "name": "Tunnel entrance 05",
+          "x": 0.6256103515625,
+          "y": 0.34423828125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-06",
+          "name": "Tunnel entrance 06",
+          "x": 0.748046875,
+          "y": 0.32568359375,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-07",
+          "name": "Tunnel entrance 07",
+          "x": 0.765380859375,
+          "y": 0.3092041015625,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-08",
+          "name": "Tunnel entrance 08",
+          "x": 0.3245849609375,
+          "y": 0.5262451171875,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-09",
+          "name": "Tunnel entrance 09",
+          "x": 0.5296630859375,
+          "y": 0.4615478515625,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-10",
+          "name": "Tunnel entrance 10",
+          "x": 0.5977783203125,
+          "y": 0.47265625,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-11",
+          "name": "Tunnel entrance 11",
+          "x": 0.548583984375,
+          "y": 0.5235595703125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-12",
+          "name": "Tunnel entrance 12",
+          "x": 0.7447509765625,
+          "y": 0.5147705078125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-13",
+          "name": "Tunnel entrance 13",
+          "x": 0.527099609375,
+          "y": 0.5225830078125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-14",
+          "name": "Tunnel entrance 14",
+          "x": 0.46875,
+          "y": 0.57568359375,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-15",
+          "name": "Tunnel entrance 15",
+          "x": 0.5146484375,
+          "y": 0.6129150390625,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-16",
+          "name": "Tunnel entrance 16",
+          "x": 0.3770751953125,
+          "y": 0.78271484375,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-17",
+          "name": "Tunnel entrance 17",
+          "x": 0.4222412109375,
+          "y": 0.79296875,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-18",
+          "name": "Tunnel entrance 18",
+          "x": 0.56640625,
+          "y": 0.67822265625,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-19",
+          "name": "Tunnel entrance 19",
+          "x": 0.5714111328125,
+          "y": 0.73876953125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-20",
+          "name": "Tunnel entrance 20",
+          "x": 0.622802734375,
+          "y": 0.7598876953125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-21",
+          "name": "Tunnel entrance 21",
+          "x": 0.729736328125,
+          "y": 0.71923828125,
+          "kind": "tunnel_entrance"
+        },
+        {
+          "id": "karakin-22",
+          "name": "Tunnel entrance 22",
+          "x": 0.760498046875,
+          "y": 0.6983642578125,
+          "kind": "tunnel_entrance"
+        }
+      ]
     },
     {
       "id": "miramar",
       "name": "Miramar",
       "size_m": 8000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Miramar_Main_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Axiom",
+        "notes": "15 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. Only the 15 source secret_room points are imported. The three separate basement annotations, vehicles and other categories are excluded. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
       },
-      "points": []
+      "points": [
+        {
+          "id": "miramar-01",
+          "name": "Secret room 01",
+          "x": 0.219482421875,
+          "y": 0.2052001953125
+        },
+        {
+          "id": "miramar-02",
+          "name": "Secret room 02",
+          "x": 0.3995361328125,
+          "y": 0.13232421875
+        },
+        {
+          "id": "miramar-03",
+          "name": "Secret room 03",
+          "x": 0.5660400390625,
+          "y": 0.17626953125
+        },
+        {
+          "id": "miramar-04",
+          "name": "Secret room 04",
+          "x": 0.771240234375,
+          "y": 0.23828125
+        },
+        {
+          "id": "miramar-05",
+          "name": "Secret room 05",
+          "x": 0.3426513671875,
+          "y": 0.3074951171875
+        },
+        {
+          "id": "miramar-06",
+          "name": "Secret room 06",
+          "x": 0.171630859375,
+          "y": 0.403076171875
+        },
+        {
+          "id": "miramar-07",
+          "name": "Secret room 07",
+          "x": 0.6302490234375,
+          "y": 0.3936767578125
+        },
+        {
+          "id": "miramar-08",
+          "name": "Secret room 08",
+          "x": 0.470947265625,
+          "y": 0.4788818359375
+        },
+        {
+          "id": "miramar-09",
+          "name": "Secret room 09",
+          "x": 0.757080078125,
+          "y": 0.5230712890625
+        },
+        {
+          "id": "miramar-10",
+          "name": "Secret room 10",
+          "x": 0.160888671875,
+          "y": 0.651123046875
+        },
+        {
+          "id": "miramar-11",
+          "name": "Secret room 11",
+          "x": 0.32763671875,
+          "y": 0.6109619140625
+        },
+        {
+          "id": "miramar-12",
+          "name": "Secret room 12",
+          "x": 0.541748046875,
+          "y": 0.6376953125
+        },
+        {
+          "id": "miramar-13",
+          "name": "Secret room 13",
+          "x": 0.1734619140625,
+          "y": 0.88916015625
+        },
+        {
+          "id": "miramar-14",
+          "name": "Secret room 14",
+          "x": 0.39697265625,
+          "y": 0.813720703125
+        },
+        {
+          "id": "miramar-15",
+          "name": "Secret room 15",
+          "x": 0.6431884765625,
+          "y": 0.7706298828125
+        }
+      ]
     },
     {
       "id": "paramo",
       "name": "Paramo",
       "size_m": 3000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Paramo_Main_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance. Paramo terrain changes between matches; a fixed historical reference can abstain or align only partly."
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Axiom",
+        "notes": "8 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 3000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. Paramo landmarks can change between matches; compare reference locations with the current in-game map. These are eight known candidate positions, not a promise that every room is usable in every match. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
       },
-      "points": []
+      "points": [
+        {
+          "id": "paramo-01",
+          "name": "Secret room 01",
+          "x": 0.128173828125,
+          "y": 0.6356201171875
+        },
+        {
+          "id": "paramo-02",
+          "name": "Secret room 02",
+          "x": 0.2764892578125,
+          "y": 0.3590087890625
+        },
+        {
+          "id": "paramo-03",
+          "name": "Secret room 03",
+          "x": 0.3973388671875,
+          "y": 0.3165283203125
+        },
+        {
+          "id": "paramo-04",
+          "name": "Secret room 04",
+          "x": 0.433349609375,
+          "y": 0.6314697265625
+        },
+        {
+          "id": "paramo-05",
+          "name": "Secret room 05",
+          "x": 0.517578125,
+          "y": 0.803955078125
+        },
+        {
+          "id": "paramo-06",
+          "name": "Secret room 06",
+          "x": 0.6243896484375,
+          "y": 0.4910888671875
+        },
+        {
+          "id": "paramo-07",
+          "name": "Secret room 07",
+          "x": 0.81787109375,
+          "y": 0.57421875
+        },
+        {
+          "id": "paramo-08",
+          "name": "Secret room 08",
+          "x": 0.604248046875,
+          "y": 0.6029052734375
+        }
+      ]
     },
     {
       "id": "rondo",
       "name": "Rondo",
       "size_m": 8000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Rondo_Main_No_Text_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Axiom",
+        "notes": "15 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. The 15 source secret_room annotations represent community-listed key rooms; no market, shop or safe locations are included. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22. Stable id rondo-08 retains its original source record but has a documented individual factual correction to (0.69952, 0.74753), corroborated independently against an original authored map and recent public key-use observations; see the provenance audit.",
+        "additional_sources": [
+          "https://pubgstatistics.com/secretrooms",
+          "https://steamcommunity.com/sharedfiles/filedetails/?id=3583051048"
+        ]
       },
-      "points": []
+      "points": [
+        {
+          "id": "rondo-01",
+          "name": "Secret room 01",
+          "x": 0.1806640625,
+          "y": 0.1668701171875
+        },
+        {
+          "id": "rondo-02",
+          "name": "Secret room 02",
+          "x": 0.369873046875,
+          "y": 0.6314697265625
+        },
+        {
+          "id": "rondo-03",
+          "name": "Secret room 03",
+          "x": 0.4150390625,
+          "y": 0.8597412109375
+        },
+        {
+          "id": "rondo-04",
+          "name": "Secret room 04",
+          "x": 0.1751708984375,
+          "y": 0.3984375
+        },
+        {
+          "id": "rondo-05",
+          "name": "Secret room 05",
+          "x": 0.179443359375,
+          "y": 0.589111328125
+        },
+        {
+          "id": "rondo-06",
+          "name": "Secret room 06",
+          "x": 0.1568603515625,
+          "y": 0.794677734375
+        },
+        {
+          "id": "rondo-07",
+          "name": "Secret room 07",
+          "x": 0.606689453125,
+          "y": 0.9056396484375
+        },
+        {
+          "id": "rondo-08",
+          "name": "Secret room 08",
+          "x": 0.69952,
+          "y": 0.74753
+        },
+        {
+          "id": "rondo-09",
+          "name": "Secret room 09",
+          "x": 0.572509765625,
+          "y": 0.540283203125
+        },
+        {
+          "id": "rondo-10",
+          "name": "Secret room 10",
+          "x": 0.863037109375,
+          "y": 0.337646484375
+        },
+        {
+          "id": "rondo-11",
+          "name": "Secret room 11",
+          "x": 0.6182861328125,
+          "y": 0.25244140625
+        },
+        {
+          "id": "rondo-12",
+          "name": "Secret room 12",
+          "x": 0.7110595703125,
+          "y": 0.1121826171875
+        },
+        {
+          "id": "rondo-13",
+          "name": "Secret room 13",
+          "x": 0.372314453125,
+          "y": 0.11572265625
+        },
+        {
+          "id": "rondo-14",
+          "name": "Secret room 14",
+          "x": 0.4656982421875,
+          "y": 0.326416015625
+        },
+        {
+          "id": "rondo-15",
+          "name": "Secret room 15",
+          "x": 0.81298828125,
+          "y": 0.5247802734375
+        }
+      ]
     },
     {
       "id": "sanhok",
@@ -194,17 +1016,20 @@
       "name": "Taego",
       "size_m": 8000.0,
       "source": {
-        "url": "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js",
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
         "license": "MIT",
-        "attribution": "Copyright (c) 2026 Aleksei Reuk",
-        "notes": "The 12 points are adapted from the adzpm/pubg-map community dataset. They have not been verified in-game for this project. This is an incomplete, unverified list; it must not be treated as a complete list of Taego secret rooms. Coordinate accuracy and current validity are unverified. Original x/y values are source-image pixels; the upstream web/public/assets/tiles/taego/info.json at the same commit records an 8192 x 8192 px image. Values here are normalized as x/8192 and y/8192, with a top-left origin, x increasing rightward and y increasing downward. size_m:8000 is an approximate metre scale based on Taego's nominal 8 x 8 km map size; 8192 image pixels do not mean 8192 metres. Distances are estimated straight-line values. Stable ids and English display names were added in upstream order. No source map image is included. The full MIT license is in THIRD_PARTY_NOTICES.md. Source recorded: 2026-10-21."
+        "attribution": "Copyright (c) 2026 Aleksei Reuk; Copyright (c) 2026 Axiom",
+        "additional_sources": [
+          "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js"
+        ],
+        "notes": "15 community-listed rooms: 11 retained adzpm points, taego-01 corrected to ziphow S403, and three additions S413-S415. Existing ids remain stable. The correction and additions were corroborated against recent public key-use detections and an original community map, without importing either dataset/image. This covers the 15 rooms in the consulted lists, not a claim of exhaustive current-game coverage. No in-game verification was performed for LootLizard. Coordinates are source pixels divided by 8192, top-left origin, x right/east, y down/south. The 8000 m side length is approximate and is not the pixel divisor. Full source records and ids are in data-sources/secret-locations.json; licenses in THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
       },
       "points": [
         {
           "id": "taego-01",
           "name": "Secret room 01",
-          "x": 0.176025390625,
-          "y": 0.1458740234375
+          "x": 0.1715087890625,
+          "y": 0.1455078125
         },
         {
           "id": "taego-02",
@@ -271,6 +1096,24 @@
           "name": "Secret room 12",
           "x": 0.116943359375,
           "y": 0.6451416015625
+        },
+        {
+          "id": "taego-13",
+          "name": "Secret room 13",
+          "x": 0.740966796875,
+          "y": 0.4744873046875
+        },
+        {
+          "id": "taego-14",
+          "name": "Secret room 14",
+          "x": 0.4388427734375,
+          "y": 0.2415771484375
+        },
+        {
+          "id": "taego-15",
+          "name": "Secret room 15",
+          "x": 0.1544189453125,
+          "y": 0.3314208984375
         }
       ]
     },
@@ -291,12 +1134,153 @@
       "name": "Vikendi",
       "size_m": 8000.0,
       "source": {
-        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Vikendi_Main_Low_Res.png",
-        "license": "PUBG developer asset terms; not MIT",
-        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+        "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Axiom",
+        "notes": "20 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. The ten key-locked security rooms and ten bear-cave entrances are separate kinds. Lab camps, crowbar points, vehicles and other unrelated categories are excluded. Bear caves are not key-locked rooms. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
       },
-      "points": []
+      "points": [
+        {
+          "id": "vikendi-01",
+          "name": "Security room 01",
+          "x": 0.33740234375,
+          "y": 0.193359375,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-02",
+          "name": "Security room 02",
+          "x": 0.66455078125,
+          "y": 0.16259765625,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-03",
+          "name": "Security room 03",
+          "x": 0.768310546875,
+          "y": 0.302001953125,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-04",
+          "name": "Security room 04",
+          "x": 0.840576171875,
+          "y": 0.477783203125,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-05",
+          "name": "Security room 05",
+          "x": 0.746826171875,
+          "y": 0.7216796875,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-06",
+          "name": "Security room 06",
+          "x": 0.484619140625,
+          "y": 0.8031005859375,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-07",
+          "name": "Security room 07",
+          "x": 0.29150390625,
+          "y": 0.692138671875,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-08",
+          "name": "Security room 08",
+          "x": 0.1708984375,
+          "y": 0.47265625,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-09",
+          "name": "Security room 09",
+          "x": 0.504150390625,
+          "y": 0.39453125,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-10",
+          "name": "Security room 10",
+          "x": 0.57861328125,
+          "y": 0.60888671875,
+          "kind": "security_room"
+        },
+        {
+          "id": "vikendi-11",
+          "name": "Bear cave 11",
+          "x": 0.4609375,
+          "y": 0.7852783203125,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-12",
+          "name": "Bear cave 12",
+          "x": 0.44970703125,
+          "y": 0.808349609375,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-13",
+          "name": "Bear cave 13",
+          "x": 0.62841796875,
+          "y": 0.7403564453125,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-14",
+          "name": "Bear cave 14",
+          "x": 0.765625,
+          "y": 0.716064453125,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-15",
+          "name": "Bear cave 15",
+          "x": 0.80859375,
+          "y": 0.46923828125,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-16",
+          "name": "Bear cave 16",
+          "x": 0.72216796875,
+          "y": 0.349853515625,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-17",
+          "name": "Bear cave 17",
+          "x": 0.73681640625,
+          "y": 0.2152099609375,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-18",
+          "name": "Bear cave 18",
+          "x": 0.649658203125,
+          "y": 0.186279296875,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-19",
+          "name": "Bear cave 19",
+          "x": 0.342529296875,
+          "y": 0.1630859375,
+          "kind": "bear_cave"
+        },
+        {
+          "id": "vikendi-20",
+          "name": "Bear cave 20",
+          "x": 0.5791015625,
+          "y": 0.43701171875,
+          "kind": "bear_cave"
+        }
+      ]
     }
   ]
 }

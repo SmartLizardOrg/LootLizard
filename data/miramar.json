@@ -3,10 +3,101 @@
   "name": "Miramar",
   "size_m": 8000.0,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Miramar_Main_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+    "license": "MIT",
+    "attribution": "Copyright (c) 2026 Axiom",
+    "notes": "15 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. Only the 15 source secret_room points are imported. The three separate basement annotations, vehicles and other categories are excluded. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
-  "points": []
+  "points": [
+    {
+      "id": "miramar-01",
+      "name": "Secret room 01",
+      "x": 0.219482421875,
+      "y": 0.2052001953125
+    },
+    {
+      "id": "miramar-02",
+      "name": "Secret room 02",
+      "x": 0.3995361328125,
+      "y": 0.13232421875
+    },
+    {
+      "id": "miramar-03",
+      "name": "Secret room 03",
+      "x": 0.5660400390625,
+      "y": 0.17626953125
+    },
+    {
+      "id": "miramar-04",
+      "name": "Secret room 04",
+      "x": 0.771240234375,
+      "y": 0.23828125
+    },
+    {
+      "id": "miramar-05",
+      "name": "Secret room 05",
+      "x": 0.3426513671875,
+      "y": 0.3074951171875
+    },
+    {
+      "id": "miramar-06",
+      "name": "Secret room 06",
+      "x": 0.171630859375,
+      "y": 0.403076171875
+    },
+    {
+      "id": "miramar-07",
+      "name": "Secret room 07",
+      "x": 0.6302490234375,
+      "y": 0.3936767578125
+    },
+    {
+      "id": "miramar-08",
+      "name": "Secret room 08",
+      "x": 0.470947265625,
+      "y": 0.4788818359375
+    },
+    {
+      "id": "miramar-09",
+      "name": "Secret room 09",
+      "x": 0.757080078125,
+      "y": 0.5230712890625
+    },
+    {
+      "id": "miramar-10",
+      "name": "Secret room 10",
+      "x": 0.160888671875,
+      "y": 0.651123046875
+    },
+    {
+      "id": "miramar-11",
+      "name": "Secret room 11",
+      "x": 0.32763671875,
+      "y": 0.6109619140625
+    },
+    {
+      "id": "miramar-12",
+      "name": "Secret room 12",
+      "x": 0.541748046875,
+      "y": 0.6376953125
+    },
+    {
+      "id": "miramar-13",
+      "name": "Secret room 13",
+      "x": 0.1734619140625,
+      "y": 0.88916015625
+    },
+    {
+      "id": "miramar-14",
+      "name": "Secret room 14",
+      "x": 0.39697265625,
+      "y": 0.813720703125
+    },
+    {
+      "id": "miramar-15",
+      "name": "Secret room 15",
+      "x": 0.6431884765625,
+      "y": 0.7706298828125
+    }
+  ]
 }

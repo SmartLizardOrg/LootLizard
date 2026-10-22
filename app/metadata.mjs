@@ -1,3 +1,4 @@
+import {LOCATION_KINDS} from './location-markers.mjs';
 const ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 export function validateMaps(maps) {
   if (!Array.isArray(maps) || maps.length > 32) throw Error('Invalid map catalog');
@@ -10,7 +11,8 @@ export function validateMaps(maps) {
     const ids = new Set();
     for (const p of map.points) {
       if (!p || typeof p.id !== 'string' || !ID.test(p.id) || ids.has(p.id) || typeof p.name !== 'string' || !p.name.trim() || p.name.length > 160 ||
-          !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1) throw Error('Invalid room record');
+          !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1 ||
+          (Object.hasOwn(p, 'kind') && !LOCATION_KINDS.includes(p.kind))) throw Error('Invalid location record');
       ids.add(p.id);
     }
   }
