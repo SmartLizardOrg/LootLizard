@@ -82,7 +82,7 @@ def build_installer(payload: Path, output: Path, vpk: Path, *, version: str | No
     subprocess.run([str(vpk), "--skip-updates", "--yes", "pack",
                     "--packId", PACKAGE_ID, "--packVersion", version,
                     "--packDir", str(payload), "--mainExe", "LootLizard.exe",
-                    "--packTitle", "LootLizard", "--packAuthors", "SmartLizardOrg",
+                    "--packTitle", "LootLizard", "--packAuthors", "molnard-labs",
                     "--channel", CHANNEL, "--runtime", "win-x64", "--noPortable",
                     "--shortcuts", "Desktop,StartMenuRoot", "--outputDir", str(output)], check=True)
     assets = validate_feed(output, version)

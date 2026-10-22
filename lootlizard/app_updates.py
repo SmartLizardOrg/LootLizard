@@ -17,8 +17,12 @@ import urllib.request
 
 from .storage import preferences_path
 
-REPOSITORY_URL = "https://github.com/SmartLizardOrg/LootLizard"
-LATEST_RELEASE_URL = "https://api.github.com/repos/SmartLizardOrg/LootLizard/releases/latest"
+REPOSITORY_URL = "https://github.com/molnard-labs/LootLizard"
+LEGACY_REPOSITORY_URL = "https://github.com/SmartLizardOrg/LootLizard"
+REPOSITORY_URLS = (REPOSITORY_URL, LEGACY_REPOSITORY_URL)
+# The numeric repository ID survives an organization rename. Keep discovery
+# redirects disabled and permit only these two known names for this repository.
+LATEST_RELEASE_URL = "https://api.github.com/repositories/1428915855/releases/latest"
 INSTALLER_URL = REPOSITORY_URL + "/releases/latest/download/LootLizard-Setup.exe"
 PACKAGE_ID = "SmartLizardOrg.LootLizard"
 CHECK_INTERVAL_SECONDS = 6*60*60
@@ -126,9 +130,11 @@ def _release_details(release):
     if not isinstance(tag, str) or not tag.startswith("v"):
         raise ValueError("The latest release has no stable version tag.")
     _stable_version(tag[1:])
-    base = REPOSITORY_URL+"/releases/download/"+tag
-    if release.get("html_url") != REPOSITORY_URL+"/releases/tag/"+tag:
+    repository = next((url for url in REPOSITORY_URLS
+                       if release.get("html_url") == url+"/releases/tag/"+tag), None)
+    if repository is None:
         raise ValueError("Unexpected release repository or tag URL.")
+    base = repository+"/releases/download/"+tag
     assets = release.get("assets")
     if not isinstance(assets, list) or len(assets) > 64:
         raise ValueError("Invalid release asset list.")
@@ -262,7 +268,7 @@ class AppUpdateClient:
                 return None
             value = json.loads(raw.decode("utf-8"), object_pairs_hook=_json_object)
             if (not isinstance(value, dict) or type(value.get("schema_version")) is not int or value["schema_version"] != 1
-                    or value.get("repository") != REPOSITORY_URL or value.get("scope") != self._scope
+                    or value.get("repository") not in REPOSITORY_URLS or value.get("scope") != self._scope
                     or value.get("package_id") != PACKAGE_ID):
                 return None
             package = self._validate_asset(SimpleNamespace(PackageId=PACKAGE_ID, Type="Full",

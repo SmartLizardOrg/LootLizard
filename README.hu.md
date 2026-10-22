@@ -1,12 +1,14 @@
-# LootLizard 0.8.0 — Magyar gyorsindító
+# LootLizard 0.8.1 — Régi asztali kiadás, magyar gyorsindító
 
 [English documentation](README.md)
 
-Kísérleti, nyílt forrású Windows-program a [SmartLizardOrg](https://github.com/SmartLizardOrg) alatt, amely kérésre készült PUBG-képen jelöli az ismert titkosszoba-koordinátákat a második kijelzőn. A **Ctrl+Shift+B** a kiválasztott monitorról kér képet, és a képfeldolgozás helyben, offline fut. A közösségi pontadatok frissítése GitHub HTTPS-kéréseket használ; képet nem küld el. Nem folyamatos követés; a következő képkérésig az előző állapotot látod.
+Kísérleti, nyílt forrású Windows-program a [molnard-labs](https://github.com/molnard-labs) alatt, amely kérésre készült PUBG-képen jelöli az ismert titkosszoba-koordinátákat a második kijelzőn. A **Ctrl+Shift+B** a kiválasztott monitorról kér képet, és a képfeldolgozás helyben, offline fut. A közösségi pontadatok frissítése GitHub HTTPS-kéréseket használ; képet nem küld el. Nem folyamatos követés; a következő képkérésig az előző állapotot látod.
 
 A **0.8.0** telepítőt és opcionális automatikus alkalmazásfrissítést ad a korábbi funkciókhoz. Saját, helyi teljes térképminták katalógusával azonosítja a minták közt szereplő pályát, és támogatott nagyítás/mozgatás után is a helyére vetíti a pontokat. Automatikus nézésitölcsér-keresés és opcionális városnév-olvasás is elérhető. **A pincejelöléshez nem kötelező saját ikonmintát betanítani.** A csomag **15 Erangel- és 12 Taego-koordinátát** tartalmaz. Mindkét közösségi adatsor ellenőrizetlen; a Taego-lista kifejezetten hiányos. Játéktérképképet vagy személyes profilt nem mellékelünk.
 
-**[LootLizard-Setup.exe letöltése Windowshoz](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — a legújabb stabil, felhasználónként települő változat. Nem kell Python vagy rendszergazdai jogosultság. További csomagok: [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Pontjavítást vagy új pályaadatot pull requesttel küldhetsz: [CONTRIBUTING.md](CONTRIBUTING.md).
+A **0.8.1** a `legacy/desktop-migration` ágon megőrzött asztali kiadás, a `molnard-labs` GitHub-szervezethez javított hivatkozásokkal. A szervezet átnevezése után a már telepített **0.8.0** változathoz egyszer futtasd a legújabb **LootLizard-Setup.exe** telepítőt, mert a régi frissítő elutasítja a repó átirányítását. A telepítés az alkalmazás azonosítóját, a beállításokat, a profilokat és a pontgyorsítótárat is megtartja. A 0.8.1 frissítője az állandó repóazonosítót használja, és a két ismert repónév mellett is ellenőrzi a csomag azonosítóját és ellenőrzőösszegét.
+
+**[LootLizard-Setup.exe letöltése Windowshoz](https://github.com/molnard-labs/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — a legújabb stabil, felhasználónként települő változat. Nem kell Python vagy rendszergazdai jogosultság. További csomagok: [Releases](https://github.com/molnard-labs/LootLizard/releases). Pontjavítást vagy új pályaadatot pull requesttel küldhetsz: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 A 0.6 új felületén a térkép kapja a főszerepet: apró, pontos borostyánsárga helyjelölők mellett kis számozott címkék, türkiz **YOU** (magyarul **TE**) sajátjelölő, szélesebb célpontlista és külön Beállítások ablak. Minden látható ismert pincét megjelöl; a kör és a távolság határozza meg a sorrendet. A számcímke mérete **Settings > General > Marker size** alatt Large vagy Medium lehet; alapértelmezés a Large. A helyet mutató apró pont mindkét méretnél változatlan.
 
@@ -14,7 +16,7 @@ Az opcionális ikonminta megjelenést ismer fel, nem játékosazonosságot. Más
 
 ## Indítás és nyelv
 
-Indítsd a [LootLizard-Setup.exe](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe) fájlt, majd használd a Start menü vagy az asztal LootLizard-parancsikonját. A program helye `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; a beállítások, profilok és pontgyorsítótár külön, `%LOCALAPPDATA%\LootLizard` alatt maradnak, eltávolításkor is megőrizve.
+Indítsd a [LootLizard-Setup.exe](https://github.com/molnard-labs/LootLizard/releases/latest/download/LootLizard-Setup.exe) fájlt, majd használd a Start menü vagy az asztal LootLizard-parancsikonját. A program helye `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; a beállítások, profilok és pontgyorsítótár külön, `%LOCALAPPDATA%\LootLizard` alatt maradnak, eltávolításkor is megőrizve.
 
 A Windows-kiadás **nincs kódaláírással ellátva**; a SmartScreen ismeretlen kiadóra figyelmeztethet. A közzétett SHA-256 sértetlenséget ellenőriz, nem kódaláíró tanúsítvány. A projekt saját kiadási oldaláról töltsd le.
 
@@ -40,7 +42,7 @@ Az **Automatic app updates** kikapcsolása az ütemezett ellenőrzést **és a s
 
 ## Közösségi pontadatok automatikus frissítése
 
-A **Settings > General > Map updates** részben az **Automatic map updates** alapértelmezetten be van kapcsolva. Indításkor, majd futás közben körülbelül 60 másodpercenként ellenőrzi a [nyilvános pontkatalógust](https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json). A **Check now** kézi ellenőrzést kér, a szerver által kért várakozást ez is betartja. A jelölőnégyzet kikapcsolása az automatikus kéréseket állítja le.
+A **Settings > General > Map updates** részben az **Automatic map updates** alapértelmezetten be van kapcsolva. Indításkor, majd futás közben körülbelül 60 másodpercenként ellenőrzi a [nyilvános pontkatalógust](https://raw.githubusercontent.com/molnard-labs/LootLizard/metadata/maps.json). A **Check now** kézi ellenőrzést kér, a szerver által kért várakozást ez is betartja. A jelölőnégyzet kikapcsolása az automatikus kéréseket állítja le.
 
 GitHub workflow-várakozás, CDN-gyorsítótár vagy hálózati hiba miatt a frissítés késhet; ez nem azonnali értesítés. Az utolsó érvényes letöltés a `%LOCALAPPDATA%\LootLizard\maps-cache.json` fájlban marad. Offline a korábbi érvényes adatokkal működik; ha még nincs letöltés/gyorsítótár, a mellékelt pontokat használja. A katalógus teljes pillanatkép, így közösségi pontok törlését is átvezeti. A kézzel importált helyi JSON-ok elsőbbséget élveznek azonos pályaazonosítónál, és a program nem írja felül őket.
 
@@ -151,6 +153,6 @@ Ha új LootLizard-beállítás még nincs, a korábbi `%LOCALAPPDATA%\BasementCo
 
 A 15 Erangel- és 12 Taego-pont pontos forrása, módosításai és teljes MIT licence: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Pontosságuk, teljességük és aktuális érvényességük ellenőrizetlen; a Taego-lista hiányos. A normalizált koordináták mindig a teljes térképhez tartoznak. Az 8192 forrásképpont nem 8192 méter; a mellékelt 8000 méteres méretarány becslés.
 
-A telepítő és az alkalmazásfrissítés Velopack Python SDK **1.2.161**-et használ, ugyanilyen verziójú .NET `vpk` csomagolóval. A tényleges buildscript [scripts/build_installer.py](scripts/build_installer.py); forrást és függőségi licenceket is csomagol. A buildhez szükséges Python/.NET eszközöket a felhasználónak nem kell telepítenie. A helyi teszt nem bizonyít sikeres telepítést/frissítést másik gépen; a fej nélküli telepítő-CI sem ellenőrzi a valódi játékot, fókuszt vagy a GUI háttérszálainak leállási versenyhelyzetét. A tényleges CI-eredmény az [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) oldalon látható.
+A telepítő és az alkalmazásfrissítés Velopack Python SDK **1.2.161**-et használ, ugyanilyen verziójú .NET `vpk` csomagolóval. A tényleges buildscript [scripts/build_installer.py](scripts/build_installer.py); forrást és függőségi licenceket is csomagol. A buildhez szükséges Python/.NET eszközöket a felhasználónak nem kell telepítenie. A helyi teszt nem bizonyít sikeres telepítést/frissítést másik gépen; a fej nélküli telepítő-CI sem ellenőrzi a valódi játékot, fókuszt vagy a GUI háttérszálainak leállási versenyhelyzetét. A tényleges CI-eredmény az [Actions](https://github.com/molnard-labs/LootLizard/actions) oldalon látható.
 
 A programkód [MIT licence](LICENSE) nem ad jogot a PUBG képeihez vagy védjegyeihez. **Játékképeket, privát képes tesztadatot, helyi katalógust vagy személyes profilt nem terjesztünk a csomaggal.** A képernyőkép-alapú működés önmagában nem bizonyít hivatalos engedélyt vagy anti-cheat kompatibilitást. A program nem olvas játékfolyamat-memóriát vagy játékfájlokat, nem injektál és nem automatizál játékmenetet. A teljes leírás, pont-JSON formátum, fordítás és csomagolás az [angol README-ben](README.md) található.

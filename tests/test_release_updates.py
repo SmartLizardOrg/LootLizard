@@ -90,6 +90,36 @@ class AppUpdateTests(unittest.TestCase):
         self.download()
         self.factory.assert_called_once_with(updates.REPOSITORY_URL+"/releases/download/v0.9.0")
 
+    def test_known_previous_org_release_remains_pinned_to_its_exact_tag_and_assets(self):
+        value = release()
+        value["html_url"] = value["html_url"].replace(updates.REPOSITORY_URL, updates.LEGACY_REPOSITORY_URL)
+        for item in value["assets"]:
+            item["browser_download_url"] = item["browser_download_url"].replace(
+                updates.REPOSITORY_URL, updates.LEGACY_REPOSITORY_URL)
+        self.latest.return_value = value
+        self.download()
+        self.factory.assert_called_once_with(updates.LEGACY_REPOSITORY_URL+"/releases/download/v0.9.0")
+
+    def test_mixed_org_release_and_assets_are_rejected(self):
+        value = release()
+        value["assets"][0]["browser_download_url"] = value["assets"][0]["browser_download_url"].replace(
+            updates.REPOSITORY_URL, updates.LEGACY_REPOSITORY_URL)
+        self.latest.return_value = value
+        self.assertEqual(self.client.check_and_download().status, "error")
+        self.manager.download_updates.assert_not_called()
+
+    def test_old_org_verified_cache_survives_rename_and_still_reverifies_bytes(self):
+        self.download()
+        value = json.loads(self.cache.read_text(encoding="utf-8"))
+        value["repository"] = updates.LEGACY_REPOSITORY_URL
+        self.cache.write_text(json.dumps(value), encoding="utf-8")
+        self.latest.side_effect = OSError("offline")
+        client = updates.AppUpdateClient(cache_path=self.cache)
+        self.assertEqual(client.check_and_download().status, "ready")
+        (self.packages/self.target.FileName).write_bytes(b"tampered")
+        client = updates.AppUpdateClient(cache_path=self.cache)
+        self.assertEqual(client.check_and_download().status, "error")
+
     def test_offline_restart_recovers_only_cached_expected_metadata_and_reverified_bytes(self):
         self.download()
         client = updates.AppUpdateClient(cache_path=self.cache)
@@ -325,6 +355,7 @@ class ReleaseHttpTests(unittest.TestCase):
             self.assertEqual(updates._fetch_latest_release()["tag_name"], "v0.9.0")
         request = opener.open.call_args.args[0]
         self.assertEqual(request.full_url, updates.LATEST_RELEASE_URL)
+        self.assertEqual(request.full_url, "https://api.github.com/repositories/1428915855/releases/latest")
         self.assertEqual(opener.open.call_args.kwargs["timeout"], 8)
         self.assertTrue(response.closed)
 

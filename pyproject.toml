@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lootlizard"
-version = "0.8.0"
+version = "0.8.1"
 description = "An on-demand PUBG map companion with community-maintained map data"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -23,9 +23,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/SmartLizardOrg/LootLizard"
-Repository = "https://github.com/SmartLizardOrg/LootLizard"
-Issues = "https://github.com/SmartLizardOrg/LootLizard/issues"
+Homepage = "https://github.com/molnard-labs/LootLizard"
+Repository = "https://github.com/molnard-labs/LootLizard"
+Issues = "https://github.com/molnard-labs/LootLizard/issues"
 
 [project.scripts]
 lootlizard = "lootlizard.__main__:main"

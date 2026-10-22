@@ -27,7 +27,7 @@ import urllib.request
 
 from .core import MapData
 
-FEED_URL = "https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json"
+FEED_URL = "https://raw.githubusercontent.com/molnard-labs/LootLizard/metadata/maps.json"
 MAX_FEED_BYTES = 2_000_000
 MAX_MAPS = 32
 MAX_RETRY_SECONDS = 900.

@@ -1,12 +1,14 @@
-# LootLizard 0.8.0
+# LootLizard 0.8.1 — Legacy desktop edition
 
 [Magyar gyorsindító](README.hu.md)
 
-An experimental, open-source Windows companion by [SmartLizardOrg](https://github.com/SmartLizardOrg) that projects known PUBG: BATTLEGROUNDS secret-room coordinates onto a requested screenshot on a second display. **Ctrl+Shift+B** captures one selected monitor. Image recognition runs locally; community point updates use GitHub HTTPS. No account or AI API key is needed.
+An experimental, open-source Windows companion by [molnard-labs](https://github.com/molnard-labs) that projects known PUBG: BATTLEGROUNDS secret-room coordinates onto a requested screenshot on a second display. **Ctrl+Shift+B** captures one selected monitor. Image recognition runs locally; community point updates use GitHub HTTPS. No account or AI API key is needed.
 
-**[Download LootLizard-Setup.exe for Windows](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — the latest stable per-user installer. No Python installation or administrator rights are required. Other assets are on [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Contribute corrections or new point datasets through a pull request: [CONTRIBUTING.md](CONTRIBUTING.md).
+**[Download LootLizard-Setup.exe for Windows](https://github.com/molnard-labs/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — the latest stable per-user installer. No Python installation or administrator rights are required. Other assets are on [Releases](https://github.com/molnard-labs/LootLizard/releases). Contribute corrections or new point datasets through a pull request: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Version **0.8.0** adds an installer and optional automatic **application updates** from stable GitHub Releases. These are separate from the community coordinate updates below. Downloads do not close LootLizard or interrupt play; a ready program update is applied only after you close the app or explicitly choose **Restart to update**.
+
+Version **0.8.1** keeps the legacy desktop edition on the `legacy/desktop-migration` branch and updates its GitHub organization links to `molnard-labs`. After the organization rename, an existing **0.8.0** installation needs a one-time run of the latest **LootLizard-Setup.exe** because its old updater rejects the repository redirect. The installer retains the same application identity, settings, profiles and map cache. Version 0.8.1 discovers releases by the permanent repository ID and accepts only the two known repository names, with the existing package and checksum checks.
 
 Version 0.7 introduces the **LootLizard** name and automatic community point-data updates. The app checks at startup and approximately every 60 seconds while open; GitHub workflow execution, CDN caching and retry/backoff can delay delivery. These updates contain coordinates and attribution only, never application code or map images.
 
@@ -20,7 +22,7 @@ Both icon methods estimate appearance, not player identity. A changed squad colo
 
 ## Start and choose a language
 
-Run [LootLizard-Setup.exe](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe), then open LootLizard from its Start menu or desktop shortcut. The application is installed per user under `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; settings, profiles and map cache stay separately under `%LOCALAPPDATA%\LootLizard` and are retained on uninstall.
+Run [LootLizard-Setup.exe](https://github.com/molnard-labs/LootLizard/releases/latest/download/LootLizard-Setup.exe), then open LootLizard from its Start menu or desktop shortcut. The application is installed per user under `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; settings, profiles and map cache stay separately under `%LOCALAPPDATA%\LootLizard` and are retained on uninstall.
 
 Windows builds are **unsigned**. Windows SmartScreen may show an unknown-publisher warning; a published SHA-256 is an integrity check, not a code-signing certificate. Download from this project's release page.
 
@@ -40,7 +42,7 @@ The interface starts in **English**. Choose **Settings > General > Language > Ma
 
 ## Application updates
 
-In an installed build, **Settings > General > App updates > Automatic app updates** is on by default. It checks stable releases from [SmartLizardOrg/LootLizard](https://github.com/SmartLizardOrg/LootLizard/releases) at startup and every six hours, downloading a newer verified package in a separate worker. **Check now** requests a manual check. This is program code from the project's release publishers; package checksums detect corruption, not a compromised publisher account.
+In an installed build, **Settings > General > App updates > Automatic app updates** is on by default. It checks stable releases from [molnard-labs/LootLizard](https://github.com/molnard-labs/LootLizard/releases) at startup and every six hours, downloading a newer verified package in a separate worker. **Check now** requests a manual check. This is program code from the project's release publishers; package checksums detect corruption, not a compromised publisher account.
 
 A ready update applies after an ordinary **Close**, without restarting, or after you select **Restart to update**. Nothing forces the app to close while you play, and PUBG is not restarted. Explicit restart waits for current background work to finish. If work is still running at ordinary Close, application is deferred to a later run/check; a partially downloaded update is never applied.
 
@@ -142,7 +144,7 @@ Bundled data is [Erangel: 15 points](data/erangel.json) and [Taego: 12 points](d
 
 **Settings > General > Map updates** contains **Automatic map updates** (on by default), **Check now**, and the active data revision/status. Automatic checks run on startup and roughly every 60 seconds. **Check now** requests an immediate check but still respects a server retry delay. Disable the checkbox to stop automatic requests; manual checks remain available. The last valid downloaded snapshot is cached in `%LOCALAPPDATA%\LootLizard\maps-cache.json`; failures keep the last valid data, or bundled data when no valid download/cache exists. The app works with that data while offline.
 
-The public feed is [metadata/maps.json](https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json). It is a complete snapshot: removals replace older community entries as well as additions/changes. Your explicitly imported local point files are saved by path and take precedence over community entries with the same map id; a remote update does not overwrite those files. Images and profiles are never part of the feed.
+The public feed is [metadata/maps.json](https://raw.githubusercontent.com/molnard-labs/LootLizard/metadata/maps.json). It is a complete snapshot: removals replace older community entries as well as additions/changes. Your explicitly imported local point files are saved by path and take precedence over community entries with the same map id; a remote update does not overwrite those files. Images and profiles are never part of the feed.
 
 To correct coordinates or add a map, edit the human-readable `data/*.json` on `main` and open a pull request. After merge, the **Publish map metadata** workflow validates all point files and publishes one atomic `maps.json` commit on the `metadata` branch. Running apps can then pick up the new snapshot without a new executable. This is eventual delivery, not an instant push notification: workflow queues, GitHub's raw-content cache and network retry limits apply. A new map still needs a matching local full-map reference before its points can be projected. See [the contribution guide](CONTRIBUTING.md) for stable ids, source licensing and manual coordinate evidence.
 
@@ -213,14 +215,14 @@ Build a Windows directory bundle in the same environment:
 ```powershell
 .\.venv\Scripts\python.exe -m pip install "pyinstaller>=6.11,<7"
 .\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onedir --windowed --name LootLizard --add-data 'data;data' --collect-all PIL --collect-all cv2 --collect-all numpy --collect-all velopack --distpath dist --workpath build --specpath . launcher.py
-.\.venv\Scripts\python.exe scripts/package_release.py --binary dist/LootLizard --output release --label 0.8.0
+.\.venv\Scripts\python.exe scripts/package_release.py --binary dist/LootLizard --output release --label 0.8.1
 ```
 
 `--binary` accepts the onedir directory or its `LootLizard.exe`. Packaging refuses to replace an existing bundle/ZIP. Use the build environment so runtime versions/licenses match. Local builds are `local-unpublished` with null repository/commit fields; byte-for-byte reproducibility is not claimed. Source packaging includes code, tests, point JSON and notices, not local screenshots/references/profiles.
 
 Installer packaging uses [scripts/build_installer.py](scripts/build_installer.py) and matching **Velopack Python SDK / .NET `vpk` 1.2.161**. Building requires a compatible .NET SDK; end users do not need Python or the .NET build tools. Install the pinned tool with `dotnet tool install vpk --tool-path .build-tools --version 1.2.161`, then pass `--payload` (the enriched directory produced above), an empty `--output`, and `--vpk .build-tools/vpk.exe` to the script. The installer and full update package include source and dependency notices. The script validates the generated full-package feed/checksum and creates the stable `LootLizard-Setup.exe` alias; it does not install or publish anything.
 
-The `check` workflow validates community data and runs unit tests on Windows for main pushes and pull requests. The separate `metadata` workflow publishes validated point snapshots after relevant main changes or manual dispatch. It never runs a write-enabled job for a pull request. Tagged release automation packages the installer, full update feed/package, optional ZIP and checksums. Check [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) and [Releases](https://github.com/SmartLizardOrg/LootLizard/releases) for actual publication/test status. A local mock or packaging test does not establish a successful installed upgrade. Headless installer CI can verify install/download/apply/uninstall and retained user data, but does not exercise real gameplay, UI focus or the GUI worker-shutdown race. Exercise capture, DPI/monitors, the hotkey, catalog reload, unknown rejection, optional profiles, Steam launch and shutdown on the supported setup before distributing a binary.
+The `check` workflow validates community data and runs unit tests on Windows for main pushes and pull requests. The separate `metadata` workflow publishes validated point snapshots after relevant main changes or manual dispatch. It never runs a write-enabled job for a pull request. Tagged release automation packages the installer, full update feed/package, optional ZIP and checksums. Check [Actions](https://github.com/molnard-labs/LootLizard/actions) and [Releases](https://github.com/molnard-labs/LootLizard/releases) for actual publication/test status. A local mock or packaging test does not establish a successful installed upgrade. Headless installer CI can verify install/download/apply/uninstall and retained user data, but does not exercise real gameplay, UI focus or the GUI worker-shutdown race. Exercise capture, DPI/monitors, the hotkey, catalog reload, unknown rejection, optional profiles, Steam launch and shutdown on the supported setup before distributing a binary.
 
 ## License and sources
 
