@@ -23,9 +23,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/SmartLizardOrg/LootLizard"
-Repository = "https://github.com/SmartLizardOrg/LootLizard"
-Issues = "https://github.com/SmartLizardOrg/LootLizard/issues"
+Homepage = "https://github.com/molnard-labs/LootLizard"
+Repository = "https://github.com/molnard-labs/LootLizard"
+Issues = "https://github.com/molnard-labs/LootLizard/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

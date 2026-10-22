@@ -82,7 +82,7 @@ local remembering clears the saved custom references/preferences/catalog for
 this origin. Browser-managed storage can be cleared or evicted.
 
 The public coordinate feed remains separate:
-`https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json`.
+`https://raw.githubusercontent.com/molnard-labs/LootLizard/metadata/maps.json`.
 Startup and roughly 60-second checks validate whole snapshots and preserve the
 last valid data on failure. A coordinate PR does not add an unreviewed image URL
 or execute application code.
@@ -122,7 +122,7 @@ workflow validates the tag, runs checks, attaches the static ZIP and checksum,
 and commits the exact public build to `web-release` without force-pushing.
 An older web release cannot replace a newer production build.
 
-Cloudflare Pages connects to `SmartLizardOrg/LootLizard` with production branch
+Cloudflare Pages connects to `molnard-labs/LootLizard` with production branch
 `web-release`, framework **None**, no build command and output directory `/`.
 The generated branch already contains the deployable files. Therefore a source
 merge alone does not update the public application; a published web release does.

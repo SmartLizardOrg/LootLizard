@@ -1,4 +1,4 @@
-export const FEED_URL = 'https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json';
+export const FEED_URL = 'https://raw.githubusercontent.com/molnard-labs/LootLizard/metadata/maps.json';
 const ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 export function validateMaps(maps) {
   if (!Array.isArray(maps) || maps.length > 32) throw Error('Invalid map catalog');

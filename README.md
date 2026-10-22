@@ -8,7 +8,7 @@ community room coordinates when it can identify the map.
 **Web alpha · 0.9.0.** The interface defaults to English, with Hungarian available.
 No desktop installation, account, API key or global hotkey is required.
 [Magyar leírás](README.hu.md) · [Contributing](CONTRIBUTING.md) ·
-[Releases](https://github.com/SmartLizardOrg/LootLizard/releases)
+[Releases](https://github.com/molnard-labs/LootLizard/releases)
 
 ## Use the companion
 

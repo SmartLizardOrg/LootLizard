@@ -33,7 +33,7 @@ export function createDemo() {
   f.fillStyle='#29363d';f.fillRect(0,0,960,720);f.fillStyle='#526b70';f.fillRect(0,350,960,370);f.fillStyle='#758b92';f.fillRect(0,0,960,200);
   f.fillStyle='#1f2a30';f.fillRect(390,300,190,420);f.fillStyle='#ccd4d6';f.font='20px sans-serif';f.fillText('NO MAP VISIBLE — SYNTHETIC GAMEPLAY',200,90);
   const gameplay=f.getImageData(0,0,960,720);
-  const map={id:'demo',name:'Synthetic demo',size_m:8000,source:{url:'https://github.com/SmartLizardOrg/LootLizard',license:'MIT',notes:'Original deterministic test artwork. Not a PUBG map.'},points:[
+  const map={id:'demo',name:'Synthetic demo',size_m:8000,source:{url:'https://github.com/molnard-labs/LootLizard',license:'MIT',notes:'Original deterministic test artwork. Not a PUBG map.'},points:[
     {id:'demo-01',name:'Demo room 01',x:.43,y:.48},{id:'demo-02',name:'Demo room 02',x:.61,y:.57},
     {id:'demo-03',name:'Demo room 03',x:.2,y:.23},{id:'demo-04',name:'Demo room 04',x:.81,y:.79},
     {id:'demo-05',name:'Demo room 05',x:.51,y:.32},{id:'demo-06',name:'Demo room 06',x:.23,y:.63},
