@@ -1,9 +1,9 @@
 /** Capture requests are preferences/constraints, never proof of actual settings. */
-const CAPTURE_RATES = new Set([1, 3]);
+const CAPTURE_RATES = new Set([.1, .2, .5, 1, 2, 3]);
 const DISPLAY_SURFACES = new Set(['monitor', 'window', 'browser']);
 
 function captureRate(fps) {
-  if (!CAPTURE_RATES.has(fps)) throw new RangeError('Choose a capture rate of 1 or 3 FPS.');
+  if (!CAPTURE_RATES.has(fps)) throw new RangeError('Unsupported capture rate.');
   return fps;
 }
 

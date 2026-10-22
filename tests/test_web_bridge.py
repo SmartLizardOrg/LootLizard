@@ -2,6 +2,7 @@
 import importlib.util
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -80,6 +81,7 @@ class WebBridgeTests(unittest.TestCase):
         self.assertTrue(result["sift"])
         self.assertTrue(result["affine"])
         self.assertEqual(result["referenceSide"], 1800)
+        self.assertEqual(result["maxReferences"], 32)
 
     def test_identifies_map_and_projects_into_supplied_frame_pixels(self):
         engine = self.engine([self.reference("map-a", self.a), self.reference("map-b", self.b)])
@@ -102,6 +104,22 @@ class WebBridgeTests(unittest.TestCase):
         self.assertIsNone(unknown["position"])
         self.assertIsNone(unknown["zone"])
         self.assertEqual(unknown["points"], [])
+
+    def test_match_map_lock_rechecks_one_reference_and_reset_restores_full_search(self):
+        engine = self.engine([self.reference("map-a", self.a), self.reference("map-b", self.b)])
+        with patch.object(bridge, "register_map", wraps=bridge.register_map) as register:
+            locked = self.analyze(engine, frame(self.a), context="map-only", map_id="map-a")
+            self.assertEqual(locked["registration"]["mapId"], "map-a")
+            self.assertEqual([ref.map_id for ref in register.call_args.args[1]], ["map-a"])
+            unknown = self.analyze(engine, frame(self.b), context="map-only", map_id="map-a")
+            self.assertIsNone(unknown["registration"], "A different map cannot replace the current match")
+            self.assertEqual(unknown["points"], [])
+            reset = self.analyze(engine, frame(self.b), context="map-only")
+            self.assertEqual(reset["registration"]["mapId"], "map-b")
+            self.assertEqual(len(register.call_args.args[1]), 2)
+        for hint, context in [("missing", "map-only"), (1, "map-only"), ("map-a", "live")]:
+            with self.subTest(hint=hint, context=context), self.assertRaises(ValueError):
+                self.analyze(engine, frame(self.a), context=context, map_id=hint)
 
     def test_ambiguous_references_withhold_all_geometry(self):
         engine = self.engine([self.reference("map-a", self.a), self.reference("map-b", self.a)])
@@ -146,6 +164,66 @@ class WebBridgeTests(unittest.TestCase):
         self.assertAlmostEqual(result["zone"]["centerX"], 275/640, delta=.012)
         self.assertAlmostEqual(result["zone"]["centerY"], 245/640, delta=.012)
         self.assertAlmostEqual(result["zone"]["radius"], 158/640, delta=.012)
+
+    def test_map_only_registers_and_projects_without_running_marker_or_circle_detection(self):
+        canonical = Image.fromarray(self.a)
+        canonical.paste(icon_patch(), (160, 160))
+        pixels = np.asarray(canonical).copy()
+        cv2.circle(pixels, (275, 245), 158, (245, 245, 245), 2, cv2.LINE_AA)
+        engine = self.engine()
+        with patch.object(bridge, "recognize_registered_marker") as marker, \
+                patch.object(bridge, "detect_safe_zone") as circle, \
+                patch.object(bridge, "_full_map_bounds") as bounds:
+            result = self.analyze(engine, frame(pixels), context="map-only", ticket={"epoch": 4, "sequence": 2})
+        marker.assert_not_called()
+        circle.assert_not_called()
+        bounds.assert_not_called()
+        self.assertEqual(result["registration"]["mapId"], "map-a")
+        self.assertEqual(result["ticket"], {"epoch": 4, "sequence": 2})
+        self.assertEqual(len(result["points"]), 2)
+        center = next(point for point in result["points"] if point["id"] == "center")
+        np.testing.assert_allclose((center["imageX"], center["imageY"]), (360, 310), atol=2.)
+        self.assertIsNone(result["position"])
+        self.assertIsNone(result["zone"])
+        self.assertIn("disabled in map-only", result["markerReason"])
+        self.assertIn("disabled in map-only", result["zoneReason"])
+        self.assertEqual(result["timings"]["markerMs"], 0.)
+        self.assertEqual(result["timings"]["zoneMs"], 0.)
+        self.assertGreater(result["timings"]["registrationMs"], 0.)
+        json.dumps(result, allow_nan=False)
+
+    def test_unknown_and_empty_reference_map_only_never_run_optional_detectors(self):
+        engines = (self.engine(), bridge.BrowserVisionEngine([data("map-a")]))
+        with patch.object(bridge, "recognize_registered_marker") as marker, \
+                patch.object(bridge, "detect_safe_zone") as circle:
+            for engine in engines:
+                with self.subTest(reference_count=len(engine.references)):
+                    result = self.analyze(engine, frame(terrain(999)), context="map-only")
+                    self.assertIsNone(result["registration"])
+                    self.assertIsNone(result["position"])
+                    self.assertIsNone(result["zone"])
+                    self.assertEqual(result["points"], [])
+                    self.assertEqual(result["timings"]["markerMs"], 0.)
+                    self.assertEqual(result["timings"]["zoneMs"], 0.)
+        marker.assert_not_called()
+        circle.assert_not_called()
+
+    def test_reference_capacity_accepts_a_complete_32_map_catalog_and_rejects_33_atomically(self):
+        maps = [data(f"map-{i}") for i in range(32)]
+        engine = bridge.BrowserVisionEngine(maps)
+        records = [self.reference(record["id"], self.a[:128, :128]) for record in maps]
+        # Capacity/transaction coverage does not need 32 SIFT feature builds;
+        # real reference construction and registration are exercised separately.
+        with patch.object(bridge, "MapReference", side_effect=lambda map_id, image:
+                          SimpleNamespace(map_id=map_id, image_size=image.size)) as construct:
+            result = engine.set_references(records)
+            self.assertEqual(result["count"], 32)
+            self.assertEqual(construct.call_count, 32)
+            previous = engine.references
+            with self.assertRaisesRegex(ValueError, "at most 32"):
+                engine.set_references(records + records[:1])
+            self.assertIs(engine.references, previous)
+            self.assertEqual(construct.call_count, 32, "Reject over-capacity input before decoding/building references")
 
     def test_reference_transaction_failure_preserves_previous_catalog(self):
         engine = self.engine()

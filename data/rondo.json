@@ -1,0 +1,12 @@
+{
+  "id": "rondo",
+  "name": "Rondo",
+  "size_m": 8000,
+  "source": {
+    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Rondo_Main_No_Text_Low_Res.png",
+    "license": "PUBG developer asset terms; not MIT",
+    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+  },
+  "points": []
+}

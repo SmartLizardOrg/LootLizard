@@ -78,8 +78,8 @@ class MapData:
         if not isinstance(source, dict):
             raise ValueError("source must be an object")
         records = data.get("points")
-        if not isinstance(records, list) or not 1 <= len(records) <= 5000:
-            raise ValueError("points must contain between 1 and 5000 records")
+        if not isinstance(records, list) or len(records) > 5000:
+            raise ValueError("points must contain at most 5000 records")
         points, seen = [], set()
         for record in records:
             if not isinstance(record, dict):

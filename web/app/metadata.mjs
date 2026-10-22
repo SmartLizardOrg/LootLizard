@@ -1,4 +1,3 @@
-export const FEED_URL = 'https://raw.githubusercontent.com/molnard-labs/LootLizard/metadata/maps.json';
 const ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 export function validateMaps(maps) {
   if (!Array.isArray(maps) || maps.length > 32) throw Error('Invalid map catalog');
@@ -6,7 +5,7 @@ export function validateMaps(maps) {
   for (const map of maps) {
     if (!map || typeof map.id !== 'string' || !ID.test(map.id) || seen.has(map.id) || typeof map.name !== 'string' || !map.name.trim() || map.name.length > 160 ||
         !Number.isFinite(map.size_m) || map.size_m < 100 || map.size_m > 100000 || !map.source || typeof map.source !== 'object' || Array.isArray(map.source) ||
-        !Array.isArray(map.points) || !map.points.length || map.points.length > 5000) throw Error('Invalid map record');
+        !Array.isArray(map.points) || map.points.length > 5000) throw Error('Invalid map record');
     seen.add(map.id);
     const ids = new Set();
     for (const p of map.points) {
@@ -27,7 +26,7 @@ export async function readBoundedJSON(response, maxBytes=2_000_000) {
   const bytes = new Uint8Array(count); let offset=0; for (const value of chunks) { bytes.set(value,offset); offset += value.length; }
   return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 }
-export function validateSnapshot(value) {
-  if (!value || value.schema_version !== 1 || typeof value.revision !== 'string' || !value.revision.trim() || value.revision.length > 160) throw Error('Unsupported map feed');
+export function validateCatalog(value) {
+  if (!value || value.schema_version !== 1 || typeof value.revision !== 'string' || !value.revision.trim() || value.revision.length > 160) throw Error('Unsupported bundled map catalog');
   validateMaps(value.maps); return value;
 }

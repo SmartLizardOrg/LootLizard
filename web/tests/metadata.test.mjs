@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateMaps, validateSnapshot, readBoundedJSON} from '../app/metadata.mjs';
+import {validateMaps, validateCatalog, readBoundedJSON} from '../app/metadata.mjs';
 
 const map = () => ({id: 'test-map', name: 'Test map', size_m: 8000, source: {license: 'MIT'},
   points: [{id: 'test-01', name: 'Test room', x: .2, y: .8}]});
 
 test('a complete valid snapshot or explicit empty removal snapshot is accepted', () => {
   const snapshot = {schema_version: 1, revision: 'test-revision', maps: [map()]};
-  assert.equal(validateSnapshot(snapshot), snapshot);
-  assert.deepEqual(validateSnapshot({...snapshot, maps: []}).maps, []);
+  assert.equal(validateCatalog(snapshot), snapshot);
+  assert.deepEqual(validateCatalog({...snapshot, maps: []}).maps, []);
 });
 
 test('unsafe or coerced IDs and duplicate map/point identities are rejected', () => {
@@ -32,9 +32,15 @@ test('non-object source and non-normalized coordinates are rejected', () => {
 
 test('invalid schema or revision cannot replace the current snapshot', () => {
   for (const revision of ['', '   ', 'x'.repeat(161), 123]) {
-    assert.throws(() => validateSnapshot({schema_version: 1, revision, maps: [map()]}));
+    assert.throws(() => validateCatalog({schema_version: 1, revision, maps: [map()]}));
   }
-  assert.throws(() => validateSnapshot({schema_version: 2, revision: 'known', maps: []}));
+  assert.throws(() => validateCatalog({schema_version: 2, revision: 'known', maps: []}));
+});
+
+test('maps without bundled room coordinates are valid and do not invent a point', () => {
+  const empty = {...map(), points: []};
+  assert.deepEqual(validateMaps([empty])[0].points, []);
+  assert.deepEqual(validateCatalog({schema_version: 1, revision: 'release', maps: [empty]}).maps[0].points, []);
 });
 
 test('bounded JSON rejects declared and streamed excess before publication', async () => {

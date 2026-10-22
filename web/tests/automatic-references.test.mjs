@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
 import {AUTOMATIC_REFERENCES, fetchReference, loadAutomaticReferences} from '../app/automatic-references.mjs';
 
 const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1]);
@@ -12,15 +13,36 @@ const trustedDigest = record => ({subtle: {async digest(algorithm, bytes) {
   return digestBytes(record.sha256);
 }}});
 
-test('automatic references are immutable, pinned official assets with reviewed dimensions', () => {
-  assert.deepEqual(AUTOMATIC_REFERENCES.map(record => record.mapId), ['erangel', 'taego']);
+test('automatic references are immutable bundled assets for all eleven distinct official maps', () => {
+  assert.deepEqual(AUTOMATIC_REFERENCES.map(record => record.mapId), ['erangel', 'miramar', 'sanhok', 'vikendi', 'karakin', 'paramo', 'haven', 'taego', 'deston', 'rondo', 'training']);
   assert.ok(Object.isFrozen(AUTOMATIC_REFERENCES));
   for (const record of AUTOMATIC_REFERENCES) {
     assert.ok(Object.isFrozen(record));
-    assert.match(record.url, /^https:\/\/raw\.githubusercontent\.com\/pubg\/api-assets\/32b13b51128b8d8909ae5e77f3b833e01230b24d\/Assets\/Maps\/\w+_Main_Low_Res\.png$/);
+    const url = new URL(record.url);
+    assert.equal(url.origin, new URL(import.meta.url).origin);
+    assert.ok(url.pathname.endsWith(`/app/map-assets/${record.mapId}.png`));
+    assert.equal(url.search, '');
     assert.match(record.sha256, /^[a-f0-9]{64}$/);
     assert.equal(record.width, 819);
     assert.equal(record.height, record.width);
+  }
+});
+
+test('every bundled PNG matches its provenance manifest and the runtime checksum', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../app/map-assets/manifest.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.references.length, 11);
+  assert.equal(manifest.source.commit, '32b13b51128b8d8909ae5e77f3b833e01230b24d');
+  for (const record of AUTOMATIC_REFERENCES) {
+    const source = manifest.references.find(item => item.mapId === record.mapId);
+    assert.equal(source.sha256, record.sha256);
+    assert.match(source.source_url, /^https:\/\/raw\.githubusercontent\.com\/pubg\/api-assets\/32b13b51128b8d8909ae5e77f3b833e01230b24d\/Assets\/Maps\/[A-Za-z0-9_]+\.png$/);
+    const bytes = await readFile(new URL(record.url));
+    assert.equal(bytes.length, source.bytes);
+    assert.deepEqual(Array.from(bytes.subarray(0, 8)), [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(bytes.readUInt32BE(16), record.width);
+    assert.equal(bytes.readUInt32BE(20), record.height);
+    const hash = Buffer.from(await webcrypto.subtle.digest('SHA-256', bytes)).toString('hex');
+    assert.equal(hash, record.sha256);
   }
 });
 
@@ -30,7 +52,7 @@ test('fetch verifies the complete byte sequence and omits credentials', async ()
     assert.equal(url, record.url);
     assert.equal(options.credentials, 'omit');
     assert.equal(options.redirect, 'error');
-    assert.equal(options.cache, 'force-cache');
+    assert.equal(options.cache, 'no-cache');
     assert.ok(options.signal instanceof AbortSignal);
     return response();
   }});
@@ -96,7 +118,7 @@ test('loader skips unknown map IDs and already available references', async () =
 });
 
 test('download failure is isolated per map and successful PNGs reach the decoder', async () => {
-  const taego = AUTOMATIC_REFERENCES[1];
+  const taego = AUTOMATIC_REFERENCES.find(record => record.mapId === 'taego');
   let decoded = 0;
   const image = {width: 819, height: 819};
   const result = await loadAutomaticReferences({knownMapIds: ['erangel', 'taego'], cryptoImpl: trustedDigest(taego),
@@ -111,7 +133,7 @@ test('image decode failure is reported without discarding other maps', async () 
   let fetchIndex = 0;
   const result = await loadAutomaticReferences({knownMapIds: ['erangel', 'taego'],
     fetchImpl: async () => {fetchIndex++; return response();},
-    cryptoImpl: {subtle: {async digest() {return digestBytes(AUTOMATIC_REFERENCES[fetchIndex - 1].sha256);}}},
+    cryptoImpl: {subtle: {async digest() {return digestBytes(AUTOMATIC_REFERENCES.find(record => record.mapId === (fetchIndex === 1 ? 'erangel' : 'taego')).sha256);}}},
     decode: async () => {if (fetchIndex === 1) throw Error('Invalid image dimensions'); return {width: 819, height: 819};}});
   assert.deepEqual(result.loaded.map(record => record.mapId), ['taego']);
   assert.deepEqual(result.failures, [{mapId: 'erangel', error: 'Invalid image dimensions'}]);

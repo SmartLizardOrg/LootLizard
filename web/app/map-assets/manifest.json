@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "https://github.com/pubg/api-assets",
+    "commit": "32b13b51128b8d8909ae5e77f3b833e01230b24d",
+    "terms": "https://developer.pubg.com/tos",
+    "attribution": "PUBG Corporation/KRAFTON and affiliates. PUBG imagery is not MIT licensed."
+  },
+  "references": [
+    {
+      "mapId": "erangel",
+      "file": "erangel.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Erangel_Main_Low_Res.png",
+      "sha256": "56bd4bf0bdcd5e902ef4c232bc54d9546ae0a6cc8b881833f45f0f0a9e93aea9",
+      "bytes": 1150033,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "miramar",
+      "file": "miramar.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Miramar_Main_Low_Res.png",
+      "sha256": "25e47254abf6a1b339f4a030ed323f8947fcbd0628c530eba7c0973d5d45ea14",
+      "bytes": 1464459,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "sanhok",
+      "file": "sanhok.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Sanhok_Main_Low_Res.png",
+      "sha256": "184561634b90ab2e981df6edd4813f2ac6e165d5d62ed3cbe684eec079b03855",
+      "bytes": 1069220,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "vikendi",
+      "file": "vikendi.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Vikendi_Main_Low_Res.png",
+      "sha256": "a2fcd39d6ae87d82fc5747389f946e1f03ddb946ea9ac67e9944a0dcd3c05516",
+      "bytes": 1389189,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "karakin",
+      "file": "karakin.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Karakin_Main_Low_Res.png",
+      "sha256": "87fd5c4f956a1a05858cc069fdd4da33d8ffa56d31eb9182b6038a0fbe6f216b",
+      "bytes": 1202169,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "paramo",
+      "file": "paramo.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Paramo_Main_Low_Res.png",
+      "sha256": "dd40f9ede3225abc07421c46148f8fc76a4f87997612e68536c6c6a89c4ac4b1",
+      "bytes": 1321649,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "haven",
+      "file": "haven.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Haven_Main_Low_Res.png",
+      "sha256": "287435cb7b9e5f92862ac79f65c86839f9a4dcbf61c7287342caa3c85907c5fa",
+      "bytes": 1113915,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "taego",
+      "file": "taego.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Taego_Main_Low_Res.png",
+      "sha256": "dcf2679fa735b0b112d69783fc022b7699ee2523d6e765640b8a0b279bfe4c45",
+      "bytes": 1368588,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "deston",
+      "file": "deston.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Deston_Main_Low_Res.png",
+      "sha256": "be35aeb55781edd47ac547fa51b2d9c84244b55dcbc2fd621198b60aeb4da0b7",
+      "bytes": 1302148,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "rondo",
+      "file": "rondo.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Rondo_Main_No_Text_Low_Res.png",
+      "sha256": "47872f9f34bf817e37dcb7b92d2e00e054d8cc03aa0ba955eb4dd6efb17750a2",
+      "bytes": 1675592,
+      "width": 819,
+      "height": 819
+    },
+    {
+      "mapId": "training",
+      "file": "training.png",
+      "source_url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Training_Main_Low_Res.png",
+      "sha256": "acd5e86e095680aec13830a8e26622cba4dc787cfc675ae9b4674d569203449d",
+      "bytes": 1022159,
+      "width": 819,
+      "height": 819
+    }
+  ]
+}

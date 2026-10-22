@@ -1,4 +1,4 @@
-"""Publication validation and atomic whole-snapshot feed regressions."""
+"""Validation and deterministic packaging of bundled release map catalogs."""
 
 import copy
 import json
@@ -37,8 +37,9 @@ class MapCatalogTests(unittest.TestCase):
         catalog = builder.build_catalog(builder.ROOT / "data", SHA)
         self.assertEqual(set(catalog), {"schema_version", "revision", "maps"})
         self.assertEqual(catalog["revision"], SHA)
-        self.assertEqual({m["id"]: len(m["points"]) for m in catalog["maps"]}, {"erangel": 15, "taego": 12})
-        self.assertEqual(catalog["maps"][0]["source"]["license"], "MIT")
+        self.assertEqual(len(catalog["maps"]), 11)
+        self.assertEqual({m["id"]: len(m["points"]) for m in catalog["maps"] if m["points"]}, {"erangel": 15, "taego": 12})
+        self.assertEqual(next(m for m in catalog["maps"] if m["id"] == "erangel")["source"]["license"], "MIT")
         self.assertIn("incomplete", next(m for m in catalog["maps"] if m["id"] == "taego")["source"]["notes"].lower())
 
     def test_deterministic_whole_snapshot_and_valid_empty_removal(self):
@@ -53,9 +54,17 @@ class MapCatalogTests(unittest.TestCase):
     def test_published_bytes_roundtrip_through_the_real_client_parser(self):
         self.save(record())
         catalog = builder.build_catalog(self.data, SHA)
-        snapshot = builder.parse_snapshot(builder.encode_catalog(catalog))
-        self.assertEqual(snapshot.revision, SHA)
-        self.assertEqual([data.to_dict() for data in snapshot.maps], catalog["maps"])
+        snapshot = builder.validate_catalog(json.loads(builder.encode_catalog(catalog)))
+        self.assertEqual(snapshot["revision"], SHA)
+        self.assertEqual(snapshot["maps"], catalog["maps"])
+
+    def test_reference_only_maps_can_have_no_points_without_dummy_targets(self):
+        document = record(); document["points"] = []
+        self.save(document)
+        self.assertEqual(builder.build_catalog(self.data, SHA)["maps"][0]["points"], [])
+        local = builder.build_catalog(self.data)
+        self.assertRegex(local["revision"], r"^content:[a-f0-9]{64}$")
+        self.assertEqual(local, builder.build_catalog(self.data))
 
     def test_missing_directory_and_non_commit_revision_are_rejected(self):
         for revision in ("main", "a"*39, "A"*40, "../metadata", "a"*161):
