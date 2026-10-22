@@ -4,31 +4,28 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lootlizard"
-version = "0.8.0"
-description = "An on-demand PUBG map companion with community-maintained map data"
+version = "0.9.0"
+description = "A browser-based PUBG map companion with local image processing"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [{name = "LootLizard contributors"}]
 
-dependencies = ["Pillow>=11,<13", "opencv-python-headless>=4.13,<5", "numpy>=2,<3", "velopack==1.2.161; sys_platform == 'win32'"]
+dependencies = ["Pillow>=11,<13", "opencv-python-headless>=4.13,<5", "numpy>=2,<3"]
 classifiers = [
   "Development Status :: 3 - Alpha",
-  "Environment :: Win32 (MS Windows)",
-  "Operating System :: Microsoft :: Windows",
+  "Environment :: Web Environment",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
   "Topic :: Games/Entertainment",
 ]
 
 [project.urls]
-Homepage = "https://github.com/SmartLizardOrg/LootLizard"
-Repository = "https://github.com/SmartLizardOrg/LootLizard"
-Issues = "https://github.com/SmartLizardOrg/LootLizard/issues"
-
-[project.scripts]
-lootlizard = "lootlizard.__main__:main"
+Homepage = "https://github.com/molnard-labs/LootLizard"
+Repository = "https://github.com/molnard-labs/LootLizard"
+Issues = "https://github.com/molnard-labs/LootLizard/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

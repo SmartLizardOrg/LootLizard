@@ -1,69 +1,114 @@
 # Contributing to LootLizard
 
-LootLizard is an experimental community project under [SmartLizardOrg](https://github.com/SmartLizardOrg/LootLizard). Pull requests for coordinate corrections, additional point datasets, translations and code fixes are welcome. A coordinate passing validation does not prove that a room exists or remains accessible in the current game.
+LootLizard is a browser application with portable Python CV modules. Open a
+focused pull request against `main`. The earlier Windows application remains
+available in the `v0.8.0` tag; new changes should target the web application.
 
-## Correct or add point data
+## Local setup
 
-1. Fork the repository and edit `data/<map-id>.json` on a branch based on `main`. These are the human-editable source files. Do not edit the generated `metadata` branch or add `maps.json` to `main`.
-2. Keep each existing map id and point id stable. Add new point ids rather than renumbering an entire list. Explain removals and corrections; a name change is not a reason to replace an id.
-3. Supply a reusable source URL, its data license and attribution. Prefer a pinned commit/permalink or a dated primary source. A repository's code license is not automatically a license for copied coordinates, game artwork or another site's data. Retain required notices in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-4. Describe manual coordinate evidence and its limits in the PR: game/map version and date, mode, full-map grid anchors or known image dimensions, normalization method, whether an entrance or only a room center was checked, and completeness. A model prediction or successful projection is not independent ground truth. Mark unverified or incomplete data honestly in `source.notes`.
-5. Run validation and tests below, then open a PR against `main` using the template. Do not commit copyrighted game map images, private screenshots, local reference catalogs, profiles, usernames or account data. Use shareable source links and textual measurement notes.
-
-Example only; this identifies no real room:
-
-```json
-{
-  "id": "my-map",
-  "name": "My map",
-  "size_m": 8000,
-  "source": {
-    "url": "https://example.org/data-source",
-    "license": "MIT",
-    "attribution": "Data contributors",
-    "notes": "Incomplete, unverified example; explain actual evidence here."
-  },
-  "points": [{"id": "my-map-01", "name": "Secret room 01", "x": 0.25, "y": 0.5}]
-}
+```sh
+python -m venv .venv
+# Activate .venv using your shell's normal activation command.
+python -m pip install .
+python scripts/build_web.py
+python scripts/serve_web.py --port 8765
 ```
 
-Map and point ids use lowercase letters, digits, `_` or `-`, start with a letter/digit and contain at most 64 characters. Map ids must be unique across files; point ids must be unique within their map. Use English default names. Coordinates are finite numbers in `[0,1]`, relative to the **entire** map with top-left origin: x increases rightward, y downward. Do not normalize a zoomed viewport as the full map. `size_m` is an approximate map-side distance scale, not image-pixel dimensions. There are at most 5,000 points per map, 32 maps per feed and 2,000,000 encoded UTF-8 bytes in the whole feed. Duplicate JSON keys, non-finite values, unsafe ids and missing credits fail publication.
+The landing page is `/`, the companion is `/app/`. Browser packages and public
+references are downloaded on the first visit; the Python installation above is
+for developer tests, not an end-user requirement. Do not deploy the whole source
+checkout: `scripts/build_web.py` creates the curated `dist/` directory.
 
-The currently bundled data is only **15 Erangel and 12 Taego points**. Both sets remain unverified; Taego is explicitly incomplete. Additional map data needs a matching user-supplied local image reference before LootLizard can recognize that map. Point data alone never creates image recognition.
+## Checks
 
-## Validate locally
-
-From the repository root, after setting up Python as in [README.md](README.md):
-
-```powershell
-.\.venv\Scripts\python.exe scripts/build_map_catalog.py --revision (git rev-parse HEAD) --output "$env:TEMP/lootlizard-maps.json"
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```sh
+python -B -m unittest discover -s tests -v
+python -B -m unittest discover -s web/tests -p 'test_*.py' -v
+node --test web/tests/*.test.mjs
+python scripts/build_web.py
 ```
 
-The builder needs a full lowercase 40-character commit SHA and uses the same feed parser as the updater, plus publication source/license checks. This local command is a validation preview; do not publish uncommitted edits under an old revision. Every changed published snapshot must have a new validated main commit revision. The generated feed has exactly three top-level fields:
+GitHub Actions also exercises the real Pyodide/OpenCV worker in Chromium using
+synthetic artwork. The browser test must preserve its CI-only guard and use no
+private screenshots, user profiles or real sharing permissions. Local visual
+checks should use an explicitly selected, visible browser.
 
-```json
-{"schema_version": 1, "revision": "0123456789abcdef0123456789abcdef01234567", "maps": []}
+For recognition work, test unknown and ambiguous frames, stale asynchronous
+replies, Stop/sharing interruption and reference replacement. Successful
+synthetic registration is separate from general PUBG accuracy. A performance
+change needs controlled frame-time measurement; a passing functional test does
+not demonstrate an FPS improvement.
+
+## Community point data
+
+Edit the relevant file under `data/`. Positions are whole-map normalized values:
+the upper-left corner is `(0, 0)` and the lower-right corner is `(1, 1)`.
+Coordinates must describe the complete map, not a zoomed or panned screenshot.
+Both current maps use an approximate `size_m` of 8000 for straight-line distances.
+
+- Use stable, lowercase, safe ids for maps and points. Retain ids for corrections
+  to an existing location so that updates can be reviewed clearly.
+- Include a precise source URL, license and attribution. Describe uncertainty,
+  map version and incompleteness in the source notes.
+- Keep existing credits and indicate which points were added, moved or removed.
+  Do not label a list complete without evidence. The Taego list is incomplete.
+- Do not include screenshots, game map images, private catalogs or profiles in a
+  coordinate PR. A code license does not establish rights to an image.
+
+Run catalog validation using the full source commit:
+
+```sh
+python scripts/build_map_catalog.py --revision FULL_40_CHARACTER_COMMIT_SHA --output work/maps.json
 ```
 
-The illustrative revision above is not a real publication. The shortened example is an empty snapshot; a populated feed contains complete point-data objects like the input example in `maps`. An empty list is a valid complete removal snapshot. The builder validates/encodes the whole feed before atomically replacing its output file.
+The metadata workflow builds one validated snapshot after relevant changes reach
+`main` and publishes it to `metadata/maps.json`. Open clients poll that fixed
+public GitHub feed roughly every 60 seconds. CDN caching and failures can delay
+updates; rejected snapshots retain the last good data. This channel publishes
+point metadata only, not executable application code.
 
-## What happens after merge?
+## Map references and private fixtures
 
-The read-only **Check** workflow validates every point file and runs tests for main pushes and PRs. The separate **Publish map metadata** workflow runs only for relevant main changes or manual dispatch on main. Its serialized write-enabled job checks out the newest main, validates it, uses that exact checkout commit as the feed revision and pushes a single complete `maps.json` commit to `metadata`. Pull-request code never runs with that publisher's write token. A non-fast-forward remote update fails rather than force-overwriting history.
+Public reference-source configuration belongs to the browser application. Keep
+its source provenance, byte/dimension bounds, version pins and validation intact.
+Never substitute an arbitrary screenshot for a complete square map reference.
+User-supplied references are optional local data; do not upload them in tests or
+bug reports without deliberately reviewing the content and distribution rights.
 
-The public feed is <https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json>. Running clients normally check on startup and about every 60 seconds. Workflow queues, raw-content CDN caching, offline conditions and retry delays mean delivery is eventual. Bad/incomplete downloads leave the previous valid cache in use. Explicit local point imports override community entries with the same id.
+The portable `lootlizard/dataset.py` utilities and
+`scripts/evaluate_screenshots.py` can evaluate local annotated datasets. Ground
+truth must be manually established; unknown facts remain null. Keep training
+references separate from held-out evaluation captures, and report both sample
+counts and abstentions. The repository does not contain the private real-game
+evaluation set. Synthetic fixtures should be generated programmatically.
 
-A **data-only PR** can reach existing clients through this feed without a new executable. An **application/code change** needs normal review, tests and a new tagged binary release; the data updater never downloads or executes application code. Check [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) for actual CI results; a local test run is separate evidence.
+## Public builds and releases
 
-## Application releases and installer updates
+The builder copies `web/landing/` to the site root and `web/app/` to `/app/`, plus
+an explicit list of seven Python modules to `/cv/`, two point JSON files and
+required notices. Public directories must contain only intended static assets;
+unexpected file types, source links, oversized assets and unsafe paths fail the
+build. Existing output may be replaced only when its prior build manifest is
+valid and no untracked files are present.
 
-Version **0.8.0** uses the per-user [LootLizard-Setup.exe](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe) as the primary Windows download. The installed files live under `%LOCALAPPDATA%\SmartLizardOrg.LootLizard\current`; `%LOCALAPPDATA%\LootLizard` contains user settings, profiles and map cache and is retained on uninstall. Existing ZIP/source users need a one-time installer run for application self-updates. Portable ZIPs remain a manual-update option.
+Source changes do not automatically publish the production app. After all checks
+pass and the source is merged to `main`, create a matching prerelease tag such
+as `v0.9.0-web.1` and publish its GitHub Release. The release workflow validates
+the tag and its ancestry, builds/tests the exact commit, attaches the ZIP and
+SHA-256 file, and updates `web-release`. Cloudflare Pages serves that generated
+branch with no build command and the repository root as its output directory.
+The workflow keeps branch history and rejects an older release replacing a
+newer production build. It never updates the legacy Windows feed.
 
-Application updates use stable releases of this repository, independently of `metadata/maps.json`. The installed app checks at startup and every six hours and stages a verified higher-version full package through Velopack. A ready package is applied only after ordinary Close, or explicit **Restart to update**; current background work must finish first. Disabling **Automatic app updates** disables scheduled checks and normal-exit apply. Manual checking/downloading and explicit restart remain available. Never introduce an update-triggered close during gameplay, a downgrade, a channel switch, or image upload.
+Keep application versions in `pyproject.toml` and `lootlizard/__init__.py` aligned.
+Use a new `-web.NUMBER` suffix for each web alpha release of that version.
+Navigation/reload revalidates application assets; open sessions retain their
+loaded code. Publishing must not force a reload or silently restart screen
+capture. Keep preferences optional and provide a way to clear stored data.
 
-Build with matching **`velopack==1.2.161`** and **.NET `vpk` 1.2.161**. [scripts/build_installer.py](scripts/build_installer.py) consumes the enriched payload from `package_release.py`, validates the full package/feed and produces the stable installer alias; it does not install or publish. Source, tests, data and dependency notices accompany the installer/full update package. The tagged release pipeline publishes these with the optional ZIP and SHA-256 checksums. Windows binaries are currently unsigned; checksum verification is not independent publisher authentication. Repository/release maintainers and their publishing credentials are part of the application-update trust boundary.
+## Licensing
 
-Installer CI uses an isolated synthetic `0.7.99` package fixture to exercise install → check/download `0.8.0` → retained pending package → apply-on-exit → uninstall, checking that synthetic user data survives. The older fixture uses the current payload with an older install manifest; it is not a previously published application binary. `--update-probe` is a headless test hook, not a supported alternative update source. Its runner-environment/path checks prevent accidental normal use; environment variables are not proof of trusted CI or an authorization boundary against a local caller. Normal application updates use the fixed public GitHub repository.
-
-Report actual [Actions](https://github.com/SmartLizardOrg/LootLizard/actions) results separately from local mocked tests. Headless installer success cannot establish GUI focus behavior, real-game capture/recognition, SmartScreen behavior on another PC, or all worker-shutdown races. Test ordinary Close, explicit restart, automatic-update opt-out and an update download still running at Close. Keep synthetic CI files out of real user directories and retain the package id, channel, version and checksum validation.
+Submit code under the repository's MIT license. Preserve attribution and update
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) when adding a dependency, public
+reference source or adapted dataset. PUBG assets and trademarks keep their
+owners' rights; do not present this project as officially approved.
