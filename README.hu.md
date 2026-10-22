@@ -7,6 +7,8 @@ a saját gépeden fut; a program nem tölti fel a képernyőképeket.
 
 **Webes alfa · 0.9.0.** Az alapnyelv angol, a magyar nyelv választható.
 Nem kell asztali programot telepíteni, fiókot vagy API-kulcsot létrehozni.
+[LootLizard megnyitása](https://lootlizard.pages.dev/app/) ·
+[Bemutatóoldal](https://lootlizard.pages.dev/) ·
 [Részletes angol dokumentáció](README.md) · [Közreműködés](CONTRIBUTING.md)
 
 ## Használat
