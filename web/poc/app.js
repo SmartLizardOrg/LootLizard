@@ -48,6 +48,7 @@ function currentMap(){return maps.concat(demo.map).find(m=>m.id===session.result
 function targets(){const map=currentMap();if(!map)return[];const visible=new Map((session.result.points||[]).map(p=>[p.id,p]));return orderTargets(map,session.result.position,session.result.zone).map(p=>({...p,...visible.get(p.id)}));}
 function clearGuidance(){session.invalidate();lastWall=0;render();}
 function status(next,message=''){phase=next;detail=message;render();}
+function updateAge(){const age=lastWall?Date.now()-lastWall:null;put('snapshot-age',age===null?t('No current result'):`${Math.floor(age/1000)} s ${t('ago')}`);return age;}
 function render(){
   const result=session.result,map=currentMap(),points=targets();
   const names={loading:'Loading recognition engine…',idle:'Ready when you are',scanning:'Checking image…',recognized:'Map recognized',unknown:'No verified map',stopped:'Sharing stopped',error:'Could not process image',cropping:'Select the complete map'};
@@ -60,6 +61,7 @@ function render(){
   put('capture-status',t(session.source==='screen'?'Sharing screen':session.source==='demo'?'Synthetic demo':session.source==='image'?'Local image':'Not sharing'));
   put('position-status',t(result?.position?'Position estimate · identity unverified':'Position unknown · distances unavailable'));
   put('last-update',lastWall?new Date(lastWall).toLocaleTimeString(language==='hu'?'hu-HU':'en-GB'):'—');
+  updateAge();
   put('scan-duration',result?.timings?`${Math.round(result.timings.totalMs)} ms`:'—');
   $('start-sharing').disabled=!engine||configuring>0||workerFailed;
   $('stop-sharing').disabled=!session.active;
@@ -218,7 +220,7 @@ $('replay-mode').addEventListener('change',()=>{clearGuidance();if(session.activ
 window.addEventListener('pagehide',stop);
 new ResizeObserver(()=>draw()).observe($('map-stage'));
 setInterval(()=>{
-  const age=lastWall?Date.now()-lastWall:null;put('snapshot-age',age===null?t('No current result'):`${Math.floor(age/1000)} s ${t('ago')}`);
+  const age=updateAge();
   if(session.source==='screen'&&age!==null&&age>Math.max(15000,interval*3)&&session.result){clearGuidance();status('unknown','The last result expired. Waiting for a fresh frame.');}
 },1000);
 
