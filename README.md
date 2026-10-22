@@ -2,6 +2,11 @@
 
 [Magyar gyorsindító](README.hu.md)
 
+**Browser experiment:** the separate `poc/browser-client` branch includes a
+[client-only web proof of concept](web/README.md). It uses a single approved
+screen-sharing session and automatic local recognition. It is a development
+preview; the stable Windows release below is unchanged.
+
 An experimental, open-source Windows companion by [SmartLizardOrg](https://github.com/SmartLizardOrg) that projects known PUBG: BATTLEGROUNDS secret-room coordinates onto a requested screenshot on a second display. **Ctrl+Shift+B** captures one selected monitor. Image recognition runs locally; community point updates use GitHub HTTPS. No account or AI API key is needed.
 
 **[Download LootLizard-Setup.exe for Windows](https://github.com/SmartLizardOrg/LootLizard/releases/latest/download/LootLizard-Setup.exe)** — the latest stable per-user installer. No Python installation or administrator rights are required. Other assets are on [Releases](https://github.com/SmartLizardOrg/LootLizard/releases). Contribute corrections or new point datasets through a pull request: [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10161e">
+  <meta name="description" content="An experimental, local browser companion for PUBG map screenshots.">
+  <title>LootLizard · Browser preview</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="LootLizard home">
+      <span class="brand-mark" aria-hidden="true">LL</span>
+      <span>Loot<span class="brand-accent">Lizard</span></span>
+    </a>
+    <span class="preview-badge" data-i18n="Browser proof of concept">Browser proof of concept</span>
+    <div class="sharing-actions" aria-label="Screen sharing">
+      <span id="capture-status" class="capture-status" role="status" data-i18n="Not sharing">Not sharing</span>
+      <button id="start-sharing" class="button button-primary" type="button">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg>
+        <span data-i18n="Start sharing">Start sharing</span>
+      </button>
+      <button id="stop-sharing" class="button button-stop" type="button" disabled>
+        <span class="stop-icon" aria-hidden="true"></span><span data-i18n="Stop">Stop</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="map-panel" aria-label="Map view">
+      <div class="map-heading">
+        <div class="map-title">
+          <span class="eyebrow" data-i18n="YOUR MAP">YOUR MAP</span>
+          <h1 id="map-name" data-i18n="Waiting for a map">Waiting for a map</h1>
+        </div>
+        <div class="map-tools">
+          <label class="button button-subtle file-button" for="open-image">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 5 5 3-3 5 5"/><circle cx="16.5" cy="8.5" r="1"/></svg>
+            <span data-i18n="Open image">Open image</span>
+          </label>
+          <input id="open-image" class="visually-hidden" type="file" accept="image/png,image/jpeg">
+          <button id="load-demo" class="button button-subtle" type="button" data-i18n="Load demo">Load demo</button>
+        </div>
+      </div>
+
+      <div id="map-stage" class="map-stage">
+        <canvas id="map-canvas" width="1200" height="900" aria-label="Current screenshot and detected room locations"></canvas>
+        <video id="capture-video" muted playsinline autoplay hidden aria-hidden="true"></video>
+        <div id="canvas-empty" class="map-empty">
+          <span class="empty-reticle" aria-hidden="true"><i></i></span>
+          <h2 data-i18n="A clearer view of your next stop">A clearer view of your next stop</h2>
+          <p data-i18n="Share your game screen, then open the map. Add your own full-map reference in Setup to recognize it.">Share your game screen, then open the map. Add your own full-map reference in Setup to recognize it.</p>
+          <span class="empty-alternative" data-i18n="Or try the synthetic demo without sharing.">Or try the synthetic demo without sharing.</span>
+        </div>
+        <div id="demo-banner" class="demo-banner" hidden data-i18n="Synthetic demo · not a live game">Synthetic demo · not a live game</div>
+      </div>
+      <div class="map-footer">
+        <div class="legend" aria-label="Map legend">
+          <span><i class="legend-anchor" aria-hidden="true"></i><span data-i18n="Room">Room</span></span>
+          <span><i class="legend-inside" aria-hidden="true"></i><span data-i18n="Inside circle">Inside circle</span></span>
+          <span><i class="legend-player" aria-hidden="true"></i><span data-i18n="Position estimate">Position estimate</span></span>
+        </div>
+        <div class="scan-metrics"><span id="snapshot-age" class="snapshot-age" data-i18n="No image yet">No image yet</span><span><span data-i18n="Last scan">Last scan</span> <span id="last-update">—</span></span><span><span data-i18n="Scan">Scan</span> <span id="scan-duration">—</span></span></div>
+      </div>
+    </section>
+
+    <aside class="sidebar" aria-label="Destinations and settings">
+      <section class="status-card" aria-labelledby="recognition-status">
+        <div class="status-eyebrow"><span id="recognition-indicator" class="status-indicator" aria-hidden="true"></span><span data-i18n="MAP RECOGNITION">MAP RECOGNITION</span></div>
+        <h2 id="recognition-status" role="status" data-i18n="Ready when you are">Ready when you are</h2>
+        <p id="recognition-detail" data-i18n="Start sharing to scan locally. Unknown maps will not show targets.">Start sharing to scan locally. Unknown maps will not show targets.</p>
+        <p id="engine-status" class="engine-status" role="status" data-i18n="Recognition engine not loaded">Recognition engine not loaded</p>
+        <dl class="map-stats">
+          <div><dt data-i18n="Known rooms">Known rooms</dt><dd id="room-count">0</dd></div>
+          <div><dt data-i18n="Inside circle">Inside circle</dt><dd id="inside-count">—</dd></div>
+        </dl>
+        <p id="position-status" class="position-status" data-i18n="Position unknown · distances unavailable">Position unknown · distances unavailable</p>
+      </section>
+
+      <section class="targets-card" aria-labelledby="targets-title">
+        <div class="targets-heading"><h2 id="targets-title" data-i18n="Destinations">Destinations</h2><span class="sort-note" data-i18n="Inside first">Inside first</span></div>
+        <div class="target-scroll">
+          <table class="targets-table">
+            <thead><tr><th scope="col" class="rank-column"><span class="visually-hidden" data-i18n="Rank">Rank</span>#</th><th scope="col" data-i18n="Room">Room</th><th scope="col" class="zone-column" data-i18n="Zone">Zone</th><th scope="col" class="distance-column">≈ m</th></tr></thead>
+            <tbody id="target-list"></tbody>
+          </table>
+          <div id="empty-targets" class="empty-targets"><span class="empty-target-line" aria-hidden="true"></span><p data-i18n="Your rooms will appear here once the map is verified.">Your rooms will appear here once the map is verified.</p></div>
+        </div>
+        <p class="community-note" data-i18n="Community coordinates · verify in game">Community coordinates · verify in game</p>
+      </section>
+
+      <details id="settings-panel" class="settings-panel">
+        <summary><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span data-i18n="Setup & preferences">Setup &amp; preferences</span><span class="disclosure-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="settings-body">
+          <fieldset>
+            <legend data-i18n="Local map reference">Local map reference</legend>
+            <p class="field-help" data-i18n="Choose your own complete, square map image. It stays on this device.">Choose your own complete, square map image. It stays on this device.</p>
+            <label for="reference-map" data-i18n="Map">Map</label>
+            <select id="reference-map"><option value="erangel">Erangel</option><option value="taego">Taego</option></select>
+            <label class="button button-outline reference-picker" for="reference-file"><span data-i18n="Import reference image">Import reference image</span></label>
+            <input id="reference-file" class="visually-hidden" type="file" accept="image/png,image/jpeg">
+            <button id="crop-reference" class="button button-outline reference-picker" type="button" data-i18n="Use current image as reference">Use current image as reference</button>
+            <p id="crop-help" class="field-help crop-help" hidden data-i18n="Drag a square around the complete, fully zoomed-out map, then save.">Drag a square around the complete, fully zoomed-out map, then save.</p>
+            <div class="crop-actions"><button id="save-crop" class="button button-primary" type="button" hidden data-i18n="Save map area">Save map area</button><button id="cancel-crop" class="button button-subtle" type="button" hidden data-i18n="Cancel selection">Cancel selection</button></div>
+            <p id="reference-status" class="field-status" role="status" data-i18n="No references loaded">No references loaded</p>
+            <ul id="reference-list" class="reference-list" aria-label="Imported map references"></ul>
+            <button id="clear-references" class="button button-subtle clear-references" type="button" disabled data-i18n="Clear references">Clear references</button>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="Preferences">Preferences</legend>
+            <label for="language-select" data-i18n="Language">Language</label>
+            <select id="language-select"><option value="en">English</option><option value="hu">Magyar</option></select>
+            <label for="scan-interval" data-i18n="Scan interval">Scan interval</label>
+            <select id="scan-interval"><option value="1500">1.5 s</option><option value="3000" selected>3 s</option><option value="5000">5 s</option></select>
+            <p class="field-help" data-i18n="A longer interval uses less CPU. Scans run only while sharing is active.">A longer interval uses less CPU. Scans run only while sharing is active.</p>
+            <label class="checkbox-field" for="cache-preferences"><input id="cache-preferences" type="checkbox" checked><span data-i18n="Remember preferences and map references on this device">Remember preferences and map references on this device</span></label>
+            <label class="checkbox-field" for="replay-mode"><input id="replay-mode" type="checkbox"><span data-i18n="Replay or spectating — disable player estimate">Replay or spectating — disable player estimate</span></label>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="Community map data">Community map data</legend>
+            <p id="metadata-status" class="field-status" role="status" data-i18n="Using bundled coordinates">Using bundled coordinates</p>
+            <p class="field-help" data-i18n="Coordinates can be updated from GitHub. Images are never uploaded.">Coordinates can be updated from GitHub. Images are never uploaded.</p>
+          </fieldset>
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <footer class="privacy-bar"><span class="privacy-icon" aria-hidden="true">◇</span><p data-i18n="Images stay on this device. Sharing stays active until stopped.">Images stay on this device. Sharing stays active until stopped.</p><span class="prototype-note" data-i18n="Experimental · no verified player identity">Experimental · no verified player identity</span></footer>
+  <noscript><div class="noscript-note">JavaScript is required for local image processing. No image is uploaded.</div></noscript>
+</body>
+</html>

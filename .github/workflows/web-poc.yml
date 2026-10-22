@@ -1,0 +1,68 @@
+name: Browser experiment
+
+on:
+  push:
+    branches: [main, poc/browser-client]
+    paths:
+      - 'web/**'
+      - 'lootlizard/**'
+      - 'data/*.json'
+      - 'scripts/serve_web_poc.py'
+      - '.github/workflows/web-poc.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'lootlizard/**'
+      - 'data/*.json'
+      - 'scripts/serve_web_poc.py'
+      - '.github/workflows/web-poc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Check the static server and capture-session state
+        shell: pwsh
+        run: |
+          python -B -m unittest discover -s web/tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Static server tests failed" }
+          node --test web/tests/*.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "Browser session tests failed" }
+      - name: Install isolated browser-test tools
+        shell: pwsh
+        run: |
+          # Node is supplied by the Windows runner image; no app dependencies
+          # or package manifests are changed by this disposable installation.
+          node -e "if (Number(process.versions.node.split('.')[0]) < 20) process.exit(1)"
+          if ($LASTEXITCODE -ne 0) { throw "Playwright requires Node20 or newer" }
+          npm install --prefix "$env:RUNNER_TEMP/lootlizard-web-tools" --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          if ($LASTEXITCODE -ne 0) { throw "Browser-test tool installation failed" }
+          node "$env:RUNNER_TEMP/lootlizard-web-tools/node_modules/playwright/cli.js" install chromium
+          if ($LASTEXITCODE -ne 0) { throw "Test Chromium installation failed" }
+      - name: Exercise real Pyodide/OpenCV and stale-result rejection
+        shell: pwsh
+        env:
+          LOOTLIZARD_PLAYWRIGHT_MODULE: ${{ runner.temp }}/lootlizard-web-tools/node_modules/playwright
+          LOOTLIZARD_WEB_EVIDENCE: ${{ runner.temp }}/lootlizard-web-evidence
+        run: node web/tests/browser-smoke.cjs
+      - name: Upload synthetic test evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: LootLizard-browser-experiment
+          path: ${{ runner.temp }}/lootlizard-web-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
