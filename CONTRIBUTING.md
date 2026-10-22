@@ -57,6 +57,13 @@ types. Do not infer a key/security requirement from a generic room name. The app
 uses the type for its shared map/list/legend symbol; preserve a point's actual
 coordinates when improving crowded badge placement.
 
+Erangel bunker entrances are separately recorded factual observations in
+`data-sources/erangel-bunker-entrances.json`; its source uses a 1000-unit map plane,
+not 8192 pixels. Preserve that transform and the distinction from the 15 licensed
+secret-room records. Miramar's three Los Leones `basement` source records use
+`tunnel_entrance`; they are not three new key-locked rooms. Do not duplicate a room
+marker as an entrance unless a separate entrance location is actually sourced.
+
 Validate a complete local catalog:
 
 ```sh

@@ -71,6 +71,14 @@ buildings, depending on the map. Taego includes
 independently verified in game for this project; neither the counts nor the lists
 establish complete coverage of the current game. Verify locations and entrances.
 
+Underground entrances have their own green tunnel symbol. Erangel includes seven
+separately sourced bunker entrances (four at Shelter); Miramar includes three
+entrances at the Los Leones underground complex alongside its 15 secret rooms.
+Karakin retains its 22 tunnel entrances. Multiple entrances can lead to the same
+underground space; these counts do not mean additional key-locked rooms. Existing
+room markers are not relabelled as precise entrances. Entrance positions are
+community observations and have not been checked in the current game for LootLizard.
+
 Paramo's landmarks can change between matches; check its locations against the
 current in-game map. Haven's 22 markers identify possible Pillar cache building
 centres transcribed from a historical community guide; only some buildings are
