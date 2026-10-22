@@ -36,9 +36,25 @@ körülbelül 14,1 MB-ot jelentenek; a dekódolt képek és a felismerési mint�
 memóriát igényelnek. Az eredeti képek 2024-esek, eltérhetnek a mai játéktól.
 A játékbeli elérhetőség mód- és rotációfüggő; a lista nem pontossági garancia.
 
-Közösségi pinceadat 15 erangeli és 12 taegói ponthoz van. Még ellenőrizetlenek,
-a taegói lista hiányos. A többi térkép pontlistája szándékosan üres; ebből nem
-következik, hogy ott nincs titkos helyiség. Kitalált pontok nem kerültek be.
+Közösségi helyadat kilenc térképhez van: Erangel, Taego, Miramar, Deston, Rondo,
+Vikendi, Paramo, Karakin és Haven. Térképtől függően titkos szobákat, biztonsági
+szobákat, medvebarlang-bejáratokat, alagútbejáratokat vagy lehetséges raktárépületeket
+jelölnek. Taego listája a forrásban szereplő 15 titkos
+szobát tartalmazza. A közösségi adatokat ebben a projektben még nem ellenőriztük
+önállóan a játékban; a listák hiányosak vagy elavultak lehetnek.
+
+Paramo tájékozódási pontjai meccsenként változhatnak; ellenőrizd a helyeket az
+aktuális térképen. Haven 22 jelölője egy korábbi közösségi útmutatóban megjelölt
+lehetséges Pillar-raktárépületek középpontját mutatja; meccsenként csak néhány aktív,
+és a listát a jelenlegi játékban ellenőrizni kell. Nem 22 garantáltan aktív szoba.
+Sanhok és Training pontlistája üres, mert nincs hozzájuk
+mellékelt, forrással alátámasztott helyadat; ebből nem következik, hogy ott nincs
+titkos helyiség.
+
+Ajtó-, lakat-, barlang-, alagút- és ládajel különbözteti meg a helytípusokat a térképen
+és a listában. Az apró középpont mutatja a koordinátát, az eltolt ikonhoz rövid
+vonal vezet. Sűrű területen az ikon szabad helyre kerülhet vagy szám nélkül
+jelenhet meg; ha nincs helye, a pontos középpont marad látható.
 
 A játékosoknak szánt felület térképet ismer fel és pincepontokat vetít rá.
 Játékospozíció-, iránytölcsér- és körfelismerés nem fut benne. Térképváltozás,

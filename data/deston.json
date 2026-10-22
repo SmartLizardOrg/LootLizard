@@ -3,10 +3,287 @@
   "name": "Deston",
   "size_m": 8000,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Deston_Main_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+    "license": "MIT",
+    "attribution": "Copyright (c) 2026 Axiom; Copyright (c) 2026 Aleksei Reuk",
+    "additional_sources": [
+      "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js"
+    ],
+    "notes": "39 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. 34 ziphow security-room points are supplemented by five distinct adzpm points corroborated by recent public key-use detections. Drone-only rooms were not deliberately imported. Ripton has closely spaced/multilevel rooms: this two-dimensional map does not identify the floor, door or key availability, and the list may still be incomplete. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
-  "points": []
+  "points": [
+    {
+      "id": "deston-01",
+      "name": "Security room 01",
+      "x": 0.2008056640625,
+      "y": 0.5562744140625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-02",
+      "name": "Security room 02",
+      "x": 0.749755859375,
+      "y": 0.516845703125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-03",
+      "name": "Security room 03",
+      "x": 0.7567138671875,
+      "y": 0.5172119140625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-04",
+      "name": "Security room 04",
+      "x": 0.7576904296875,
+      "y": 0.510986328125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-05",
+      "name": "Security room 05",
+      "x": 0.7711181640625,
+      "y": 0.5037841796875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-06",
+      "name": "Security room 06",
+      "x": 0.7935791015625,
+      "y": 0.4964599609375,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-07",
+      "name": "Security room 07",
+      "x": 0.8056640625,
+      "y": 0.5067138671875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-08",
+      "name": "Security room 08",
+      "x": 0.798095703125,
+      "y": 0.530517578125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-09",
+      "name": "Security room 09",
+      "x": 0.7821044921875,
+      "y": 0.5634765625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-10",
+      "name": "Security room 10",
+      "x": 0.751953125,
+      "y": 0.5753173828125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-11",
+      "name": "Security room 11",
+      "x": 0.73974609375,
+      "y": 0.5736083984375,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-12",
+      "name": "Security room 12",
+      "x": 0.7276611328125,
+      "y": 0.581787109375,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-13",
+      "name": "Security room 13",
+      "x": 0.80712890625,
+      "y": 0.5596923828125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-14",
+      "name": "Security room 14",
+      "x": 0.8021240234375,
+      "y": 0.567626953125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-15",
+      "name": "Security room 15",
+      "x": 0.80029296875,
+      "y": 0.5694580078125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-16",
+      "name": "Security room 16",
+      "x": 0.829833984375,
+      "y": 0.5535888671875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-17",
+      "name": "Security room 17",
+      "x": 0.8233642578125,
+      "y": 0.562255859375,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-18",
+      "name": "Security room 18",
+      "x": 0.5609130859375,
+      "y": 0.4989013671875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-19",
+      "name": "Security room 19",
+      "x": 0.468505859375,
+      "y": 0.5533447265625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-20",
+      "name": "Security room 20",
+      "x": 0.6226806640625,
+      "y": 0.239990234375,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-21",
+      "name": "Security room 21",
+      "x": 0.821533203125,
+      "y": 0.2305908203125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-22",
+      "name": "Security room 22",
+      "x": 0.235107421875,
+      "y": 0.1796875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-23",
+      "name": "Security room 23",
+      "x": 0.2296142578125,
+      "y": 0.1748046875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-24",
+      "name": "Security room 24",
+      "x": 0.2393798828125,
+      "y": 0.220947265625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-25",
+      "name": "Security room 25",
+      "x": 0.63623046875,
+      "y": 0.1099853515625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-26",
+      "name": "Security room 26",
+      "x": 0.339599609375,
+      "y": 0.0643310546875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-27",
+      "name": "Security room 27",
+      "x": 0.2138671875,
+      "y": 0.4132080078125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-28",
+      "name": "Security room 28",
+      "x": 0.4022216796875,
+      "y": 0.4385986328125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-29",
+      "name": "Security room 29",
+      "x": 0.5540771484375,
+      "y": 0.334716796875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-30",
+      "name": "Security room 30",
+      "x": 0.9014892578125,
+      "y": 0.385498046875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-31",
+      "name": "Security room 31",
+      "x": 0.281005859375,
+      "y": 0.5770263671875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-32",
+      "name": "Security room 32",
+      "x": 0.4622802734375,
+      "y": 0.6971435546875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-33",
+      "name": "Security room 33",
+      "x": 0.6990966796875,
+      "y": 0.7874755859375,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-34",
+      "name": "Security room 34",
+      "x": 0.1407470703125,
+      "y": 0.7703857421875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-35",
+      "name": "Security room 35",
+      "x": 0.3837890625,
+      "y": 0.3311767578125,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-36",
+      "name": "Security room 36",
+      "x": 0.7806396484375,
+      "y": 0.5576171875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-37",
+      "name": "Security room 37",
+      "x": 0.8116455078125,
+      "y": 0.606201171875,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-38",
+      "name": "Security room 38",
+      "x": 0.819580078125,
+      "y": 0.5162353515625,
+      "kind": "security_room"
+    },
+    {
+      "id": "deston-39",
+      "name": "Security room 39",
+      "x": 0.82568359375,
+      "y": 0.5303955078125,
+      "kind": "security_room"
+    }
+  ]
 }

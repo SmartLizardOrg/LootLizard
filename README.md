@@ -48,11 +48,26 @@ fetch map PNGs from an external image host. The reference package is about
 **14.1 MB** before ordinary HTTP caching; decoded images and feature caches use
 additional memory. PNG sizes and SHA-256 are checked before use.
 
-Community room coordinates remain available for **15 Erangel** and **12 Taego**
-locations. They are unverified; Taego is incomplete. Other maps intentionally have
-empty point lists, which does not mean no secret rooms exist. No room locations
-were invented to make a map appear supported. Verify listed locations and their
-entrances in the game.
+Community location coordinates are bundled for **nine maps**: Erangel, Taego,
+Miramar, Deston, Rondo, Vikendi, Paramo, Karakin and Haven. The data covers secret rooms,
+security rooms, bear cave entrances, tunnel entrances and possible supply-cache
+buildings, depending on the map. Taego includes
+15 source-listed secret rooms. Imported community coordinates have not been
+independently verified in game for this project; neither the counts nor the lists
+establish complete coverage of the current game. Verify locations and entrances.
+
+Paramo's landmarks can change between matches; check its locations against the
+current in-game map. Haven's 22 markers identify possible Pillar cache building
+centres transcribed from a historical community guide; only some buildings are
+active each match, and this list needs checking. They are not 22 guaranteed rooms.
+Sanhok and
+Training retain empty point lists because no supported coordinates are bundled;
+an empty list does not mean no secret locations exist.
+
+Door, lock, cave, tunnel and supply-crate symbols distinguish location types on the
+map and in the list. Small center points mark the coordinates; offset badges use
+short leader lines. In crowded areas, badges move into free space or leave the
+anchor visible without a number. The legend shows only types present on the map.
 
 The current match stays associated with its first verified map until a confirmed
 match end, **Reset match**, or sharing interruption. Subsequent scans check that

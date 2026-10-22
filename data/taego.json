@@ -3,17 +3,20 @@
   "name": "Taego",
   "size_m": 8000,
   "source": {
-    "url": "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js",
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
     "license": "MIT",
-    "attribution": "Copyright (c) 2026 Aleksei Reuk",
-    "notes": "The 12 points are adapted from the adzpm/pubg-map community dataset. They have not been verified in-game for this project. This is an incomplete, unverified list; it must not be treated as a complete list of Taego secret rooms. Coordinate accuracy and current validity are unverified. Original x/y values are source-image pixels; the upstream web/public/assets/tiles/taego/info.json at the same commit records an 8192 x 8192 px image. Values here are normalized as x/8192 and y/8192, with a top-left origin, x increasing rightward and y increasing downward. size_m:8000 is an approximate metre scale based on Taego's nominal 8 x 8 km map size; 8192 image pixels do not mean 8192 metres. Distances are estimated straight-line values. Stable ids and English display names were added in upstream order. No source map image is included. The full MIT license is in THIRD_PARTY_NOTICES.md. Source recorded: 2026-10-21."
+    "attribution": "Copyright (c) 2026 Aleksei Reuk; Copyright (c) 2026 Axiom",
+    "additional_sources": [
+      "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js"
+    ],
+    "notes": "15 community-listed rooms: 11 retained adzpm points, taego-01 corrected to ziphow S403, and three additions S413-S415. Existing ids remain stable. The correction and additions were corroborated against recent public key-use detections and an original community map, without importing either dataset/image. This covers the 15 rooms in the consulted lists, not a claim of exhaustive current-game coverage. No in-game verification was performed for LootLizard. Coordinates are source pixels divided by 8192, top-left origin, x right/east, y down/south. The 8000 m side length is approximate and is not the pixel divisor. Full source records and ids are in data-sources/secret-locations.json; licenses in THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
   "points": [
     {
       "id": "taego-01",
       "name": "Secret room 01",
-      "x": 0.176025390625,
-      "y": 0.1458740234375
+      "x": 0.1715087890625,
+      "y": 0.1455078125
     },
     {
       "id": "taego-02",
@@ -80,6 +83,24 @@
       "name": "Secret room 12",
       "x": 0.116943359375,
       "y": 0.6451416015625
+    },
+    {
+      "id": "taego-13",
+      "name": "Secret room 13",
+      "x": 0.740966796875,
+      "y": 0.4744873046875
+    },
+    {
+      "id": "taego-14",
+      "name": "Secret room 14",
+      "x": 0.4388427734375,
+      "y": 0.2415771484375
+    },
+    {
+      "id": "taego-15",
+      "name": "Secret room 15",
+      "x": 0.1544189453125,
+      "y": 0.3314208984375
     }
   ]
 }

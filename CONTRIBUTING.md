@@ -34,9 +34,28 @@ an approximate nominal side length for straight-line distance, not a route lengt
 Use stable lowercase safe map/point ids. Retain existing ids when correcting points.
 
 Empty `points: []` is valid and means no coordinates are supplied. Do not manufacture
-points or imply a zero-length list proves no secret rooms exist. Erangel has 15
-unverified points; Taego has 12 and is incomplete. New point records need a precise
-source URL, attribution, license, version and uncertainty notes. Preserve credits.
+points or imply a zero-length list proves no secret locations exist. Community
+coordinates cover Erangel, Taego, Miramar, Deston, Rondo, Vikendi, Paramo, Karakin and
+Haven; Sanhok and Training currently have empty lists. Taego includes 15 source-listed
+secret rooms. These are imported community data, not independently verified or
+guaranteed complete lists of locations in the current game.
+
+New point records need a precise source URL, attribution, license, version and
+uncertainty notes. Preserve credits, existing point ids and the distinction between
+room locations and entrances. Paramo's landmarks can change between matches; fixed
+coordinates must retain that caveat and must not be presented as current-match
+ground truth.
+
+Haven's 22 possible Pillar cache building centres come from a historical community
+guide. Preserve the uncertainty note: only some are active each match, and the
+list needs current-game verification. A possible building centre must not be
+renamed as a guaranteed active room or precise entrance.
+
+Point `kind` is optional and defaults to `secret_room` for existing records. Use
+`security_room`, `bear_cave`, `tunnel_entrance` or `supply_cache` when the source identifies those
+types. Do not infer a key/security requirement from a generic room name. The app
+uses the type for its shared map/list/legend symbol; preserve a point's actual
+coordinates when improving crowded badge placement.
 
 Validate a complete local catalog:
 

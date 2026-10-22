@@ -79,6 +79,20 @@ class DataTests(unittest.TestCase):
         original = fixture()
         self.assertEqual(MapData.from_dict(original).to_dict(), original)
 
+    def test_location_kinds_survive_packaging_and_legacy_rooms_keep_their_default(self):
+        original = fixture()
+        self.assertEqual(MapData.from_dict(original).points[0].kind, "secret_room")
+        for kind in ("security_room", "bear_cave", "tunnel_entrance", "supply_cache"):
+            with self.subTest(kind=kind):
+                original["points"][0]["kind"] = kind
+                parsed = MapData.from_dict(original)
+                self.assertEqual(parsed.points[0].kind, kind)
+                self.assertEqual(parsed.to_dict(), original)
+        for kind in (None, True, {}, "vehicle", "__proto__"):
+            original["points"][0]["kind"] = kind
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                MapData.from_dict(original)
+
     def test_bad_coordinate_types_are_rejected(self):
         for value in [None, True, "0.5", -1, 1.1, float("nan"), float("inf")]:
             data = fixture()
@@ -115,14 +129,14 @@ class DataTests(unittest.TestCase):
                 MapData.load(path)
 
     def test_bundled_data_is_normalized_and_attributed(self):
-        for map_id, expected_count in [("erangel", 15), ("taego", 12)]:
+        for map_id, expected_count in [("erangel", 15), ("taego", 15)]:
             with self.subTest(map_id=map_id):
                 data = MapData.load(ROOT / "data" / f"{map_id}.json")
                 self.assertEqual(data.id, map_id)
                 self.assertEqual(len(data.points), expected_count)
                 self.assertEqual(data.size_m, 8000)
                 self.assertTrue(all(point.id.startswith(f"{map_id}-") for point in data.points))
-                self.assertIn("10dc2faa743835fc2fe00cd745c9f9e3373322b1", data.source["url"])
+                self.assertTrue(data.source["url"].startswith("https://github.com/"))
                 self.assertEqual(data.source["license"], "MIT")
                 self.assertIn("Aleksei Reuk", data.source["attribution"])
 

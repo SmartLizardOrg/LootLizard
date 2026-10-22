@@ -43,6 +43,20 @@ test('maps without bundled room coordinates are valid and do not invent a point'
   assert.deepEqual(validateCatalog({schema_version: 1, revision: 'release', maps: [empty]}).maps[0].points, []);
 });
 
+test('location kinds are optional for legacy rooms and only known kinds are accepted', () => {
+  const legacy=map();
+  assert.equal(validateMaps([legacy])[0],legacy);
+  assert.equal(Object.hasOwn(legacy.points[0],'kind'),false,'Validation must not mutate legacy records');
+  for(const kind of ['secret_room','security_room','bear_cave','tunnel_entrance','supply_cache']){
+    const value=map();value.points[0].kind=kind;
+    assert.equal(validateMaps([value])[0].points[0].kind,kind);
+  }
+  for(const kind of [null,undefined,[],{},1,'SECRET_ROOM','unknown','constructor','__proto__']){
+    const value=map();value.points[0].kind=kind;
+    assert.throws(()=>validateMaps([value]),/Invalid location record/);
+  }
+});
+
 test('bounded JSON rejects declared and streamed excess before publication', async () => {
   await assert.rejects(readBoundedJSON(new Response('{}', {headers: {'content-length': '999'}}), 20), /too large/);
   const stream = new ReadableStream({start(controller) {

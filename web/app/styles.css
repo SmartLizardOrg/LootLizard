@@ -77,6 +77,10 @@ h1 { margin: 0; font-size: 23px; font-weight: 650; line-height: 1.2; letter-spac
 .retained-banner::before { content: ""; display: block; flex: 0 0 auto; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); }
 .map-footer { min-height: 39px; display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 14px; color: var(--subtle); font-size: 11px; font-variant-numeric: tabular-nums; }
 .map-update { display: inline-flex; gap: 7px; }
+.location-legend { display: flex; flex-wrap: wrap; flex: 0 0 auto; gap: 8px 18px; padding: 0 0 9px; margin: 0; list-style: none; color: var(--muted); font-size: 11px; }
+.location-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.location-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 19px; width: 19px; height: 20px; vertical-align: middle; }
+.location-icon svg { width: 19px; height: 19px; }
 .sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3c4d5e transparent; }
 .status-card { padding: 20px 21px; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; flex: 0 0 auto; }
 .status-eyebrow { display: flex; align-items: center; gap: 7px; color: var(--subtle); font-size: 10px; font-weight: 650; letter-spacing: .12em; }
@@ -96,6 +100,9 @@ h1 { margin: 0; font-size: 23px; font-weight: 650; line-height: 1.2; letter-spac
 .targets-table td { border-top: 1px solid var(--line-soft); padding: 13px 12px; vertical-align: middle; overflow-wrap: anywhere; line-height: 1.5; }
 .targets-table .rank-column, .targets-table td:first-child { width: 43px; padding-left: 18px; padding-right: 5px; color: var(--subtle); font-variant-numeric: tabular-nums; }
 .targets-table td:nth-child(2) { color: var(--amber-soft); }
+.targets-table .location-cell { display: table-cell; }
+.location-cell .location-icon { margin-right: 8px; }
+.paramo-note, .haven-note { color: var(--amber-soft); }
 .targets-table tbody tr:hover { background: #24313c; }
 .targets-table tbody tr.is-selected { background: #3a3020; }
 .empty-targets { padding: 26px 24px 30px; text-align: center; color: var(--subtle); font-size: 13px; line-height: 1.7; }

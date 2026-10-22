@@ -3,10 +3,165 @@
   "name": "Karakin",
   "size_m": 2000,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Karakin_Main_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+    "license": "MIT",
+    "attribution": "Copyright (c) 2026 Axiom",
+    "notes": "22 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 2000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. These 22 source 'basement' annotations mark underground/tunnel entrances, not 22 distinct key-locked rooms; several entrances can lead to the same tunnel. Sticky Bomb access may be required. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
-  "points": []
+  "points": [
+    {
+      "id": "karakin-01",
+      "name": "Tunnel entrance 01",
+      "x": 0.2230224609375,
+      "y": 0.370361328125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-02",
+      "name": "Tunnel entrance 02",
+      "x": 0.2403564453125,
+      "y": 0.3359375,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-03",
+      "name": "Tunnel entrance 03",
+      "x": 0.399658203125,
+      "y": 0.3656005859375,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-04",
+      "name": "Tunnel entrance 04",
+      "x": 0.581298828125,
+      "y": 0.318603515625,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-05",
+      "name": "Tunnel entrance 05",
+      "x": 0.6256103515625,
+      "y": 0.34423828125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-06",
+      "name": "Tunnel entrance 06",
+      "x": 0.748046875,
+      "y": 0.32568359375,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-07",
+      "name": "Tunnel entrance 07",
+      "x": 0.765380859375,
+      "y": 0.3092041015625,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-08",
+      "name": "Tunnel entrance 08",
+      "x": 0.3245849609375,
+      "y": 0.5262451171875,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-09",
+      "name": "Tunnel entrance 09",
+      "x": 0.5296630859375,
+      "y": 0.4615478515625,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-10",
+      "name": "Tunnel entrance 10",
+      "x": 0.5977783203125,
+      "y": 0.47265625,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-11",
+      "name": "Tunnel entrance 11",
+      "x": 0.548583984375,
+      "y": 0.5235595703125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-12",
+      "name": "Tunnel entrance 12",
+      "x": 0.7447509765625,
+      "y": 0.5147705078125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-13",
+      "name": "Tunnel entrance 13",
+      "x": 0.527099609375,
+      "y": 0.5225830078125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-14",
+      "name": "Tunnel entrance 14",
+      "x": 0.46875,
+      "y": 0.57568359375,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-15",
+      "name": "Tunnel entrance 15",
+      "x": 0.5146484375,
+      "y": 0.6129150390625,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-16",
+      "name": "Tunnel entrance 16",
+      "x": 0.3770751953125,
+      "y": 0.78271484375,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-17",
+      "name": "Tunnel entrance 17",
+      "x": 0.4222412109375,
+      "y": 0.79296875,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-18",
+      "name": "Tunnel entrance 18",
+      "x": 0.56640625,
+      "y": 0.67822265625,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-19",
+      "name": "Tunnel entrance 19",
+      "x": 0.5714111328125,
+      "y": 0.73876953125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-20",
+      "name": "Tunnel entrance 20",
+      "x": 0.622802734375,
+      "y": 0.7598876953125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-21",
+      "name": "Tunnel entrance 21",
+      "x": 0.729736328125,
+      "y": 0.71923828125,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "karakin-22",
+      "name": "Tunnel entrance 22",
+      "x": 0.760498046875,
+      "y": 0.6983642578125,
+      "kind": "tunnel_entrance"
+    }
+  ]
 }
