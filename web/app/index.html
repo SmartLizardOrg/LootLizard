@@ -67,6 +67,7 @@
           </ol>
         </div>
         <div id="demo-banner" class="demo-banner" hidden data-i18n="Synthetic demo · not a live game">Synthetic demo · not a live game</div>
+        <div id="retained-banner" class="retained-banner" role="status" hidden data-i18n="Last recognized map · open the map to refresh">Last recognized map · open the map to refresh</div>
       </div>
       <div class="map-footer">
         <div class="legend" aria-label="Map legend">
@@ -74,7 +75,7 @@
           <span><i class="legend-inside" aria-hidden="true"></i><span data-i18n="Inside circle">Inside circle</span></span>
           <span><i class="legend-player" aria-hidden="true"></i><span data-i18n="Position estimate">Position estimate</span></span>
         </div>
-        <div class="scan-metrics"><span id="snapshot-age" class="snapshot-age" data-i18n="No image yet">No image yet</span><span><span data-i18n="Last scan">Last scan</span> <span id="last-update">—</span></span><span><span data-i18n="Scan">Scan</span> <span id="scan-duration">—</span></span></div>
+        <div class="scan-metrics"><span id="snapshot-age" class="snapshot-age" data-i18n="No image yet">No image yet</span><span><span data-i18n="Map updated">Map updated</span> <span id="last-update">—</span></span><span><span data-i18n="Scan">Scan</span> <span id="scan-duration">—</span></span></div>
       </div>
     </section>
 
@@ -89,12 +90,14 @@
           <div><dt data-i18n="Inside circle">Inside circle</dt><dd id="inside-count">—</dd></div>
         </dl>
         <p id="position-status" class="position-status" data-i18n="Position unknown · distances unavailable">Position unknown · distances unavailable</p>
+        <p id="circle-status" class="circle-status" data-i18n="No circle recognized">No circle recognized</p>
       </section>
 
       <section id="source-panel" class="source-panel" aria-labelledby="source-title" hidden>
         <div class="source-heading"><h2 id="source-title" data-i18n="Connected source">Connected source</h2><span class="source-indicator" aria-hidden="true"></span></div>
         <div class="source-preview-frame"><canvas id="source-preview" width="240" height="135" role="img" aria-label="Low-rate preview of the connected source"></canvas></div>
         <p id="source-status" class="source-status" role="status" data-i18n="No source connected">No source connected</p>
+        <div class="source-controls"><button id="reset-match" class="button button-subtle reset-match" type="button" data-i18n="Reset match">Reset match</button></div>
       </section>
 
       <section class="targets-card" aria-labelledby="targets-title">

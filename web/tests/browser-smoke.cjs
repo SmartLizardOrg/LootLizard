@@ -22,8 +22,8 @@ const deadline = setTimeout(() => { report.status = 'timeout'; save(); server?.k
 deadline.unref();
 
 // Observe the rendered interface independently of the controller's state API.
-// Hidden ancestors count: an old bitmap must not remain visible after its map
-// registration has been invalidated, even if the canvas retains its dimensions.
+// Hidden ancestors count. During gameplay the central bitmap must stay paired
+// with its retained map registration; Stop/reset must still remove it.
 async function readMapView() {
   return page.evaluate(() => {
     const visible = element => Boolean(element && !element.hidden &&
@@ -31,10 +31,19 @@ async function readMapView() {
     const main = document.querySelector('#map-canvas');
     const preview = document.querySelector('#source-preview');
     const connect = document.querySelector('#connect-source');
+    const pixelHash = canvas => {
+      if (!canvas?.width || !canvas?.height) return null;
+      const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+      let hash = 2166136261;
+      for (const value of pixels) hash = Math.imul(hash ^ value, 16777619);
+      return (hash >>> 0).toString(16);
+    };
     return {
       view: document.querySelector('#map-stage')?.dataset.view || null,
       title: document.querySelector('#stage-title')?.textContent.trim() || '',
-      main: {visible: visible(main), width: main?.width || 0, height: main?.height || 0},
+      main: {visible: visible(main), width: main?.width || 0, height: main?.height || 0, pixelHash: pixelHash(main)},
+      retainedBannerVisible: visible(document.querySelector('#retained-banner')),
+      targetCount: document.querySelectorAll('#target-list tr').length,
       sourcePanelVisible: visible(document.querySelector('#source-panel')),
       preview: {visible: visible(preview), width: preview?.width || 0, height: preview?.height || 0,
         centerPixel: preview?.width && preview?.height ? Array.from(preview.getContext('2d').getImageData(
@@ -68,6 +77,7 @@ function assertStoppedView(view) {
   assert.equal(view.main.visible, false, 'Stopping must hide the old recognized map bitmap');
   assert.equal(view.sourcePanelVisible, false, 'Stopping must hide the source confirmation panel');
   assert.equal(view.preview.visible, false, 'Stopping must hide the source preview');
+  assert.equal(view.retainedBannerVisible, false, 'Stopping must hide the retained-map notice');
   assert.notEqual(view.view, 'map', 'Stopped geometry must not leave a recognized-map presentation');
 }
 
@@ -107,6 +117,34 @@ async function main() {
   report.defaultReferences = await page.evaluate(() => window.lootLizard.getState().referenceCount);
   assert.equal(report.defaultReferences, 2, 'Erangel and Taego references must load without user file import');
   report.steps.push('official-default-references-load-automatically');
+  const localOCR = await page.evaluate(async () => {
+    const {createMatchContextReader} = await import('/app/match-context-reader.mjs');
+    const {classifyMatchContext} = await import('/app/match-context.mjs');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200; canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#111820'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px Arial';
+    ctx.fillText('PLAY    CAREER    CUSTOMIZE    WORKSHOP    STORE', 32, 72);
+    ctx.fillText('NORMAL', 32, 560);
+    ctx.fillText('PLAY', 32, 710);
+    const reader = createMatchContextReader({initTimeoutMs: 45_000, timeoutMs: 12_000});
+    let observation, classification;
+    try {
+      observation = await reader.read(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      classification = classifyMatchContext(observation);
+    } finally { reader.terminate(); }
+    // Keep arbitrary recognized text out of test evidence, as in the app.
+    return {status: observation.status, wordCount: observation.words?.length || 0,
+      context: classification.context, reason: observation.reason, readerState: reader.getState()};
+  });
+  assert.equal(localOCR.status, 'ok', 'The pinned local OCR worker and English model must initialize');
+  assert.ok(localOCR.wordCount >= 5, 'Actual OCR must recognize the synthetic multi-cue menu');
+  assert.equal(localOCR.context, 'lobby');
+  assert.equal(localOCR.readerState.busy, false);
+  assert.equal(localOCR.readerState.initialized, false, 'Terminating the reader must release its worker');
+  report.localOCR = localOCR;
+  report.steps.push('real-local-ocr-classifies-synthetic-lobby-and-releases-worker');
   const setupView = await readMapView();
   assert.equal(setupView.view, 'setup');
   assert.equal(setupView.main.visible, false, 'Before connection, the center must show setup rather than a blank/gameplay canvas');
@@ -241,7 +279,10 @@ async function main() {
     window.__syntheticCapture = {canvas, stream, frames: demo.frames, scans: []};
     const observer = new MutationObserver(() => {
       const state = window.lootLizard.getState();
-      if (state.phase === 'scanning') window.__syntheticCapture.scans.push(state);
+      if (state.phase === 'scanning') window.__syntheticCapture.scans.push({...state,
+        view: document.querySelector('#map-stage').dataset.view,
+        mainVisible: !document.querySelector('#map-canvas').hidden,
+        targetCount: document.querySelectorAll('#target-list tr').length});
     });
     observer.observe(document.querySelector('#recognition-status'), {childList: true, characterData: true, subtree: true});
     window.__syntheticCapture.observer = observer;
@@ -252,12 +293,13 @@ async function main() {
   await otherTab.bringToFront();
   await page.waitForFunction(() => {
     const state = window.lootLizard.getState();
-    return state.sharing && state.mapId === 'demo' && state.points.length > 0;
+    return state.sharing && state.phase === 'recognized' && state.mapId === 'demo' && state.points.length > 0;
   }, null, {timeout: 60_000});
   report.passiveStreamState = await page.evaluate(() => window.lootLizard.getState());
   const sharedMapView = await readMapView();
   assertCroppedMap(sharedMapView);
   assertSourcePreview(sharedMapView);
+  assert.equal(sharedMapView.retainedBannerVisible, false, 'A current recognized map needs no retained-map notice');
   report.sharedMapView = sharedMapView;
   report.steps.push('recognized-map-crops-registered-bounds-with-bounded-source-preview');
   await page.evaluate(() => {
@@ -268,32 +310,90 @@ async function main() {
   });
   await page.waitForFunction(() => {
     const state = window.lootLizard.getState();
-    return state.sharing && state.phase === 'unknown' && state.mapId === null && state.points.length === 0;
+    return state.sharing && state.phase === 'unknown' && state.mapId === 'demo' && state.points.length > 0;
   }, null, {timeout: 60_000});
   const gameplayUI = await page.evaluate(() => ({state: window.lootLizard.getState(), scans: window.__syntheticCapture.scans}));
   assert.ok(gameplayUI.scans.length > 0, 'Automatic stream must actually process the changed frame');
-  assert.ok(gameplayUI.scans.every(state => state.mapId === null && state.points.length === 0), 'A newer displayed frame must never carry old geometry while scanning');
-  assert.equal(await page.locator('#target-list tr').count(), 0);
+  assert.ok(gameplayUI.scans.every(state => state.mapId === 'demo' && state.points.length > 0 &&
+    state.view === 'map' && state.mainVisible && state.targetCount > 0),
+  'Scanning gameplay must retain the recognized map and its targets instead of replacing its bitmap');
+  assert.equal(gameplayUI.state.mapUpdatedAt, report.passiveStreamState.mapUpdatedAt,
+    'Unrecognized gameplay must not refresh the age of the retained map');
+  assert.equal(gameplayUI.state.positionUpdatedAt, report.passiveStreamState.positionUpdatedAt);
+  assert.equal(gameplayUI.state.zoneUpdatedAt, report.passiveStreamState.zoneUpdatedAt);
+  assert.deepEqual(gameplayUI.state.points, report.passiveStreamState.points);
+  assert.ok(await page.locator('#target-list tr').count() > 0);
   const gameplayView = await readMapView();
-  assert.equal(gameplayView.view, 'waiting', 'Unrecognized gameplay must return the connected stage to waiting');
-  assert.equal(gameplayView.main.visible, false, 'Ordinary gameplay must never fill the central map stage');
-  assert.match(gameplayView.title, /open.*map/i, 'The connected waiting stage must ask the player to open the game map');
+  assertCroppedMap(gameplayView);
+  assert.equal(gameplayView.main.pixelHash, sharedMapView.main.pixelHash,
+    'The retained central map pixels must stay paired with their old registration, never with the gameplay frame');
+  assert.equal(gameplayView.retainedBannerVisible, true, 'A retained map must be labeled clearly');
   assertSourcePreview(gameplayView);
   assert.deepEqual(gameplayView.preview.centerPixel, [31, 42, 48, 255],
     'The small preview must update to the current gameplay frame rather than retaining the old map');
   report.gameplayView = gameplayView;
-  await page.screenshot({path: path.join(evidence, 'connected-waiting.png'), fullPage: true});
-  report.steps.push('unrecognized-gameplay-stays-in-small-preview-and-main-stage-asks-for-map');
+  await page.screenshot({path: path.join(evidence, 'retained-map-during-gameplay.png'), fullPage: true});
+  report.steps.push('gameplay-updates-small-preview-while-recognized-map-and-ages-stay-paired');
   await page.evaluate(() => {
     const fixture = window.__syntheticCapture;
     fixture.canvas.getContext('2d').putImageData(fixture.frames[2], 0, 0);
     fixture.stream.getVideoTracks()[0].requestFrame?.();
   });
-  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
-  assertCroppedMap(await readMapView());
+  await page.waitForFunction(previous => {
+    const state = window.lootLizard.getState();
+    return state.phase === 'recognized' && state.mapId === 'demo' && state.mapUpdatedAt > previous;
+  }, gameplayUI.state.mapUpdatedAt, {timeout: 60_000});
+  const returnedMapView = await readMapView();
+  assertCroppedMap(returnedMapView);
+  assert.equal(returnedMapView.retainedBannerVisible, false, 'A fresh recognized map must clear the retained notice');
   report.streamGameplay = gameplayUI;
   report.streamMapReturn = await page.evaluate(() => window.lootLizard.getState());
-  report.steps.push('automatic-stream-map-gameplay-map-and-no-old-geometry-while-scanning');
+  report.steps.push('automatic-stream-map-gameplay-map-retains-guidance-until-fresh-map-arrives');
+
+  // Reset is an explicit match boundary. It clears guidance while preserving
+  // the already-approved source, even if the current image is ordinary play.
+  await page.evaluate(() => {
+    const fixture = window.__syntheticCapture;
+    fixture.canvas.getContext('2d').putImageData(fixture.frames[1], 0, 0);
+    fixture.stream.getVideoTracks()[0].requestFrame?.();
+  });
+  await page.waitForFunction(() => {
+    const state = window.lootLizard.getState();
+    return state.sharing && state.phase === 'unknown' && state.mapId === 'demo';
+  }, null, {timeout: 60_000});
+  await page.locator('#reset-match').click();
+  const reset = await page.evaluate(() => ({state: window.lootLizard.getState(),
+    trackState: window.__syntheticCapture.stream.getVideoTracks()[0].readyState,
+    sameStream: document.querySelector('#capture-video').srcObject === window.__syntheticCapture.stream}));
+  assert.equal(reset.state.sharing, true, 'Reset match must keep the approved capture running');
+  assert.equal(reset.trackState, 'live');
+  assert.equal(reset.sameStream, true);
+  assert.equal(reset.state.mapId, null);
+  assert.deepEqual(reset.state.points, []);
+  assert.equal(reset.state.position, null);
+  assert.equal(reset.state.zone, null);
+  assert.equal(reset.state.mapUpdatedAt, null);
+  assert.equal(reset.state.positionUpdatedAt, null);
+  assert.equal(reset.state.zoneUpdatedAt, null);
+  assert.equal(await page.locator('#target-list tr').count(), 0);
+  const resetView = await readMapView();
+  assert.equal(resetView.main.visible, false);
+  assert.equal(resetView.retainedBannerVisible, false);
+  assertSourcePreview(resetView);
+  assert.equal(await page.locator('#reset-match').isDisabled(), true);
+  report.resetMatch = {reset, view: resetView};
+  await page.evaluate(() => {
+    const fixture = window.__syntheticCapture;
+    fixture.canvas.getContext('2d').putImageData(fixture.frames[2], 0, 0);
+    fixture.stream.getVideoTracks()[0].requestFrame?.();
+  });
+  await page.waitForFunction(previous => {
+    const state = window.lootLizard.getState();
+    return state.sharing && state.phase === 'recognized' && state.mapId === 'demo' && state.mapUpdatedAt > previous;
+  }, report.streamMapReturn.mapUpdatedAt, {timeout: 60_000});
+  assertCroppedMap(await readMapView());
+  report.afterResetState = await page.evaluate(() => window.lootLizard.getState());
+  report.steps.push('manual-reset-clears-map-ages-without-ending-stream-and-next-map-reacquires');
   await page.evaluate(() => {
     const track = window.__syntheticCapture.stream.getVideoTracks()[0];
     track.stop();
@@ -393,6 +493,95 @@ async function main() {
   report.steps.push('diagnostic-mode-clears-map-and-rejects-in-flight-worker-geometry');
 
   await page.locator('#capture-work').selectOption('full');
+  // Exercise the production match-context path: demo streams intentionally skip
+  // OCR. Use the already-reviewed official reference, never a private capture.
+  await page.evaluate(async () => {
+    const {AUTOMATIC_REFERENCES, fetchReference} = await import('/app/automatic-references.mjs');
+    const record = AUTOMATIC_REFERENCES.find(item => item.mapId === 'erangel');
+    const bitmap = await createImageBitmap(await fetchReference(record));
+    const canvas = document.createElement('canvas');
+    canvas.width = 960; canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#111820'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 160, 40, 640, 640); bitmap.close();
+    const mapFrame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const stream = canvas.captureStream(2);
+    window.__contextCapture = {canvas, stream, mapFrame};
+    const paint = () => {ctx.putImageData(mapFrame, 0, 0); stream.getVideoTracks()[0].requestFrame?.();};
+    const repaint = setInterval(paint, 200);
+    let timeout;
+    try {
+      const started = window.lootLizard.startTestStream(stream, {demo: false});
+      paint();
+      await Promise.race([started, new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(Error('Official-reference synthetic stream produced no playable frame')), 30_000);
+      })]);
+    } finally {clearInterval(repaint); clearTimeout(timeout);}
+  });
+  await page.waitForFunction(() => {
+    const state = window.lootLizard.getState();
+    return state.sharing && state.phase === 'recognized' && state.mapId === 'erangel';
+  }, null, {timeout: 60_000});
+  const officialMapState = await page.evaluate(() => window.lootLizard.getState());
+  const officialMapView = await readMapView();
+  assertCroppedMap(officialMapView);
+  await page.evaluate(() => {
+    const fixture = window.__contextCapture, ctx = fixture.canvas.getContext('2d');
+    fixture.unknownStartedAt = Date.now();
+    ctx.fillStyle = '#29363d'; ctx.fillRect(0, 0, fixture.canvas.width, fixture.canvas.height);
+    fixture.stream.getVideoTracks()[0].requestFrame?.();
+  });
+  await page.waitForFunction(() => {
+    const fixture = window.__contextCapture, state = window.lootLizard.getState();
+    const unknownScans = window.lootLizard.getPerformance().events.filter(event =>
+      event.type === 'scan' && event.path === 'worker' && event.epochMs >= fixture.unknownStartedAt);
+    return state.sharing && state.phase === 'unknown' && state.mapId === 'erangel' && unknownScans.length >= 2;
+  }, null, {timeout: 45_000});
+  const unknownContextState = await page.evaluate(() => window.lootLizard.getState());
+  assert.equal(unknownContextState.mapUpdatedAt, officialMapState.mapUpdatedAt,
+    'Missing map/footer pixels alone must not age-reset or discard the retained match');
+  const unknownContextView = await readMapView();
+  assertCroppedMap(unknownContextView);
+  assert.equal(unknownContextView.main.pixelHash, officialMapView.main.pixelHash);
+  assert.equal(unknownContextView.retainedBannerVisible, true);
+  await page.evaluate(() => {
+    const fixture = window.__contextCapture, ctx = fixture.canvas.getContext('2d');
+    fixture.lobbyStartedAt = Date.now();
+    ctx.fillStyle = '#111820'; ctx.fillRect(0, 0, fixture.canvas.width, fixture.canvas.height);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px Arial';
+    ctx.fillText('PLAY    CAREER    CUSTOMIZE    WORKSHOP    STORE', 32, 64);
+    ctx.fillText('NORMAL', 32, fixture.canvas.height * .7);
+    ctx.fillText('PLAY', 32, fixture.canvas.height * .9);
+    fixture.stream.getVideoTracks()[0].requestFrame?.();
+  });
+  await page.waitForFunction(() => {
+    const state = window.lootLizard.getState();
+    return state.sharing && state.mapId === null && state.mapUpdatedAt === null;
+  }, null, {timeout: 90_000});
+  const automaticContextReset = await page.evaluate(() => {
+    const fixture = window.__contextCapture;
+    return {state: window.lootLizard.getState(),
+      sameStream: document.querySelector('#capture-video').srcObject === fixture.stream,
+      trackState: fixture.stream.getVideoTracks()[0].readyState,
+      contextEvents: window.lootLizard.getPerformance().events.filter(event =>
+        event.type === 'match-context' && event.epochMs >= fixture.lobbyStartedAt)};
+  });
+  assert.equal(automaticContextReset.sameStream, true);
+  assert.equal(automaticContextReset.trackState, 'live');
+  assert.equal(automaticContextReset.state.sharing, true);
+  assert.deepEqual(automaticContextReset.state.points, []);
+  assert.equal(automaticContextReset.state.position, null);
+  assert.equal(automaticContextReset.state.zone, null);
+  assert.ok(automaticContextReset.contextEvents.filter(event => event.status === 'ok' && event.context === 'lobby').length >= 3,
+    'Actual OCR must provide a positive lobby quorum before automatic reset');
+  const automaticResetView = await readMapView();
+  assert.equal(automaticResetView.main.visible, false);
+  assert.equal(automaticResetView.retainedBannerVisible, false);
+  assertSourcePreview(automaticResetView);
+  report.automaticContextReset = {officialMapState, unknownContextState, ...automaticContextReset};
+  report.steps.push('real-ocr-lobby-quorum-clears-retained-official-map-without-stopping-stream');
+  await page.evaluate(() => {window.lootLizard.stop(); delete window.__contextCapture;});
+
   await page.locator('#load-demo').click();
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   await page.evaluate(async () => {

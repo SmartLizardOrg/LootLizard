@@ -24,6 +24,9 @@ Nem kell asztali programot telepíteni, fiókot vagy API-kulcsot létrehozni.
    játékbillentyűt az alkalmazás nem nyomja meg helyetted.
    A játék képe csak kis forrás-előnézetben jelenik meg. A nagy nézet térképnyitást
    kér, és sikeres felismerés után a kivágott térképet mutatja a pincepontokkal.
+   A felismert térkép játék és inventory közben is megmarad. Új térképnyitáskor
+   frissül; a pozíció és a kör mellett külön látszik az utolsó felismerés kora.
+   A **Reset match** a térképet törli, a megosztást megtartja.
 5. A **Stop**, a böngésző megosztásleállító gombja vagy az oldal bezárása
    befejezi a megosztást. Az alkalmazás eldobja a későn érkező eredményeket is.
 
@@ -37,8 +40,14 @@ térképen mutatja meg a működést, játék és megosztási engedély nélkül
 
 A mellékelt, még ellenőrizetlen pontadatok 15 erangeli és 12 taegói helyet
 tartalmaznak; a taegói lista hiányos. Az iránytölcsérből becsült játékospozíció
-kísérleti, nem garantálja a saját játékos azonosítását. Ismeretlen vagy nem
-egyértelmű térkép esetén a célpontok törlődnek. Nagy zoom, takarás és eltérő
+kísérleti, nem garantálja a saját játékos azonosítását. Az első felismerés előtt
+ismeretlen képen nem jelennek meg célpontok; utána az utolsó felismert térkép
+megmarad, jelzett adatkorral. Többször megerősített angol lobby- vagy eredmény-
+képernyő automatikusan törli. A tanult jobb alsó lábléc a játék folytatását
+erősítheti meg; eltűnése önmagában nem töröl. Más nyelvnél vagy fel nem ismert
+átmenetnél használd a **Reset match** gombot. Teljes monitor megosztásából egy
+tetszőleges asztalképen nem állapítható meg biztosan a játék kilépése.
+Nagy zoom, takarás és eltérő
 térképverzió hibát okozhat. A távolságok közelítő, légvonalbeli értékek.
 
 Az elsődleges cél az asztali Chrome és Edge. A webes felület hordozható, de a
@@ -58,6 +67,10 @@ vagy minimalizált lapokat lassíthatja.
 
 A hálózat a nyilvános programfájlok, futtatókörnyezet, térképreferenciák és
 pontadatok letöltésére szolgál. Nincs képfeltöltés, telemetria vagy AI-szolgáltatás.
+A lobby/eredmény helyi OCR-olvasója szükség esetén tölti le a rögzített verziójú
+motort és az ellenőrzött angol modellt. A térképelemzéssel sorban fut, általában
+legfeljebb 12 másodpercenként; a felismert lábléc kihagyja ezt a munkát. Az olvasott
+szöveg és a lábléc mintája csak a memóriában marad.
 A megjegyzés engedélyezésekor a beállítások, pontadatok és referenciaképek a
 böngésző saját tárhelyére kerülnek. Ezek törölhetők, a böngésző is eltávolíthatja
 őket; másik böngésző/profil/domain külön tárhelyet jelent.
