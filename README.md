@@ -24,6 +24,9 @@ No desktop installation, account, API key or global hotkey is required.
    game's map key.
    The source appears only in a small preview. The main area asks you to open the
    map and shows a cropped map with room anchors only after recognition succeeds.
+   Once recognized, that map stays visible through gameplay and inventory.
+   Reopen the in-game map to refresh it; position and circle have independent
+   last-known ages. **Reset match** clears the map without stopping sharing.
 5. Select **Stop**, stop sharing with the browser control, or close the page when
    finished. Stopping invalidates any pending result and clears its geometry.
 
@@ -53,7 +56,15 @@ rooms are demo data, not real secret-room locations.
   roughly every 60 seconds. Invalid updates retain the last good data.
 - Optional browser storage for preferences and map references.
 
-Unknown or ambiguous frames clear targets instead of reusing old coordinates.
+Before the first verified map, unknown frames show no targets. After recognition,
+unknown gameplay retains the last map and its paired image, with a visible
+last-known label. It never places old geometry over a newer gameplay image.
+Positive English lobby/results cues must repeat three times over at least six
+seconds before an automatic match reset. A learned bottom-right footer can
+confirm continued play; a missing or changed footer alone never resets a map.
+Other UI languages or unfamiliar layouts may require **Reset match**. Closing
+PUBG clears the map when its captured window ends sharing; a whole-monitor
+capture cannot reliably infer a process exit from an arbitrary desktop image.
 Extreme zoom, map changes, HUD occlusion and team-marker ambiguity can still
 defeat recognition. A viewing-cone estimate is not proof of own-player identity.
 Replay mode disables the player estimate. Check the in-game map before choosing
@@ -86,6 +97,13 @@ Screen and image analysis runs on the user's device. There is no image-upload
 endpoint, telemetry, account or AI service. Network requests fetch public app
 files, pinned runtime packages, public map references and coordinate metadata.
 Hosting and asset providers still receive ordinary requests for those files.
+The fallback lobby/results reader lazily downloads pinned Tesseract.js and its
+verified English model. Recognition runs locally, serially with map analysis, at most
+once per 12 seconds unless confirming a possible lobby/result. Matching the
+learned footer skips this OCR work. OCR text and footer descriptors stay in
+memory and are never included in exported timings.
+The first OCR download/initialization happens in the background and does not
+hold the map-scan loop; its occasional initialization cost is not FPS-benchmarked.
 
 Captured frames and results stay in memory. If remembering data is enabled,
 preferences and point metadata use localStorage and reference images use

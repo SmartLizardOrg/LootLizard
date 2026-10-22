@@ -53,8 +53,20 @@ would need its image made available to the browser separately.
 The main stage guides connection and map opening. Live gameplay stays in a
 small source thumbnail, bounded to 240×135 pixels and updated only on sampled
 frames. A successful registration reveals a cropped map with room anchors and
-any available position/circle estimates. Unknown frames hide the main canvas
-and clear guidance; Stop also clears the thumbnail and retained source image.
+any available position/circle estimates. The paired map image and overlays stay
+visible during gameplay, inventory, temporary capture pauses, and further scans.
+The banner and independent position/circle ages identify last-known data.
+Reopening the in-game map refreshes these fields when recognized. Missing fields
+retain their older age; changing maps discards the previous map's fields.
+Stop clears the thumbnail and map; **Reset match** keeps sharing active.
+
+The in-memory bottom-right footer descriptor learns only after a verified map,
+and provides positive evidence of continued play. Missing or changed footer
+pixels never authorize reset. A lazy local English OCR worker checks for several
+spatial lobby/results cues, requiring three consistent observations over at least
+six seconds. Inventory, pause menus, an absent map and elapsed time do not count.
+Other game languages and layout changes can abstain; use **Reset match** if a
+transition is missed. A whole-monitor stream does not expose whether PUBG exited.
 
 Sharing requires a user gesture and fresh source selection for each new
 session. HTTPS (or loopback development) is required. The page cannot persist
@@ -65,7 +77,8 @@ keep the companion visible on the second monitor.
 The default UI is English; **Setup & preferences > Language > Magyar** enables
 Hungarian. **Replay or spectating** disables player estimation. Marker appearance
 is not verified own-player identity; unknown or ambiguous images withhold
-geometry. Points remain community observations, with an incomplete Taego list.
+fresh geometry. A held map remains labeled last-known. Points remain community
+observations, with an incomplete Taego list.
 
 ## Automatic reference images and local overrides
 
@@ -119,6 +132,15 @@ Python's nested timings cover Python stages only. Track frameRate is a reported
 setting, not a delivery-rate measurement. No continuous OS focus or GPU queue
 trace is collected. Synthetic tests establish functionality; fresh controlled
 game measurements are needed for performance claims with full recognition.
+
+Context fallback uses pinned Tesseract.js/core 7.0.0 and a SHA-256-verified English
+model. Recognition is lazy, serial with CV, bounded to 700,000 crop pixels, and normally
+throttled to 12 seconds (six seconds while confirming positive menu cues). A
+matching footer skips OCR. Initialization/read deadlines terminate a failed
+worker and retain the map. First download/initialization runs in the background
+so it does not block the map-scan loop. This adds an occasional cold download and worker
+memory; synthetic checks are not an FPS measurement. Context timing exports
+contain only duration/status/classification, never words or footer descriptors.
 
 ## Publishing and updates
 

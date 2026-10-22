@@ -17,6 +17,25 @@ are not copied into this repository's static build.
 The retired Windows installer and Velopack integration remain in the v0.8.0
 source tag, with the notices belonging to that release.
 
+## Local match-context OCR
+
+The optional, lazily loaded lobby/results reader uses Tesseract.js 7.0.0,
+Tesseract.js-core 7.0.0 (Apache-2.0), and the English `4.0.0_best_int` model from
+`@tesseract.js-data/eng` 1.0.0. That npm wrapper declares MIT; its upstream trained
+data carries Apache-2.0. They are downloaded by the client
+from pinned jsDelivr URLs rather than bundled in this static site. The English
+gzip is 2,952,873 bytes, SHA-256
+`45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91`,
+verified before loading. No recognition image or OCR text is uploaded.
+
+- https://github.com/naptha/tesseract.js/blob/v7.0.0/LICENSE.md
+- https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0/LICENSE
+- https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/package.json
+- https://github.com/naptha/tessdata/blob/gh-pages/LICENSE
+
+The footer descriptor and OCR words are session memory only. User names and
+screen captures are not bundled, logged or added to the public distribution.
+
 ## Automatic Erangel and Taego reference images
 
 Source: the official PUBG API developer asset repository, pubg/api-assets,
