@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-10-22",
+  "map_id": "erangel",
+  "source": {
+    "url": "https://pubgresource.com/maps/erangel",
+    "attribution": "PUBG Resource contributors; factual coordinate annotations by LootLizard contributors",
+    "bundle_url": "https://pubgresource.com/_next/static/chunks/pages/maps/erangel-4766ea9aef9b58d1.js",
+    "bundle_sha256": "d2f7c70210d77bdcc410b934d95f384dc615e6ed30a86f2c78b7a7cdc08cfaae",
+    "component_url": "https://pubgresource.com/_next/static/chunks/231.2e78ae7c661ea0cb.js",
+    "component_sha256": "621928b5ee80686af267914ef240c1d12c0040b4b455b7797d188cd243fc1e71",
+    "last_modified": "2023-10-30",
+    "license": "No general source license is asserted. Only individual factual marker coordinates are recorded; source code, text, tiles and icons are not redistributed. LootLizard annotations are MIT."
+  },
+  "coordinate_system": {
+    "width_units": 1000,
+    "height_units": 1000,
+    "origin": "top-left",
+    "x_direction": "right",
+    "y_direction": "down"
+  },
+  "normalization": "The original map places [x,y] at Leaflet [-(y/10)*2.56,(x/10)*2.56] in a 256-unit square. Normalize x/1000,y/1000; do not divide by 1024 or 8192. Source/reference image alignment confirms this mapping without an additional correction.",
+  "alignment": {
+    "source_size": [
+      1024,
+      1024
+    ],
+    "reference_size": [
+      819,
+      819
+    ],
+    "matches": 785,
+    "affine": [
+      [
+        0.79977811474536,
+        -9.506969135549734e-05,
+        0.05405925128791517
+      ],
+      [
+        9.506969135549734e-05,
+        0.79977811474536,
+        -0.027010870842090046
+      ]
+    ],
+    "inliers": 741,
+    "median_error_px": 0.2994605984614648,
+    "p95_error_px": 1.1012386407889891
+  },
+  "notes": "Seven historical community-listed bunker entrances, separate from the 15 key-locked secret basement positions: four Shelter entrances and three northern bunkers. One valid source marker on the offshore Starting Island is excluded from gameplay targets. Multiple entrances can enter the same space. Current accessibility and doorway precision have not been checked in game for LootLizard. Image registration residuals describe alignment, not entrance accuracy. Existing room markers are unchanged.",
+  "excluded_points": [
+    {
+      "upstream_id": "Bunker Entrance 4",
+      "x": 0.963451868932631,
+      "y": 0.0185970462489405,
+      "source_x": 963.451868932631,
+      "source_y": 18.5970462489405,
+      "id": "erangel-entrance-04",
+      "name": "Starting Island bunker entrance",
+      "kind": "tunnel_entrance",
+      "reason": "Offshore Starting Island, excluded from gameplay targets; not a coordinate error."
+    }
+  ],
+  "points": [
+    {
+      "upstream_id": "Bunker Entrance 1",
+      "x": 0.29593800350716404,
+      "y": 0.186780203669734,
+      "source_x": 295.938003507164,
+      "source_y": 186.780203669734,
+      "id": "erangel-entrance-01",
+      "name": "Northern bunker entrance 01",
+      "kind": "tunnel_entrance"
+    },
+    {
+      "upstream_id": "Bunker Entrance 2",
+      "x": 0.409552453470564,
+      "y": 0.191904071743793,
+      "source_x": 409.552453470564,
+      "source_y": 191.904071743793,
+      "id": "erangel-entrance-02",
+      "name": "Northern bunker entrance 02",
+      "kind": "tunnel_entrance"
+    },
+    {
+      "upstream_id": "Bunker Entrance 3",
+      "x": 0.451827597643,
+      "y": 0.20500663966008198,
+      "source_x": 451.827597643,
+      "source_y": 205.006639660082,
+      "id": "erangel-entrance-03",
+      "name": "Northern bunker entrance 03",
+      "kind": "tunnel_entrance"
+    },
+    {
+      "upstream_id": "Bunker Entrance 5",
+      "x": 0.685166958624014,
+      "y": 0.463792612079284,
+      "source_x": 685.166958624014,
+      "source_y": 463.792612079284,
+      "id": "erangel-entrance-05",
+      "name": "Shelter entrance 01",
+      "kind": "tunnel_entrance"
+    },
+    {
+      "upstream_id": "Bunker Entrance 6",
+      "x": 0.694341826407829,
+      "y": 0.458719958274451,
+      "source_x": 694.341826407829,
+      "source_y": 458.719958274451,
+      "id": "erangel-entrance-06",
+      "name": "Shelter entrance 02",
+      "kind": "tunnel_entrance"
+    },
+    {
+      "upstream_id": "Bunker Entrance 7",
+      "x": 0.6851669586240751,
+      "y": 0.47510451589108904,
+      "source_x": 685.166958624075,
+      "source_y": 475.104515891089,
+      "id": "erangel-entrance-07",
+      "name": "Shelter entrance 03",
+      "kind": "tunnel_entrance"
+    },
+    {
+      "upstream_id": "Bunker Entrance 8",
+      "x": 0.703738533246393,
+      "y": 0.47371995827445,
+      "source_x": 703.738533246393,
+      "source_y": 473.71995827445,
+      "id": "erangel-entrance-08",
+      "name": "Shelter entrance 04",
+      "kind": "tunnel_entrance"
+    }
+  ]
+}

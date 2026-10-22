@@ -5,8 +5,9 @@
   "source": {
     "url": "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js",
     "license": "MIT",
-    "attribution": "Copyright (c) 2026 Aleksei Reuk",
-    "notes": "The 15 points are adapted from the adzpm/pubg-map community dataset. They have not been verified in-game for this project; completeness and current validity are unverified. Original x/y values are source-image pixels; the upstream info.json records an 8192 x 8192 px image. Values here are normalized as x/8192 and y/8192, with a top-left origin, x increasing rightward and y increasing downward. size_m:8000 is an approximate metre scale based on Erangel's nominal 8 x 8 km map size; 8192 image pixels do not mean 8192 metres. Distances are estimated straight-line values. Stable ids and English display names were added. No source map image is included. The full MIT license is in THIRD_PARTY_NOTICES.md. Source recorded: 2026-10-21."
+    "attribution": "Copyright (c) 2026 Aleksei Reuk; factual entrance annotations by LootLizard contributors, after PUBG Resource contributors",
+    "notes": "The 15 points are adapted from the adzpm/pubg-map community dataset. They have not been verified in-game for this project; completeness and current validity are unverified. Original x/y values are source-image pixels; the upstream info.json records an 8192 x 8192 px image. Values here are normalized as x/8192 and y/8192, with a top-left origin, x increasing rightward and y increasing downward. size_m:8000 is an approximate metre scale based on Erangel's nominal 8 x 8 km map size; 8192 image pixels do not mean 8192 metres. Distances are estimated straight-line values. Stable ids and English display names were added. No source map image is included. The full MIT license is in THIRD_PARTY_NOTICES.md. Source recorded: 2026-10-21. Seven separate historical bunker entrance observations from PUBG Resource are added as tunnel_entrance: four Shelter entrances and three northern bunker entrances. The offshore Starting Island entrance is excluded from gameplay targets. They are not additional key-locked secret rooms, and current access/doorway precision are unverified. The entrance source uses a separate 1000-unit plane, normalized x/1000,y/1000, with source image alignment checked against the bundled reference. Exact factual records, source fingerprints, convention and uncertainty are retained in data-sources/erangel-bunker-entrances.json. No source code, icons, text or map tiles are redistributed; the MIT license covers these LootLizard annotations, not the original site assets. Reviewed 2026-10-22.",
+    "entrances_url": "https://pubgresource.com/maps/erangel"
   },
   "points": [
     {
@@ -98,6 +99,55 @@
       "name": "Secret basement 15",
       "x": 0.6258544921875,
       "y": 0.08154296875
+    },
+    {
+      "id": "erangel-entrance-01",
+      "name": "Northern bunker entrance 01",
+      "x": 0.29593800350716404,
+      "y": 0.186780203669734,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "erangel-entrance-02",
+      "name": "Northern bunker entrance 02",
+      "x": 0.409552453470564,
+      "y": 0.191904071743793,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "erangel-entrance-03",
+      "name": "Northern bunker entrance 03",
+      "x": 0.451827597643,
+      "y": 0.20500663966008198,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "erangel-entrance-05",
+      "name": "Shelter entrance 01",
+      "x": 0.685166958624014,
+      "y": 0.463792612079284,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "erangel-entrance-06",
+      "name": "Shelter entrance 02",
+      "x": 0.694341826407829,
+      "y": 0.458719958274451,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "erangel-entrance-07",
+      "name": "Shelter entrance 03",
+      "x": 0.6851669586240751,
+      "y": 0.47510451589108904,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "erangel-entrance-08",
+      "name": "Shelter entrance 04",
+      "x": 0.703738533246393,
+      "y": 0.47371995827445,
+      "kind": "tunnel_entrance"
     }
   ]
 }

@@ -129,7 +129,7 @@ class DataTests(unittest.TestCase):
                 MapData.load(path)
 
     def test_bundled_data_is_normalized_and_attributed(self):
-        for map_id, expected_count in [("erangel", 15), ("taego", 15)]:
+        for map_id, expected_count in [("erangel", 22), ("taego", 15)]:
             with self.subTest(map_id=map_id):
                 data = MapData.load(ROOT / "data" / f"{map_id}.json")
                 self.assertEqual(data.id, map_id)

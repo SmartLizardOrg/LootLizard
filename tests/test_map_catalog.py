@@ -39,7 +39,7 @@ class MapCatalogTests(unittest.TestCase):
         self.assertEqual(catalog["revision"], SHA)
         self.assertEqual(len(catalog["maps"]), 11)
         self.assertEqual({m["id"]: len(m["points"]) for m in catalog["maps"] if m["points"]},
-                         {"erangel": 15, "taego": 15, "miramar": 15, "deston": 39,
+                         {"erangel": 22, "taego": 15, "miramar": 18, "deston": 39,
                           "rondo": 15, "vikendi": 20, "paramo": 8, "karakin": 22, "haven": 22})
         self.assertEqual(next(m for m in catalog["maps"] if m["id"] == "erangel")["source"]["license"], "MIT")
         self.assertIn("15 rooms", next(m for m in catalog["maps"] if m["id"] == "taego")["source"]["notes"])

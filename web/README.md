@@ -43,6 +43,14 @@ Pillar cache buildings. These source-based lists have
 not been independently verified in game for this project and may be incomplete
 or outdated. Their presence does not establish recognition accuracy.
 
+Erangel additionally has seven historical community-listed bunker entrances,
+including four at Shelter, with factual provenance in
+`data-sources/erangel-bunker-entrances.json`. Miramar's three Los Leones underground
+entrances are separate from its 15 secret rooms. Both use `tunnel_entrance`, like
+Karakin's existing 22 entrances, with the shared green symbol and unchanged
+coordinate anchors. Multiple entrances can lead into one underground space;
+existing room positions are not reclassified as exact doors.
+
 Empty `points: []` is valid and means no POI coordinates are supplied; this applies
 to Sanhok and Training. It is not evidence that no secret locations exist.
 Paramo's landmarks can change between matches. Check its locations against the

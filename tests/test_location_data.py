@@ -15,12 +15,15 @@ class LocationDataTests(unittest.TestCase):
     def setUpClass(cls):
         cls.audit = json.loads((ROOT / "data-sources/secret-locations.json").read_text(encoding="utf-8"))
         cls.haven_audit = json.loads((ROOT / "data-sources/haven-candidate-buildings.json").read_text(encoding="utf-8"))
+        cls.entrance_audit = json.loads((ROOT / "data-sources/erangel-bunker-entrances.json").read_text(encoding="utf-8"))
         cls.maps = {m["id"]: m for m in build_catalog(ROOT / "data")["maps"]}
 
-    def test_every_shipped_location_has_one_pinned_source_and_correct_axes(self):
+    def test_every_licensed_location_has_one_pinned_source_and_correct_axes(self):
         records = {(r["map_id"], r["id"]): r for r in self.audit["locations"]}
         self.assertEqual(len(records), len(self.audit["locations"]))
-        actual = {(map_id, p["id"]): p for map_id, m in self.maps.items() if map_id != "haven" for p in m["points"]}
+        observed = {p["id"] for p in self.entrance_audit["points"]}
+        actual = {(map_id, p["id"]): p for map_id, m in self.maps.items() if map_id != "haven"
+                  for p in m["points"] if not (map_id == "erangel" and p["id"] in observed)}
         self.assertEqual(set(records), set(actual))
         system = self.audit["coordinate_system"]
         self.assertEqual((system["width_px"], system["height_px"], system["origin"]), (8192, 8192, "top-left"))
@@ -59,14 +62,50 @@ class LocationDataTests(unittest.TestCase):
         self.assertEqual(kinds["vikendi"], {"security_room", "bear_cave"})
         self.assertEqual(kinds["deston"], {"security_room"})
         self.assertEqual(kinds["karakin"], {"tunnel_entrance"})
+        self.assertEqual(kinds["miramar"], {"secret_room", "tunnel_entrance"})
+        self.assertEqual(kinds["erangel"], {"secret_room", "tunnel_entrance"})
         self.assertEqual(kinds["haven"], {"supply_cache"})
-        for map_id in ("erangel", "taego", "miramar", "rondo", "paramo"):
+        for map_id in ("taego", "rondo", "paramo"):
             self.assertEqual(kinds[map_id], {"secret_room"})
         for map_id in ("sanhok", "training"):
             self.assertEqual(self.maps[map_id]["points"], [])
         for map_id, document in self.maps.items():
             parsed = MapData.from_dict(document)
             self.assertEqual(len({(p.x, p.y) for p in parsed.points}), len(parsed.points), map_id)
+
+    def test_miramar_entrances_are_separate_from_the_fifteen_key_rooms(self):
+        points = self.maps["miramar"]["points"]
+        rooms = [p for p in points if p.get("kind", "secret_room") == "secret_room"]
+        entrances = {p["id"]: p for p in points if p.get("kind") == "tunnel_entrance"}
+        self.assertEqual([p["id"] for p in rooms], [f"miramar-{i:02}" for i in range(1, 16)])
+        expected = {"miramar-entrance-01": (4910, 6255), "miramar-entrance-02": (5018, 6296),
+                    "miramar-entrance-03": (5039, 6350)}
+        self.assertEqual(set(entrances), set(expected))
+        for point_id, (x, y) in expected.items():
+            self.assertEqual((entrances[point_id]["x"], entrances[point_id]["y"]), (x / 8192, y / 8192))
+        self.assertIn("not three additional key-locked rooms", self.maps["miramar"]["source"]["notes"])
+
+    def test_erangel_observed_entrances_use_the_source_plane_and_keep_rooms_separate(self):
+        points = self.maps["erangel"]["points"]
+        rooms = [p for p in points if p.get("kind", "secret_room") == "secret_room"]
+        entrances = {p["id"]: p for p in points if p.get("kind") == "tunnel_entrance"}
+        self.assertEqual([p["id"] for p in rooms], [f"erangel-{i:02}" for i in range(1, 16)])
+        audit = self.entrance_audit
+        self.assertEqual(len(entrances), 7)
+        self.assertEqual(set(entrances), {p["id"] for p in audit["points"]})
+        self.assertEqual(audit["coordinate_system"], {"width_units": 1000, "height_units": 1000,
+                         "origin": "top-left", "x_direction": "right", "y_direction": "down"})
+        self.assertIn("No general source license", audit["source"]["license"])
+        for field in ("bundle_sha256", "component_sha256"):
+            self.assertRegex(audit["source"][field], r"^[a-f0-9]{64}$")
+        for record in audit["points"]:
+            point = entrances[record["id"]]
+            self.assertAlmostEqual(point["x"], record["source_x"] / 1000, places=12)
+            self.assertAlmostEqual(point["y"], record["source_y"] / 1000, places=12)
+            self.assertEqual(point["kind"], "tunnel_entrance")
+        self.assertEqual(sum(p["name"].startswith("Shelter entrance") for p in entrances.values()), 4)
+        self.assertEqual(audit["excluded_points"][0]["id"], "erangel-entrance-04")
+        self.assertNotIn("erangel-entrance-04", entrances)
 
     def test_haven_observed_candidate_buildings_use_the_recorded_image_transform(self):
         audit = self.haven_audit

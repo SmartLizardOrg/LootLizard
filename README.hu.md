@@ -60,6 +60,14 @@ jelölnek. Taego listája a forrásban szereplő 15 titkos
 szobát tartalmazza. A közösségi adatokat ebben a projektben még nem ellenőriztük
 önállóan a játékban; a listák hiányosak vagy elavultak lehetnek.
 
+A föld alatti bejáratok külön zöld alagútikont kapnak. Erangel hét külön
+forrásolt bunkerbejáratot tartalmaz (ebből négy a Shelternél), Miramar pedig
+három bejáratot a Los Leones melletti komplexumnál a 15 titkos szoba mellett.
+Karakin 22 alagútbejárata továbbra is szerepel. Több bejárat vezethet ugyanabba
+a föld alatti térbe; ezek nem további kulcsos szobák. A szobák meglévő jelölőit
+nem nevezzük át pontos bejáratokká. A bejáratok közösségi megfigyelések, a
+jelenlegi játékban még nem ellenőriztük őket.
+
 Paramo tájékozódási pontjai meccsenként változhatnak; ellenőrizd a helyeket az
 aktuális térképen. Haven 22 jelölője egy korábbi közösségi útmutatóban megjelölt
 lehetséges Pillar-raktárépületek középpontját mutatja; meccsenként csak néhány aktív,
