@@ -47,7 +47,11 @@ async function readMapView() {
     return {
       view: document.querySelector('#map-stage')?.dataset.view || null,
       title: document.querySelector('#stage-title')?.textContent.trim() || '',
-      main: {visible: visible(main), width: main?.width || 0, height: main?.height || 0, pixelHash: pixelHash(main)},
+      main: {visible: visible(main), width: main?.width || 0, height: main?.height || 0, pixelHash: pixelHash(main),
+        cssWidth: main?.getBoundingClientRect().width || 0, cssHeight: main?.getBoundingClientRect().height || 0},
+      navigation: {visible: visible(document.querySelector('#map-navigation')),
+        zoom: document.querySelector('#map-zoom-level')?.textContent.trim(),
+        fitDisabled: document.querySelector('#map-fit')?.disabled},
       retainedBannerVisible: visible(document.querySelector('#retained-banner')),
       targetCount: document.querySelectorAll('#target-list tr').length,
       sourcePanelVisible: visible(document.querySelector('#source-panel')),
@@ -66,11 +70,12 @@ async function readMapView() {
 function assertCroppedMap(view) {
   assert.equal(view.view, 'map', 'Only a verified map may occupy the central map view');
   assert.equal(view.main.visible, true, 'A recognized map must be visible in the main stage');
-  // The original fixture is 960 x 720. Its registered full map is the square
-  // from (160, 40) to (800, 680); allow integer rounding of the fitted transform.
-  assert.ok(Math.abs(view.main.width - 640) <= 4, `Expected a map crop near 640 pixels, got ${view.main.width}`);
-  assert.ok(Math.abs(view.main.height - 640) <= 4, `Expected a map crop near 640 pixels, got ${view.main.height}`);
-  assert.ok(Math.abs(view.main.width - view.main.height) <= 4, 'The full fixture map must stay square');
+  // The source crop lives in a cached bitmap; the displayed bitmap fills the
+  // viewer and stays bounded even at 8x zoom or on a high-density display.
+  assert.ok(view.main.width > 0 && view.main.width <= 2560);
+  assert.ok(view.main.height > 0 && view.main.height <= 2560);
+  assert.ok(Math.abs(view.main.width/view.main.height-view.main.cssWidth/view.main.cssHeight)<.02);
+  assert.equal(view.navigation.visible, true);
 }
 
 function assertSourcePreview(view) {
@@ -103,7 +108,10 @@ function assertStoppedView(view) {
   assert.equal(view.preview.visible, false, 'Stopping must hide the source preview');
   assert.equal(view.retainedBannerVisible, false, 'Stopping must hide the retained-map notice');
   assert.notEqual(view.view, 'map', 'Stopped geometry must not leave a recognized-map presentation');
+  assert.equal(view.navigation.visible, false);
 }
+
+const nextPaint = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
 async function main() {
   const build = spawnSync(process.env.PYTHON || 'python', ['-B', 'scripts/build_web.py'], {cwd: root, windowsHide: true, encoding: 'utf8'});
@@ -303,6 +311,44 @@ async function main() {
   report.demoView = demoView;
   report.steps.push('test-only-demo-renders-real-map-registration-and-two-column-targets');
 
+  // Exercise real wheel, pointer and keyboard input against the rendered map.
+  const canvasBox = await page.locator('#map-canvas').boundingBox();
+  const navigationStart = await page.evaluate(() => ({updated:window.lootLizard.getState().mapUpdatedAt,
+    scans:window.lootLizard.getPerformance().events.filter(event=>event.type==='scan').length}));
+  assert.equal(demoView.navigation.zoom, '100%');
+  assert.equal(demoView.navigation.fitDisabled, true);
+  await page.mouse.move(canvasBox.x+canvasBox.width*.5,canvasBox.y+canvasBox.height*.55);
+  await page.mouse.wheel(0,-240);
+  await page.waitForFunction(()=>parseInt(document.querySelector('#map-zoom-level').textContent)>100);
+  await nextPaint();
+  const zoomedView = await readMapView();
+  assert.ok(parseInt(zoomedView.navigation.zoom)>100);
+  assert.notEqual(zoomedView.main.pixelHash,demoView.main.pixelHash);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x+canvasBox.width*.5+80,canvasBox.y+canvasBox.height*.55+45,{steps:6});
+  await page.mouse.up();await nextPaint();
+  const pannedView = await readMapView();
+  assert.equal(pannedView.navigation.zoom,zoomedView.navigation.zoom);
+  assert.notEqual(pannedView.main.pixelHash,zoomedView.main.pixelHash);
+  await page.screenshot({path:path.join(evidence,'map-zoomed-and-panned.png'),fullPage:true});
+  for(let count=0;count<12 && await page.locator('#map-zoom-in').isEnabled();count++){
+    await page.locator('#map-zoom-in').click();await nextPaint();
+  }
+  assert.equal(await page.locator('#map-zoom-level').textContent(),'800%');
+  assert.equal(await page.locator('#map-zoom-in').isDisabled(),true);
+  await page.locator('#map-canvas').press('0');await nextPaint();
+  assert.equal((await readMapView()).main.pixelHash,demoView.main.pixelHash);
+  await page.locator('#map-canvas').press('Equal');await page.locator('#map-canvas').press('ArrowRight');await nextPaint();
+  assert.ok(parseInt((await readMapView()).navigation.zoom)>100);
+  await page.locator('#map-fit').click();await nextPaint();
+  assert.equal((await readMapView()).main.pixelHash,demoView.main.pixelHash);
+  assert.equal(await page.locator('#map-zoom-out').isDisabled(),true);
+  assert.deepEqual(await page.evaluate(()=>({updated:window.lootLizard.getState().mapUpdatedAt,
+    scans:window.lootLizard.getPerformance().events.filter(event=>event.type==='scan').length})),navigationStart,
+    'Zoom and pan must repaint the held map without starting recognition');
+  report.navigation={zoomed:zoomedView.navigation,panned:pannedView.navigation};
+  report.steps.push('wheel-drag-keyboard-fit-and-zoom-limits-repaint-held-map-without-recognition');
+
   const stale = await page.evaluate(async () => {
     const {createDemo} = await import('/app/demo.mjs');
     const {mapFrame} = createDemo();
@@ -472,6 +518,13 @@ async function main() {
   report.streamMapReturn = await page.evaluate(() => window.lootLizard.getState());
   report.steps.push('automatic-stream-map-gameplay-map-retains-guidance-until-fresh-map-arrives');
 
+  await page.bringToFront();await page.locator('#map-zoom-in').click();await nextPaint();
+  const retainedZoom = await page.locator('#map-zoom-level').textContent();
+  const beforeRefresh = await page.evaluate(()=>window.lootLizard.getState().mapUpdatedAt);
+  await page.waitForFunction(previous=>window.lootLizard.getState().mapUpdatedAt>previous,beforeRefresh,{timeout:60_000});
+  assert.equal(await page.locator('#map-zoom-level').textContent(),retainedZoom,'Fresh captures of the same map must retain the chosen zoom');
+  report.steps.push('automatic-map-refresh-preserves-user-zoom');
+
   // Reset is an explicit match boundary. It clears guidance while preserving
   // the already-approved source, even if the current image is ordinary play.
   await page.evaluate(() => {
@@ -498,6 +551,7 @@ async function main() {
   assert.equal(reset.sameStream, true);
   assert.equal(reset.state.mapId, null);
   assert.deepEqual(reset.state.points, []);
+  assert.equal(await page.locator('#map-zoom-level').textContent(),'100%','Match reset must restore the next map to fit');
   assert.equal(reset.state.position, null);
   assert.equal(reset.state.zone, null);
   assert.equal(reset.state.mapUpdatedAt, null);

@@ -167,6 +167,8 @@ class WebBuildTests(unittest.TestCase):
                           "rondo": 15, "vikendi": 20, "paramo": 8, "karakin": 22, "haven": 22})
         self.assertEqual(next(item for item in catalog["maps"] if item["id"] == "haven")["points"][0]["kind"], "supply_cache")
         self.assertIn("app/location-markers.mjs", assets)
+        self.assertIn("app/map-navigation.mjs", assets)
+        self.assertIn("app/map-canvas.mjs", assets)
         self.assertEqual(sum(name.startswith("app/map-assets/") and name.endswith(".png") for name in assets), 11)
         self.assertFalse(any("screenshots/" in name or "private" in name for name in assets))
 

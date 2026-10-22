@@ -34,6 +34,21 @@ Other languages and unfamiliar menus can remain uncertain; use **Reset match**
 when needed. A whole-monitor stream cannot reliably distinguish exiting PUBG
 from briefly switching to the desktop.
 
+## Inspect the map
+
+Scroll over the recognized map to zoom toward the pointer, from **100% (fit)** to
+**800% (8×)**. Drag the map to move around a crowded area, such as Deston. The
+**+** and **−** buttons zoom around the centre; **Fit map** shows the complete map
+again. Focus the map with Tab or click it to use arrow keys for movement,
+**+ / −** for zoom and **0** to fit.
+
+Location icons keep their screen size while the map enlarges, and their small
+centre points continue to mark the exact coordinates. New captures of the same
+map preserve your zoom and focus. A new match, **Reset match** or stopping sharing
+restores the fitted view. Moving or zooming redraws the saved map without an
+extra screenshot or recognition pass; normal map checks continue independently.
+Zoom cannot reveal image detail beyond the captured map's resolution.
+
 ## Bundled maps and coordinates
 
 The release includes **11 official developer map references**: Erangel, Miramar,

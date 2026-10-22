@@ -111,6 +111,25 @@ test('source preview is optional while reset remains outside its disclosure', ()
   assert.match(source, /id="source-preview" width="240" height="135"/);
 });
 
+test('map navigation is initially hidden and gives pointer and keyboard guidance', () => {
+  const canvas = html.match(/<canvas id="map-canvas"[^>]*>/)?.[0] || '';
+  assert.match(canvas, /tabindex="0"/);
+  assert.match(canvas, /aria-describedby="map-navigation-hint map-keyboard-hint"/);
+  const navigation = html.match(/<div id="map-navigation"([^>]+)>/)[1];
+  assert.match(navigation, /\bhidden\b/);
+  assert.match(navigation, /role="group"/);
+  assert.match(navigation, /data-i18n-aria-label="Map navigation"/);
+  for (const [id, label] of [['map-zoom-out', 'Zoom out'], ['map-zoom-in', 'Zoom in']]) {
+    const control = html.match(new RegExp(`<button id="${id}"[^>]*>`))?.[0] || '';
+    assert.match(control, /type="button"/);
+    assert.ok(control.includes(`data-i18n-aria-label="${label}"`));
+  }
+  assert.match(html, /<button id="map-fit"[^>]*data-i18n="Fit map">Fit map<\/button>/);
+  assert.match(html, /<output id="map-zoom-level"[^>]*aria-live="off">100%<\/output>/);
+  assert.match(html, /id="map-navigation-hint"[^>]*data-i18n="Scroll to zoom · drag to move"/);
+  assert.match(html, /id="map-keyboard-hint"[^>]*class="visually-hidden"/);
+});
+
 test('location list contains only rank and location, with no developer or identity controls', () => {
   const headings = html.match(/<thead>([\s\S]*?)<\/thead>/)?.[1] || '';
   assert.equal([...headings.matchAll(/<th\b/g)].length, 2);

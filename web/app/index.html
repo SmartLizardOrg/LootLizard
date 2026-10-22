@@ -40,8 +40,18 @@
       </div>
 
       <div id="map-stage" class="map-stage" data-view="setup">
-        <canvas id="map-canvas" width="1200" height="900" aria-label="Your map and marked locations" data-i18n-aria-label="Your map and marked locations" hidden></canvas>
+        <canvas id="map-canvas" width="1200" height="900" tabindex="0" role="img" aria-label="Your map and marked locations" data-i18n-aria-label="Your map and marked locations" aria-describedby="map-navigation-hint map-keyboard-hint" hidden></canvas>
         <video id="capture-video" muted playsinline autoplay hidden aria-hidden="true"></video>
+        <div id="map-navigation" class="map-navigation" role="group" aria-label="Map navigation" data-i18n-aria-label="Map navigation" hidden>
+          <div class="map-navigation-actions">
+            <button id="map-zoom-out" class="map-navigation-button map-zoom-button" type="button" aria-label="Zoom out" data-i18n-aria-label="Zoom out">−</button>
+            <output id="map-zoom-level" class="map-zoom-level" aria-label="Map zoom" data-i18n-aria-label="Map zoom" aria-live="off">100%</output>
+            <button id="map-zoom-in" class="map-navigation-button map-zoom-button" type="button" aria-label="Zoom in" data-i18n-aria-label="Zoom in">+</button>
+            <button id="map-fit" class="map-navigation-button map-fit-button" type="button" data-i18n="Fit map">Fit map</button>
+          </div>
+          <p id="map-navigation-hint" class="map-navigation-hint" data-i18n="Scroll to zoom · drag to move">Scroll to zoom · drag to move</p>
+          <span id="map-keyboard-hint" class="visually-hidden" data-i18n="Use arrow keys to move, plus and minus to zoom, and 0 to fit the map.">Use arrow keys to move, plus and minus to zoom, and 0 to fit the map.</span>
+        </div>
         <div id="canvas-empty" class="map-empty">
           <span class="empty-reticle" aria-hidden="true"><i></i></span>
           <div class="stage-message" role="status" aria-live="polite">
