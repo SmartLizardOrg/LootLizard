@@ -52,7 +52,6 @@ jobs:
           python -B -m unittest discover -s tests -v
           python -B -m unittest discover -s web/tests -p 'test_*.py' -v
           node --test web/tests/*.test.mjs
-          python scripts/build_map_catalog.py --revision "$SOURCE_REVISION" --output "$RUNNER_TEMP/maps.json"
           python scripts/build_web.py --revision "$SOURCE_REVISION" --tag "$RELEASE_TAG"
       - name: Package and attach the exact static build
         env:

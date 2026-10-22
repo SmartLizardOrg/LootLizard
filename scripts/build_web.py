@@ -12,8 +12,13 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import struct
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.build_map_catalog import build_catalog, encode_catalog
+
 PYTHON_MODULES = (
     "__init__.py", "core.py", "registration.py", "marker_pipeline.py",
     "self_marker.py", "vision.py", "zone_vision.py",
@@ -24,6 +29,7 @@ STATIC_SUFFIXES = frozenset((
 ))
 MAX_FILE_BYTES = 24_000_000
 BUILD_INFO = "build-info.json"
+REFERENCE_MANIFEST = "app/map-assets/manifest.json"
 HEADERS = """/*
   Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
@@ -99,6 +105,43 @@ def release_key(tag: str) -> tuple[int, int, int, int]:
     return tuple(int(part) for part in match.groups())
 
 
+def _validate_references(assets: dict[str, bytes], map_ids: set[str]) -> None:
+    """Check all official bundled PNGs before any public output is replaced."""
+    try:
+        manifest = json.loads(assets[REFERENCE_MANIFEST])
+        if manifest["schema_version"] != 1 or not re.fullmatch(r"[0-9a-f]{40}", manifest["source"]["commit"]):
+            raise ValueError("Invalid bundled reference source")
+        records = manifest["references"]
+        if not isinstance(records, list) or not 1 <= len(records) <= 32:
+            raise ValueError("Provide one to 32 bundled reference images")
+        seen, expected = set(), {"manifest.json", "NOTICE.txt"}
+        for record in records:
+            map_id, name = record["mapId"], record["file"]
+            if not isinstance(map_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", map_id) or map_id in seen:
+                raise ValueError("Bundled reference map ids must be safe and unique")
+            if name != f"{map_id}.png":
+                raise ValueError("Bundled reference filenames must match their map ids")
+            prefix = f'https://raw.githubusercontent.com/pubg/api-assets/{manifest["source"]["commit"]}/Assets/Maps/'
+            if not isinstance(record["source_url"], str) or not record["source_url"].startswith(prefix) or not re.fullmatch(r"[A-Za-z0-9_]+\.png", record["source_url"][len(prefix):]):
+                raise ValueError("Bundled reference source must be the pinned official PUBG repository")
+            data = assets[f"app/map-assets/{name}"]
+            if len(data) != record["bytes"] or not 1 <= len(data) <= 2_000_000:
+                raise ValueError("Bundled reference byte size does not match its manifest")
+            if not isinstance(record["sha256"], str) or hashlib.sha256(data).hexdigest() != record["sha256"]:
+                raise ValueError("Bundled reference checksum mismatch")
+            if len(data) < 33 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR" or struct.unpack(">I", data[8:12])[0] != 13:
+                raise ValueError("Bundled reference must contain a PNG image")
+            width, height = struct.unpack(">II", data[16:24])
+            if width != record["width"] or height != record["height"] or width != height or not 128 <= width <= 2400:
+                raise ValueError("Bundled reference must be a complete square map with verified dimensions")
+            seen.add(map_id); expected.add(name)
+        actual = {name.removeprefix("app/map-assets/") for name in assets if name.startswith("app/map-assets/")}
+        if actual != expected or seen != map_ids:
+            raise ValueError("Bundled map assets and local catalog must match exactly")
+    except (KeyError, TypeError, json.JSONDecodeError) as error:
+        raise ValueError("Missing or malformed bundled map reference manifest") from error
+
+
 def collect_assets(root: Path = ROOT, *, revision: str | None = None, tag: str | None = None) -> dict[str, bytes]:
     root = Path(root).resolve()
     if revision is not None and not re.fullmatch(r"[0-9a-f]{40}", revision):
@@ -119,8 +162,11 @@ def collect_assets(root: Path = ROOT, *, revision: str | None = None, tag: str |
     assets.update(app)
     for filename in PYTHON_MODULES:
         assets[f"cv/{filename}"] = _read(root / "lootlizard" / filename, within=root / "lootlizard")
-    for map_id in ("erangel", "taego"):
-        assets[f"data/{map_id}.json"] = _read(root / "data" / f"{map_id}.json", within=root / "data")
+    catalog = build_catalog(root / "data", revision)
+    for record in catalog["maps"]:
+        assets[f'data/{record["id"]}.json'] = (json.dumps(record, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    assets["data/maps.json"] = encode_catalog(catalog)
+    _validate_references(assets, {record["id"] for record in catalog["maps"]})
     for filename in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
         assets[filename] = _read(root / filename, within=root)
     assets["_headers"] = HEADERS.encode("utf-8")

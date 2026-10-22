@@ -28,9 +28,8 @@ jobs:
         run: |
           python -B -m compileall -q lootlizard scripts web/app/python_bridge.py
           python -B -m unittest discover -s tests -v
-      - name: Validate community metadata and build only public assets
+      - name: Validate bundled maps and build only public assets
         run: |
-          python scripts/build_map_catalog.py --revision "$GITHUB_SHA" --output "$RUNNER_TEMP/maps.json"
           python scripts/build_web.py --revision "$GITHUB_SHA"
           python -B -m unittest discover -s web/tests -p 'test_*.py' -v
           node --test web/tests/*.test.mjs

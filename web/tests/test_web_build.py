@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
+import struct
 import tempfile
 import unittest
+import zlib
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("build_web", ROOT / "scripts/build_web.py")
@@ -25,7 +28,6 @@ class WebBuildTests(unittest.TestCase):
             "web/app/index.html": '<script src="app.js" type="module"></script>',
             "web/app/app.js": "// browser application",
             "web/app/python_bridge.py": "# browser bridge",
-            "data/erangel.json": "{}", "data/taego.json": "{}",
             "LICENSE": "MIT", "THIRD_PARTY_NOTICES.md": "Credits",
             "lootlizard/windows.py": "# legacy native code",
             ".env": "not for publication", "screenshots/private.png": "private",
@@ -34,11 +36,25 @@ class WebBuildTests(unittest.TestCase):
             self.write(name, contents)
         for filename in builder.PYTHON_MODULES:
             self.write("lootlizard/" + filename, '__version__ = "0.9.0"' if filename == "__init__.py" else "# pure CV")
+        chunk = lambda name, data: struct.pack(">I", len(data)) + name + data + struct.pack(">I", zlib.crc32(name + data))
+        png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 128, 128, 8, 2, 0, 0, 0))
+        png += chunk(b"IDAT", zlib.compress((b"\0" + bytes((20, 30, 40)) * 128) * 128)) + chunk(b"IEND", b"")
+        manifest = {"schema_version": 1, "source": {"commit": "a" * 40}, "references": []}
+        for map_id in ("erangel", "taego"):
+            self.write(f"data/{map_id}.json", json.dumps({"id": map_id, "name": map_id.title(), "size_m": 8000,
+                "source": {"url": "https://example.org/source", "license": "MIT", "attribution": "Synthetic fixture"}, "points": []}))
+            self.write(f"web/app/map-assets/{map_id}.png", png)
+            manifest["references"].append({"mapId": map_id, "file": map_id + ".png", "sha256": hashlib.sha256(png).hexdigest(),
+                "width": 128, "height": 128, "bytes": len(png),
+                "source_url": f'https://raw.githubusercontent.com/pubg/api-assets/{"a" * 40}/Assets/Maps/{map_id}_Main_Low_Res.png'})
+        self.write("web/app/map-assets/manifest.json", json.dumps(manifest))
+        self.write("web/app/map-assets/NOTICE.txt", "Synthetic test asset notices")
 
     def write(self, name, content):
         path = self.root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        if isinstance(content, bytes): path.write_bytes(content)
+        else: path.write_text(content, encoding="utf-8")
         return path
 
     def test_public_routes_include_all_worker_inputs_and_omit_checkout_secrets(self):
@@ -47,6 +63,9 @@ class WebBuildTests(unittest.TestCase):
         self.assertIn("app/index.html", assets)
         self.assertIn("app/python_bridge.py", assets)
         self.assertIn("404.html", assets)
+        self.assertIn("app/map-assets/erangel.png", assets)
+        self.assertEqual(json.loads(assets["data/maps.json"])["revision"], "a" * 40)
+        self.assertEqual({record["id"] for record in json.loads(assets["data/maps.json"])["maps"]}, {"erangel", "taego"})
         self.assertEqual({name for name in assets if name.startswith("cv/")}, {f"cv/{name}" for name in builder.PYTHON_MODULES})
         self.assertNotIn("cv/windows.py", assets)
         self.assertNotIn(".env", assets)
@@ -103,6 +122,49 @@ class WebBuildTests(unittest.TestCase):
         self.assertEqual(json.loads(assets[builder.BUILD_INFO])["tag"], "v0.9.0-web.1")
         with self.assertRaisesRegex(ValueError, "does not match"):
             builder.collect_assets(self.root, tag="v0.8.0-web.1")
+
+    def test_local_catalog_revision_is_deterministic_and_changes_with_bundled_data(self):
+        first = builder.collect_assets(self.root)
+        self.assertEqual(first["data/maps.json"], builder.collect_assets(self.root)["data/maps.json"])
+        original = json.loads(first["data/maps.json"])
+        self.assertRegex(original["revision"], r"^content:[a-f0-9]{64}$")
+        path = self.root / "data/erangel.json"
+        record = json.loads(path.read_text())
+        record["points"] = [{"id": "known-point", "name": "Synthetic coordinate", "x": .2, "y": .3}]
+        path.write_text(json.dumps(record))
+        self.assertNotEqual(original["revision"], json.loads(builder.collect_assets(self.root)["data/maps.json"])["revision"])
+
+    def test_missing_corrupt_or_unlisted_map_assets_abort_before_publication(self):
+        path = self.root / "web/app/map-assets/erangel.png"
+        original = path.read_bytes()
+        path.write_bytes(original + b"changed")
+        with self.assertRaisesRegex(ValueError, "byte size|checksum"):
+            builder.build(self.output, root=self.root)
+        self.assertFalse(self.output.exists())
+        path.write_bytes(original)
+        private = self.write("web/app/map-assets/unreviewed.png", original)
+        with self.assertRaisesRegex(ValueError, "match exactly"):
+            builder.build(self.output, root=self.root)
+        private.unlink()
+        path.unlink()
+        with self.assertRaisesRegex(ValueError, "manifest"):
+            builder.build(self.output, root=self.root)
+
+    def test_reference_source_and_map_catalog_must_match_the_bundled_manifest(self):
+        path = self.root / "web/app/map-assets/manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["references"][0]["source_url"] = "https://unreviewed.example/reference.png"
+        path.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "pinned official"):
+            builder.build(self.output, root=self.root)
+
+    def test_actual_release_includes_eleven_hashed_official_references_and_no_private_images(self):
+        assets = builder.collect_assets(ROOT)
+        catalog = json.loads(assets["data/maps.json"])
+        self.assertEqual(len(catalog["maps"]), 11)
+        self.assertEqual({item["id"]: len(item["points"]) for item in catalog["maps"] if item["points"]}, {"erangel": 15, "taego": 12})
+        self.assertEqual(sum(name.startswith("app/map-assets/") and name.endswith(".png") for name in assets), 11)
+        self.assertFalse(any("screenshots/" in name or "private" in name for name in assets))
 
     def test_symlink_input_is_rejected_if_host_supports_it(self):
         link = self.root / "web/app/private.txt"

@@ -2,15 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {displayMediaOptions, readCaptureSettings, applyCaptureRate, boundedFrameSize, setSamplerSize} from '../app/capture.mjs';
 
-test('capture starts at one FPS with bounded size and supports only the two explicit rates', () => {
+test('capture starts at one FPS and supports each player sampling cadence with bounded size', () => {
   assert.deepEqual(displayMediaOptions(), {
     video: {frameRate: {ideal: 1, max: 1}, width: {ideal: 2400, max: 2400}, height: {ideal: 2400, max: 2400}},
     audio: false, selfBrowserSurface: 'exclude',
   });
   assert.deepEqual(displayMediaOptions(3).video.frameRate, {ideal: 3, max: 3});
+  for (const rate of [.1, .2, .5, 1, 2]) assert.deepEqual(displayMediaOptions(rate).video.frameRate, {ideal: rate, max: rate});
   const changed = displayMediaOptions(); changed.video.width.max = 10;
   assert.equal(displayMediaOptions().video.width.max, 2400, 'Callers do not share mutable options');
-  for (const rate of [0, 2, 5, -1, NaN, Infinity, '1', true, null]) assert.throws(() => displayMediaOptions(rate), RangeError);
+  for (const rate of [0, 5, -1, NaN, Infinity, '1', true, null]) assert.throws(() => displayMediaOptions(rate), RangeError);
 });
 
 test('actual settings disclose only dimensions, actual rate and known surface kind', () => {

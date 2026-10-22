@@ -1,4 +1,4 @@
-/* Hosted CI only. Synthetic screen frames and official public map references. */
+/* Hosted CI only. Synthetic screen frames and bundled official map references. */
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -18,7 +18,7 @@ const base = 'http://127.0.0.1:8765';
 const report = {status: 'running', steps: [], requests: [], console: [], pageErrors: []};
 let server, browser, context, page, serverOutput = '';
 const save = () => fs.writeFileSync(path.join(evidence, 'browser-report.json'), JSON.stringify(report, null, 2));
-const deadline = setTimeout(() => { report.status = 'timeout'; save(); server?.kill(); process.exit(1); }, 8 * 60_000);
+const deadline = setTimeout(() => { report.status = 'timeout'; save(); server?.kill(); process.exit(1); }, 12 * 60_000);
 deadline.unref();
 
 // Observe the rendered interface independently of the controller's state API.
@@ -26,8 +26,14 @@ deadline.unref();
 // with its retained map registration; Stop/reset must still remove it.
 async function readMapView() {
   return page.evaluate(() => {
-    const visible = element => Boolean(element && !element.hidden &&
-      element.getClientRects().length && getComputedStyle(element).visibility !== 'hidden');
+    const visible = element => {
+      if (!element || element.hidden || !element.getClientRects().length || getComputedStyle(element).visibility === 'hidden') return false;
+      // Chromium may report layout rectangles for children of closed details.
+      // The disclosure summary itself remains visible; its content does not.
+      for (let parent = element.parentElement; parent; parent = parent.parentElement)
+        if (parent.tagName === 'DETAILS' && !parent.open && !parent.querySelector(':scope > summary')?.contains(element)) return false;
+      return typeof element.checkVisibility !== 'function' || element.checkVisibility({visibilityProperty: true});
+    };
     const main = document.querySelector('#map-canvas');
     const preview = document.querySelector('#source-preview');
     const connect = document.querySelector('#connect-source');
@@ -45,6 +51,10 @@ async function readMapView() {
       retainedBannerVisible: visible(document.querySelector('#retained-banner')),
       targetCount: document.querySelectorAll('#target-list tr').length,
       sourcePanelVisible: visible(document.querySelector('#source-panel')),
+      sourceDetailsOpen: Boolean(document.querySelector('#source-details')?.open),
+      reset: {visible: visible(document.querySelector('#reset-match')),
+        insideDisclosure: Boolean(document.querySelector('#reset-match')?.closest('#source-details')),
+        disabled: document.querySelector('#reset-match')?.disabled ?? true},
       preview: {visible: visible(preview), width: preview?.width || 0, height: preview?.height || 0,
         centerPixel: preview?.width && preview?.height ? Array.from(preview.getContext('2d').getImageData(
           Math.floor(preview.width / 2), Math.floor(preview.height / 2), 1, 1).data) : []},
@@ -65,12 +75,26 @@ function assertCroppedMap(view) {
 
 function assertSourcePreview(view) {
   assert.equal(view.sourcePanelVisible, true, 'An active shared source needs its small confirmation panel');
+  assert.equal(view.sourceDetailsOpen, true);
   assert.equal(view.preview.visible, true, 'The shared-source preview must remain visible independently of map recognition');
   assert.ok(view.preview.width > 0 && view.preview.width <= 240, 'Preview bitmap width must be bounded before drawing');
   assert.ok(view.preview.height > 0 && view.preview.height <= 135, 'Preview bitmap height must be bounded before drawing');
   assert.ok(Math.abs(view.preview.width / view.preview.height - 960 / 720) < .02,
     'The small preview must preserve the 4:3 source aspect ratio');
   assert.equal(view.preview.centerPixel[3], 255, 'The source preview must contain an actual sampled frame');
+}
+
+function assertCollapsedSource(view) {
+  assert.equal(view.sourcePanelVisible, true);
+  assert.equal(view.sourceDetailsOpen, false, 'The first recognized map must collapse the source preview');
+  assert.equal(view.preview.visible, false, 'Closed details must actually hide the preview');
+  assert.equal(view.reset.visible, true, 'Reset match must remain available outside the closed preview');
+  assert.equal(view.reset.insideDisclosure, false);
+}
+
+function assertMapOnlyState(state) {
+  assert.equal(state.position, null, 'The player view must not infer a player position');
+  assert.equal(state.zone, null, 'The player view must not infer a safe circle');
 }
 
 function assertStoppedView(view) {
@@ -103,8 +127,8 @@ async function main() {
   page.setDefaultTimeout(30_000);
   page.on('console', message => report.console.push({type: message.type(), text: message.text().slice(0, 2500)}));
   page.on('pageerror', error => report.pageErrors.push(String(error)));
-  page.on('request', request => report.requests.push({method: request.method(), url: request.url()}));
-  await page.goto(base + '/app/?test=1&diagnostics=1', {waitUntil: 'domcontentloaded'});
+  context.on('request', request => report.requests.push({method: request.method(), url: request.url()}));
+  await page.goto(base + '/app/?test=1', {waitUntil: 'domcontentloaded'});
   await page.waitForFunction(() => Boolean(window.lootLizard), null, {timeout: 30_000});
   page.setDefaultTimeout(240_000);
   const engine = await page.evaluate(async () => window.lootLizard.ready);
@@ -115,8 +139,60 @@ async function main() {
   report.engine = engine;
   report.steps.push('real-pyodide-sift-and-affine-ready');
   report.defaultReferences = await page.evaluate(() => window.lootLizard.getState().referenceCount);
-  assert.equal(report.defaultReferences, 2, 'Erangel and Taego references must load without user file import');
-  report.steps.push('official-default-references-load-automatically');
+  assert.equal(report.defaultReferences, 11, 'All ten battle-royale maps and Training must load from bundled assets');
+  assert.equal(capabilities.maxReferences, 32);
+  report.steps.push('eleven-bundled-map-references-load-without-external-image-downloads');
+  assert.equal(await page.locator('#scan-interval').inputValue(), '1000');
+  assert.equal((await page.evaluate(() => window.lootLizard.getState())).interval, 1000);
+  const intervals = await page.locator('#scan-interval option').evaluateAll(options => options.map(option => option.value));
+  assert.deepEqual(intervals, ['500', '1000', '2000', '5000', '10000']);
+  await page.locator('#settings-panel > summary').click();
+  for (const value of intervals) {
+    await page.locator('#scan-interval').selectOption(value);
+    const preference = await page.evaluate(() => ({state: window.lootLizard.getState(),
+      stored: JSON.parse(localStorage.getItem('lootlizard.web.preferences.v1')),
+      rate: window.lootLizard.getPerformance().requestedFrameRate}));
+    assert.equal(preference.state.interval, Number(value));
+    assert.equal(preference.stored.interval, Number(value));
+    assert.equal(preference.rate, 1000 / Number(value));
+  }
+  await page.locator('#language-select').selectOption('hu');
+  assert.equal((await page.evaluate(() => window.lootLizard.getState())).sharing, false, 'Preference reload checks must never interrupt a live capture');
+  await page.reload({waitUntil: 'domcontentloaded'});
+  await page.waitForFunction(() => Boolean(window.lootLizard), null, {timeout: 30_000});
+  await page.evaluate(async () => window.lootLizard.ready);
+  assert.equal(await page.locator('#scan-interval').inputValue(), '10000');
+  assert.equal(await page.locator('#language-select').inputValue(), 'hu');
+  assert.equal(await page.locator('html').getAttribute('lang'), 'hu');
+  await page.locator('#settings-panel > summary').click();
+  await page.locator('#language-select').selectOption('en');
+  await page.locator('#scan-interval').selectOption('1000');
+  await page.locator('#settings-panel > summary').click();
+  report.steps.push('all-five-check-intervals-and-language-persist-across-stopped-page-reload');
+
+  const production = await context.newPage();
+  try {
+    await production.goto(base + '/app/', {waitUntil: 'domcontentloaded'});
+    await production.waitForFunction(() => !document.querySelector('#connect-source').disabled, null, {timeout: 240_000});
+    assert.equal(await production.evaluate(() => typeof window.lootLizard), 'undefined', 'The synthetic test API must not be exposed on a normal player page');
+    assert.equal(await production.locator('#load-demo, #open-image, #reference-file, #reference-map, #replay-mode, #capture-work, #performance-diagnostics, #engine-status, #metadata-status, #position-status, #inside-count').count(), 0);
+    assert.equal(await production.locator('.targets-table th').count(), 2);
+    const text = await production.locator('body').innerText();
+    assert.doesNotMatch(text, /Pyodide|OpenCV|SIFT|WASM|RGBA|canonical|metadata|Load demo|Local performance diagnostics|identity unverified|distances unavailable/i,
+      'The player interface must describe its task without developer/runtime details');
+    report.productionInterface = {testApiAbsent: true, targetColumns: 2, developerControlsAbsent: true};
+  } finally {await production.close();}
+  await page.bringToFront();
+  report.steps.push('normal-player-page-has-no-test-api-demo-controls-or-technical-runtime-copy');
+  // The real default was verified above. Controlled video fixtures use a
+  // slower supported cadence so a completed map remains observable between
+  // expensive WASM scans rather than immediately entering the next scan.
+  await page.locator('#settings-panel > summary').click();
+  await page.locator('#scan-interval').selectOption('5000');
+  await page.locator('#settings-panel > summary').click();
+  assert.equal((await page.evaluate(() => window.lootLizard.getState())).interval, 5000);
+  report.controlledFixtureIntervalMs = 5000;
+  report.steps.push('controlled-synthetic-fixtures-use-five-second-checks-after-default-verification');
   const localOCR = await page.evaluate(async () => {
     const {createMatchContextReader} = await import('/app/match-context-reader.mjs');
     const {classifyMatchContext} = await import('/app/match-context.mjs');
@@ -181,7 +257,7 @@ async function main() {
       const results = [];
       for (const [index, image] of demo.frames.entries()) {
         results.push(await rpc('analyze', {rgba: rgba(image), width: image.width, height: image.height,
-          context: 'live', ticket: {epoch: 1, sequence: index + 1}}));
+          context: 'map-only', ticket: {epoch: 1, sequence: index + 1}}));
       }
       return {ready, loaded, map: demo.map, results};
     } finally { worker.terminate(); }
@@ -191,6 +267,9 @@ async function main() {
   assert.equal(workerResults.results.length, 3);
   workerResults.results.forEach((result, index) => {
     assert.deepEqual(result.ticket, {epoch: 1, sequence: index + 1}, 'Object frame ticket must survive worker/Python boundaries exactly');
+    assertMapOnlyState(result);
+    assert.equal(result.timings.markerMs, 0);
+    assert.equal(result.timings.zoneMs, 0);
   });
   for (const index of [0, 2]) {
     const result = workerResults.results[index];
@@ -211,15 +290,18 @@ async function main() {
   report.worker = workerResults;
   report.steps.push('real-cv-map-gameplay-rejection-map-return-and-projection');
 
-  await page.locator('#load-demo').click();
+  await page.evaluate(() => window.lootLizard.demo());
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   assert.ok(await page.locator('#target-list tr').count() > 0);
   const demoView = await readMapView();
   assertCroppedMap(demoView);
   await page.screenshot({path: path.join(evidence, 'synthetic-demo.png'), fullPage: true});
   report.demoState = await page.evaluate(() => window.lootLizard.getState());
+  assertMapOnlyState(report.demoState);
+  assert.equal(await page.locator('.targets-table th').count(), 2);
+  assert.equal(await page.locator('#target-list tr').first().locator('td').count(), 2);
   report.demoView = demoView;
-  report.steps.push('demo-button-renders-real-cv-targets');
+  report.steps.push('test-only-demo-renders-real-map-registration-and-two-column-targets');
 
   const stale = await page.evaluate(async () => {
     const {createDemo} = await import('/app/demo.mjs');
@@ -276,7 +358,13 @@ async function main() {
     canvas.width = frame.width; canvas.height = frame.height;
     canvas.getContext('2d').putImageData(frame, 0, 0);
     const stream = canvas.captureStream(2);
-    window.__syntheticCapture = {canvas, stream, frames: demo.frames, scans: []};
+    const originalPost = Worker.prototype.postMessage;
+    const fixture = {canvas, stream, frames: demo.frames, scans: [], analyzePosts: [], originalPost};
+    window.__syntheticCapture = fixture;
+    Worker.prototype.postMessage = function(message) {
+      if (message?.type === 'analyze') fixture.analyzePosts.push({context: message.context, mapId: message.mapId ?? null});
+      return Reflect.apply(originalPost, this, arguments);
+    };
     const observer = new MutationObserver(() => {
       const state = window.lootLizard.getState();
       if (state.phase === 'scanning') window.__syntheticCapture.scans.push({...state,
@@ -287,6 +375,7 @@ async function main() {
     observer.observe(document.querySelector('#recognition-status'), {childList: true, characterData: true, subtree: true});
     window.__syntheticCapture.observer = observer;
     await window.lootLizard.startTestStream(stream, {demo: true});
+    window.__syntheticCapture.detailsOpenAtStart = document.querySelector('#source-details').open;
   });
   const otherTab = await context.newPage();
   await otherTab.goto('about:blank');
@@ -296,15 +385,24 @@ async function main() {
     return state.sharing && state.phase === 'recognized' && state.mapId === 'demo' && state.points.length > 0;
   }, null, {timeout: 60_000});
   report.passiveStreamState = await page.evaluate(() => window.lootLizard.getState());
+  assertMapOnlyState(report.passiveStreamState);
+  assert.equal(await page.evaluate(() => window.__syntheticCapture.detailsOpenAtStart), true,
+    'A newly connected stream must initially expand its preview before a map is found');
   const sharedMapView = await readMapView();
   assertCroppedMap(sharedMapView);
-  assertSourcePreview(sharedMapView);
+  assertCollapsedSource(sharedMapView);
+  assert.equal(sharedMapView.reset.disabled, false);
   assert.equal(sharedMapView.retainedBannerVisible, false, 'A current recognized map needs no retained-map notice');
   report.sharedMapView = sharedMapView;
-  report.steps.push('recognized-map-crops-registered-bounds-with-bounded-source-preview');
+  report.steps.push('first-recognized-map-crops-bounds-and-collapses-preview-with-reset-still-visible');
+  await page.bringToFront();
+  await page.locator('#source-details > summary').click();
+  assertSourcePreview(await readMapView());
+  await otherTab.bringToFront();
   await page.evaluate(() => {
     const fixture = window.__syntheticCapture;
     fixture.scans.length = 0;
+    fixture.gameplayStartedAt = performance.timeOrigin + performance.now();
     fixture.canvas.getContext('2d').putImageData(fixture.frames[1], 0, 0);
     fixture.stream.getVideoTracks()[0].requestFrame?.();
   });
@@ -312,16 +410,32 @@ async function main() {
     const state = window.lootLizard.getState();
     return state.sharing && state.phase === 'unknown' && state.mapId === 'demo' && state.points.length > 0;
   }, null, {timeout: 60_000});
+  const firstGameplay = await page.evaluate(() => ({state: window.lootLizard.getState(),
+    completed: window.lootLizard.getPerformance().events.filter(event => event.type === 'scan' &&
+      event.path === 'worker' && event.epochMs >= window.__syntheticCapture.gameplayStartedAt).length}));
+  // A video element may deliver one last old map frame immediately after the
+  // canvas changes. Compare two completed gameplay scans so a legitimate final
+  // map frame cannot make the retained-age assertion depend on event timing.
+  await page.waitForFunction(completed => {
+    const fixture = window.__syntheticCapture, state = window.lootLizard.getState();
+    const scans = window.lootLizard.getPerformance().events.filter(event => event.type === 'scan' &&
+      event.path === 'worker' && event.epochMs >= fixture.gameplayStartedAt);
+    return state.phase === 'unknown' && state.mapId === 'demo' && scans.length > completed;
+  }, firstGameplay.completed, {timeout: 60_000});
   const gameplayUI = await page.evaluate(() => ({state: window.lootLizard.getState(), scans: window.__syntheticCapture.scans}));
   assert.ok(gameplayUI.scans.length > 0, 'Automatic stream must actually process the changed frame');
   assert.ok(gameplayUI.scans.every(state => state.mapId === 'demo' && state.points.length > 0 &&
     state.view === 'map' && state.mainVisible && state.targetCount > 0),
   'Scanning gameplay must retain the recognized map and its targets instead of replacing its bitmap');
-  assert.equal(gameplayUI.state.mapUpdatedAt, report.passiveStreamState.mapUpdatedAt,
+  assert.equal(gameplayUI.state.mapUpdatedAt, firstGameplay.state.mapUpdatedAt,
     'Unrecognized gameplay must not refresh the age of the retained map');
   assert.equal(gameplayUI.state.positionUpdatedAt, report.passiveStreamState.positionUpdatedAt);
   assert.equal(gameplayUI.state.zoneUpdatedAt, report.passiveStreamState.zoneUpdatedAt);
   assert.deepEqual(gameplayUI.state.points, report.passiveStreamState.points);
+  const registrationPosts = await page.evaluate(() => window.__syntheticCapture.analyzePosts);
+  assert.equal(registrationPosts[0].mapId, null, 'The first map must be identified without a trusted-map hint');
+  assert.ok(registrationPosts.some(post => post.mapId === 'demo'), 'Later scans must reuse the verified match map');
+  assert.ok(registrationPosts.every(post => post.context === 'map-only'));
   assert.ok(await page.locator('#target-list tr').count() > 0);
   const gameplayView = await readMapView();
   assertCroppedMap(gameplayView);
@@ -345,6 +459,7 @@ async function main() {
   }, gameplayUI.state.mapUpdatedAt, {timeout: 60_000});
   const returnedMapView = await readMapView();
   assertCroppedMap(returnedMapView);
+  assertSourcePreview(returnedMapView);
   assert.equal(returnedMapView.retainedBannerVisible, false, 'A fresh recognized map must clear the retained notice');
   report.streamGameplay = gameplayUI;
   report.streamMapReturn = await page.evaluate(() => window.lootLizard.getState());
@@ -361,6 +476,12 @@ async function main() {
     const state = window.lootLizard.getState();
     return state.sharing && state.phase === 'unknown' && state.mapId === 'demo';
   }, null, {timeout: 60_000});
+  await page.bringToFront();
+  await page.locator('#source-details > summary').click();
+  assertCollapsedSource(await readMapView());
+  await page.evaluate(() => document.querySelector('#reset-match').addEventListener('click', () => {
+    window.__syntheticCapture.resetPostIndex = window.__syntheticCapture.analyzePosts.length;
+  }, {capture: true, once: true}));
   await page.locator('#reset-match').click();
   const reset = await page.evaluate(() => ({state: window.lootLizard.getState(),
     trackState: window.__syntheticCapture.stream.getVideoTracks()[0].readyState,
@@ -379,7 +500,7 @@ async function main() {
   const resetView = await readMapView();
   assert.equal(resetView.main.visible, false);
   assert.equal(resetView.retainedBannerVisible, false);
-  assertSourcePreview(resetView);
+  assertCollapsedSource(resetView);
   assert.equal(await page.locator('#reset-match').isDisabled(), true);
   report.resetMatch = {reset, view: resetView};
   await page.evaluate(() => {
@@ -391,7 +512,15 @@ async function main() {
     const state = window.lootLizard.getState();
     return state.sharing && state.phase === 'recognized' && state.mapId === 'demo' && state.mapUpdatedAt > previous;
   }, report.streamMapReturn.mapUpdatedAt, {timeout: 60_000});
-  assertCroppedMap(await readMapView());
+  const reacquiredView = await readMapView();
+  assertCroppedMap(reacquiredView);
+  assertCollapsedSource(reacquiredView);
+  const resetPosts = await page.evaluate(() => {
+    const fixture = window.__syntheticCapture;
+    return fixture.analyzePosts.slice(fixture.resetPostIndex);
+  });
+  assert.ok(resetPosts.length > 0);
+  assert.equal(resetPosts[0].mapId, null, 'Reset must remove the previous trusted-map restriction before identifying the next map');
   report.afterResetState = await page.evaluate(() => window.lootLizard.getState());
   report.steps.push('manual-reset-clears-map-ages-without-ending-stream-and-next-map-reacquires');
   await page.evaluate(() => {
@@ -401,6 +530,7 @@ async function main() {
     // event here to model the browser's user-driven Stop sharing notification.
     track.dispatchEvent(new Event('ended'));
     window.__syntheticCapture.observer.disconnect();
+    Worker.prototype.postMessage = window.__syntheticCapture.originalPost;
   });
   await page.waitForFunction(() => !window.lootLizard.getState().sharing);
   const ended = await page.evaluate(() => window.lootLizard.getState());
@@ -416,8 +546,7 @@ async function main() {
   report.steps.push('synthetic-stream-automatic-scan-and-ended-clears-state');
 
   await page.bringToFront();
-  await page.locator('#settings-panel > summary').click();
-  assert.equal(await page.locator('#performance-diagnostics').isVisible(), true);
+  assert.equal((await readMapView()).sourceDetailsOpen, true, 'Stopping resets the disclosure for the next connection');
   await page.evaluate(async () => {
     const fixture = window.__syntheticCapture;
     fixture.stream = fixture.canvas.captureStream(2);
@@ -436,10 +565,13 @@ async function main() {
       await Promise.race([started, new Promise((_, reject) => {
         timeout = setTimeout(() => reject(Error('Restarted synthetic stream produced no playable frame')), 30_000);
       })]);
+      fixture.detailsOpenAtRestart = document.querySelector('#source-details').open;
     } finally { clearInterval(repaint); clearTimeout(timeout); }
   });
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
-  await page.locator('#capture-work').selectOption('capture-only');
+  assert.equal(await page.evaluate(() => window.__syntheticCapture.detailsOpenAtRestart), true);
+  assertCollapsedSource(await readMapView());
+  await page.evaluate(() => window.lootLizard.configureTestProcessing('capture-only'));
   const modeCleared = await page.evaluate(() => ({state: window.lootLizard.getState(),
     mode: window.lootLizard.getPerformance().mode}));
   assert.equal(modeCleared.mode, 'capture-only');
@@ -453,7 +585,7 @@ async function main() {
   assert.equal(modeView.main.visible, false, 'Pausing recognition must remove the former map from the main stage');
   assert.notEqual(modeView.view, 'map');
 
-  await page.locator('#capture-work').selectOption('full');
+  await page.evaluate(() => window.lootLizard.configureTestProcessing('full'));
   const inflightMode = await page.evaluate(async () => {
     const {createDemo} = await import('/app/demo.mjs');
     let scanningState;
@@ -462,12 +594,10 @@ async function main() {
         if (window.lootLizard.getState().phase !== 'scanning') return;
         observer.disconnect();
         scanningState = window.lootLizard.getState();
-        // As in the Stop test, queue the real control's change event after the
+        // As in the Stop test, queue the test-only processing change after the
         // already-enqueued worker post, before its reply can run as a task.
         queueMicrotask(() => {
-          const control = document.querySelector('#capture-work');
-          control.value = 'capture-only';
-          control.dispatchEvent(new Event('change', {bubbles: true}));
+          window.lootLizard.configureTestProcessing('capture-only');
           resolve();
         });
       });
@@ -492,7 +622,7 @@ async function main() {
   report.inflightMode = inflightMode;
   report.steps.push('diagnostic-mode-clears-map-and-rejects-in-flight-worker-geometry');
 
-  await page.locator('#capture-work').selectOption('full');
+  await page.evaluate(() => window.lootLizard.configureTestProcessing('full'));
   // Exercise the production match-context path: demo streams intentionally skip
   // OCR. Use the already-reviewed official reference, never a private capture.
   await page.evaluate(async () => {
@@ -521,10 +651,14 @@ async function main() {
   await page.waitForFunction(() => {
     const state = window.lootLizard.getState();
     return state.sharing && state.phase === 'recognized' && state.mapId === 'erangel';
-  }, null, {timeout: 60_000});
+  }, null, {timeout: 120_000});
   const officialMapState = await page.evaluate(() => window.lootLizard.getState());
   const officialMapView = await readMapView();
   assertCroppedMap(officialMapView);
+  assertCollapsedSource(officialMapView);
+  assertMapOnlyState(officialMapState);
+  await page.locator('#source-details > summary').click();
+  assertSourcePreview(await readMapView());
   await page.evaluate(() => {
     const fixture = window.__contextCapture, ctx = fixture.canvas.getContext('2d');
     fixture.unknownStartedAt = Date.now();
@@ -535,10 +669,19 @@ async function main() {
     const fixture = window.__contextCapture, state = window.lootLizard.getState();
     const unknownScans = window.lootLizard.getPerformance().events.filter(event =>
       event.type === 'scan' && event.path === 'worker' && event.epochMs >= fixture.unknownStartedAt);
-    return state.sharing && state.phase === 'unknown' && state.mapId === 'erangel' && unknownScans.length >= 2;
-  }, null, {timeout: 45_000});
+    return state.sharing && state.phase === 'unknown' && state.mapId === 'erangel' && unknownScans.length >= 1;
+  }, null, {timeout: 60_000});
+  const firstUnknownContext = await page.evaluate(() => ({state: window.lootLizard.getState(),
+    completed: window.lootLizard.getPerformance().events.filter(event => event.type === 'scan' &&
+      event.path === 'worker' && event.epochMs >= window.__contextCapture.unknownStartedAt).length}));
+  await page.waitForFunction(completed => {
+    const fixture = window.__contextCapture, state = window.lootLizard.getState();
+    const unknownScans = window.lootLizard.getPerformance().events.filter(event =>
+      event.type === 'scan' && event.path === 'worker' && event.epochMs >= fixture.unknownStartedAt);
+    return state.sharing && state.phase === 'unknown' && state.mapId === 'erangel' && unknownScans.length > completed;
+  }, firstUnknownContext.completed, {timeout: 60_000});
   const unknownContextState = await page.evaluate(() => window.lootLizard.getState());
-  assert.equal(unknownContextState.mapUpdatedAt, officialMapState.mapUpdatedAt,
+  assert.equal(unknownContextState.mapUpdatedAt, firstUnknownContext.state.mapUpdatedAt,
     'Missing map/footer pixels alone must not age-reset or discard the retained match');
   const unknownContextView = await readMapView();
   assertCroppedMap(unknownContextView);
@@ -557,7 +700,7 @@ async function main() {
   await page.waitForFunction(() => {
     const state = window.lootLizard.getState();
     return state.sharing && state.mapId === null && state.mapUpdatedAt === null;
-  }, null, {timeout: 90_000});
+  }, null, {timeout: 120_000});
   const automaticContextReset = await page.evaluate(() => {
     const fixture = window.__contextCapture;
     return {state: window.lootLizard.getState(),
@@ -582,7 +725,7 @@ async function main() {
   report.steps.push('real-ocr-lobby-quorum-clears-retained-official-map-without-stopping-stream');
   await page.evaluate(() => {window.lootLizard.stop(); delete window.__contextCapture;});
 
-  await page.locator('#load-demo').click();
+  await page.evaluate(() => window.lootLizard.demo());
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   await page.evaluate(async () => {
     const {createDemo} = await import('/app/demo.mjs');
@@ -642,6 +785,12 @@ async function main() {
   report.noReferenceView = noReferenceView;
   report.steps.push('empty-reference-screen-fast-path-samples-without-worker-transfer-or-stale-geometry');
   assert.ok(report.requests.every(request => ['GET', 'HEAD'].includes(request.method)), 'No image upload request may be issued');
+  assert.ok(report.requests.some(request => new URL(request.url).pathname === '/data/maps.json'), 'Map metadata must come from the bundled release catalog');
+  assert.ok(report.requests.every(request => !/\/metadata\/maps\.json(?:\?|$)/.test(new URL(request.url).pathname)), 'Running clients must not poll a GitHub metadata branch');
+  assert.ok(report.requests.every(request => {
+    const url = new URL(request.url);
+    return !/\.png$/i.test(url.pathname) || url.hostname === '127.0.0.1';
+  }), 'Official reference PNGs must come from the bundled origin, never a map CDN');
   assert.deepEqual(report.pageErrors, [], 'No unhandled main-page error');
   report.status = 'passed';
 }

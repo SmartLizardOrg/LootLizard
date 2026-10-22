@@ -1,114 +1,92 @@
 # Contributing to LootLizard
 
-LootLizard is a browser application with portable Python CV modules. Open a
-focused pull request against `main`. The earlier Windows application remains
-available in the `v0.8.0` tag; new changes should target the web application.
+Open a focused pull request against `main`. Current development targets the
+browser companion; the former Windows app remains in `v0.8.0` history.
 
-## Local setup
+## Develop and check
 
 ```sh
 python -m venv .venv
-# Activate .venv using your shell's normal activation command.
+# Activate using your shell's normal command.
 python -m pip install .
 python scripts/build_web.py
 python scripts/serve_web.py --port 8765
-```
-
-The landing page is `/`, the companion is `/app/`. Browser packages and public
-references are downloaded on the first visit; the Python installation above is
-for developer tests, not an end-user requirement. Do not deploy the whole source
-checkout: `scripts/build_web.py` creates the curated `dist/` directory.
-
-## Checks
-
-```sh
 python -B -m unittest discover -s tests -v
 python -B -m unittest discover -s web/tests -p 'test_*.py' -v
 node --test web/tests/*.test.mjs
-python scripts/build_web.py
 ```
 
-GitHub Actions also exercises the real Pyodide/OpenCV worker in Chromium using
-synthetic artwork. The browser test must preserve its CI-only guard and use no
-private screenshots, user profiles or real sharing permissions. Local visual
-checks should use an explicitly selected, visible browser.
+The app is `/app/`, landing `/`. Build and serve only curated `dist/`, never the
+entire source checkout. End users need no Python installation or image import.
+The hosted browser test uses synthetic frames and real WASM CV; keep its CI-only
+guard and never add private screenshots/profiles or real sharing permission bypasses.
+Local visual tests use an explicitly selected visible browser.
 
-For recognition work, test unknown and ambiguous frames, stale asynchronous
-replies, Stop/sharing interruption and reference replacement. Successful
-synthetic registration is separate from general PUBG accuracy. A performance
-change needs controlled frame-time measurement; a passing functional test does
-not demonstrate an FPS improvement.
+Recognition changes must test abstention, ambiguity, Stop, stale replies, reference
+transactions and held-map pairing/ages. Successful synthetic recognition does not
+establish real match accuracy. Performance claims need controlled game frame times.
 
-## Community point data
+## Map records and points
 
-Edit the relevant file under `data/`. Positions are whole-map normalized values:
-the upper-left corner is `(0, 0)` and the lower-right corner is `(1, 1)`.
-Coordinates must describe the complete map, not a zoomed or panned screenshot.
-Both current maps use an approximate `size_m` of 8000 for straight-line distances.
+Edit the relevant `data/<id>.json`. Coordinates are normalized across the complete
+map: `(0,0)` top-left, x right/east, y down/south, `(1,1)` bottom-right. `size_m` is
+an approximate nominal side length for straight-line distance, not a route length.
+Use stable lowercase safe map/point ids. Retain existing ids when correcting points.
 
-- Use stable, lowercase, safe ids for maps and points. Retain ids for corrections
-  to an existing location so that updates can be reviewed clearly.
-- Include a precise source URL, license and attribution. Describe uncertainty,
-  map version and incompleteness in the source notes.
-- Keep existing credits and indicate which points were added, moved or removed.
-  Do not label a list complete without evidence. The Taego list is incomplete.
-- Do not include screenshots, game map images, private catalogs or profiles in a
-  coordinate PR. A code license does not establish rights to an image.
+Empty `points: []` is valid and means no coordinates are supplied. Do not manufacture
+points or imply a zero-length list proves no secret rooms exist. Erangel has 15
+unverified points; Taego has 12 and is incomplete. New point records need a precise
+source URL, attribution, license, version and uncertainty notes. Preserve credits.
 
-Run catalog validation using the full source commit:
+Validate a complete local catalog:
 
 ```sh
-python scripts/build_map_catalog.py --revision FULL_40_CHARACTER_COMMIT_SHA --output work/maps.json
+python scripts/build_map_catalog.py --output work/maps.json
 ```
 
-The metadata workflow builds one validated snapshot after relevant changes reach
-`main` and publishes it to `metadata/maps.json`. Open clients poll that fixed
-public GitHub feed roughly every 60 seconds. CDN caching and failures can delay
-updates; rejected snapshots retain the last good data. This channel publishes
-point metadata only, not executable application code.
+A supplied `--revision FULL_40_CHARACTER_COMMIT_SHA` labels a release; otherwise the
+catalog receives a deterministic content hash. The web builder includes this catalog
+in the static site. Maps and coordinates update only with a web release; there is no
+GitHub metadata polling, metadata branch publisher or independent data rollout.
 
-## Map references and private fixtures
+## Official bundled references
 
-Public reference-source configuration belongs to the browser application. Keep
-its source provenance, byte/dimension bounds, version pins and validation intact.
-Never substitute an arbitrary screenshot for a complete square map reference.
-User-supplied references are optional local data; do not upload them in tests or
-bug reports without deliberately reviewing the content and distribution rights.
+`web/app/map-assets/manifest.json` records the selected public official asset URL,
+source commit, byte count, dimensions and SHA-256 for every bundled PNG. The runtime
+manifest in `automatic-references.mjs` must agree. Add/update only reviewed public
+sources and preserve their rights; do not substitute a private capture or an arbitrary
+map image. Keep `NOTICE.txt` and `THIRD_PARTY_NOTICES.md` accurate. PUBG imagery is not
+MIT licensed. A source code license never licenses someone else's game imagery.
 
-The portable `lootlizard/dataset.py` utilities and
-`scripts/evaluate_screenshots.py` can evaluate local annotated datasets. Ground
-truth must be manually established; unknown facts remain null. Keep training
-references separate from held-out evaluation captures, and report both sample
-counts and abstentions. The repository does not contain the private real-game
-evaluation set. Synthetic fixtures should be generated programmatically.
+All eleven references are automatic; there is no manual map selector/import flow.
+Do not add duplicate aliases with identical reference pixels (Training/Camp Jackal
+is one map), which would make unique identification ambiguous. Initial matching
+searches the library, then a verified map stays locked until the match is reset.
+Measure both initial search cost and the subsequent known-map path.
 
-## Public builds and releases
+Never bundle private screenshots, local catalogs, personal profiles, account names
+or user-provided references. The local dataset/evaluation utilities may read private
+files, but test ground truth must be independently annotated and remain local.
+Report sample counts and abstentions; synthetic fixtures should be generated.
 
-The builder copies `web/landing/` to the site root and `web/app/` to `/app/`, plus
-an explicit list of seven Python modules to `/cv/`, two point JSON files and
-required notices. Public directories must contain only intended static assets;
-unexpected file types, source links, oversized assets and unsafe paths fail the
-build. Existing output may be replaced only when its prior build manifest is
-valid and no untracked files are present.
+## Public build and release
 
-Source changes do not automatically publish the production app. After all checks
-pass and the source is merged to `main`, create a matching prerelease tag such
-as `v0.9.0-web.1` and publish its GitHub Release. The release workflow validates
-the tag and its ancestry, builds/tests the exact commit, attaches the ZIP and
-SHA-256 file, and updates `web-release`. Cloudflare Pages serves that generated
-branch with no build command and the repository root as its output directory.
-The workflow keeps branch history and rejects an older release replacing a
-newer production build. It never updates the legacy Windows feed.
+The builder copies landing/app assets, exactly seven portable CV modules, validated
+map records and their complete catalog, eleven reviewed public reference PNGs, notices
+and hosting files. Hash/size/dimension/source checks run before replacing output.
+Unlisted files in the map asset directory, unsafe paths, symlinks, invalid catalogs
+and oversized inputs fail the build. Existing output needs its valid prior build
+manifest and no untracked files before replacement.
 
-Keep application versions in `pyproject.toml` and `lootlizard/__init__.py` aligned.
-Use a new `-web.NUMBER` suffix for each web alpha release of that version.
-Navigation/reload revalidates application assets; open sessions retain their
-loaded code. Publishing must not force a reload or silently restart screen
-capture. Keep preferences optional and provide a way to clear stored data.
+Merge reviewed tested source to `main`, then publish a matching prerelease such as
+`v0.9.0-web.4`. The release workflow checks tag ancestry, runs tests, builds the exact
+source, attaches ZIP/SHA-256 assets and updates `web-release` without rewriting history.
+Cloudflare Pages serves that generated branch with no build command and `/` output.
+A source merge alone never publishes production. An older release cannot overwrite
+a newer web build. No Windows update feed is changed.
 
-## Licensing
-
-Submit code under the repository's MIT license. Preserve attribution and update
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) when adding a dependency, public
-reference source or adapted dataset. PUBG assets and trademarks keep their
-owners' rights; do not present this project as officially approved.
+Keep versions in `pyproject.toml` and `lootlizard/__init__.py` aligned. Each alpha
+uses a new `-web.NUMBER`. Reload/navigation receives a new app/maps/data release;
+open sharing sessions are not forcibly interrupted and must reselect their source
+when the user reloads. See README and third-party notices before changing hosting,
+public assets or dependencies.

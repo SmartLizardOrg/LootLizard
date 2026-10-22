@@ -4,50 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10161e">
-  <meta name="description" content="LootLizard is a local browser companion for PUBG maps. Share your game screen and plan your next secret-room stop.">
+  <meta name="description" content="Keep your PUBG map and secret-room locations on your second screen with LootLizard.">
   <title>LootLizard · Map companion</title>
   <link rel="icon" href="/mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#workspace" data-i18n="Skip to the map">Skip to the map</a>
   <header class="topbar">
-    <a class="brand" href="/" aria-label="LootLizard home">
+    <a class="brand" href="/" aria-label="LootLizard home" data-i18n-aria-label="LootLizard home">
       <span class="brand-mark" aria-hidden="true">LL</span>
       <span>Loot<span class="brand-accent">Lizard</span></span>
     </a>
     <span class="preview-badge" data-i18n="Web alpha">Web alpha</span>
-    <div class="sharing-actions" aria-label="Screen sharing">
-      <span id="capture-status" class="capture-status" role="status" data-i18n="Not sharing">Not sharing</span>
+    <div class="sharing-actions" aria-label="Game connection" data-i18n-aria-label="Game connection">
+      <span id="capture-status" class="capture-status" role="status" data-i18n="Not connected">Not connected</span>
       <button id="start-sharing" class="button button-primary" type="button">
         <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg>
         <span data-i18n="Connect PUBG window">Connect PUBG window</span>
       </button>
       <button id="stop-sharing" class="button button-stop" type="button" disabled>
-        <span class="stop-icon" aria-hidden="true"></span><span data-i18n="Stop">Stop</span>
+        <span class="stop-icon" aria-hidden="true"></span><span data-i18n="Stop sharing">Stop sharing</span>
       </button>
     </div>
   </header>
 
-  <main class="workspace">
-    <section class="map-panel" aria-label="Map view">
+  <main id="workspace" class="workspace">
+    <section class="map-panel" aria-label="Your map" data-i18n-aria-label="Your map">
       <div class="map-heading">
         <div class="map-title">
           <span class="eyebrow" data-i18n="YOUR MAP">YOUR MAP</span>
           <h1 id="map-name" data-i18n="Waiting for a map">Waiting for a map</h1>
         </div>
-        <div class="map-tools">
-          <label class="button button-subtle file-button" for="open-image">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 5 5 3-3 5 5"/><circle cx="16.5" cy="8.5" r="1"/></svg>
-            <span data-i18n="Open image">Open image</span>
-          </label>
-          <input id="open-image" class="visually-hidden" type="file" accept="image/png,image/jpeg">
-          <button id="load-demo" class="button button-subtle" type="button" data-i18n="Load demo">Load demo</button>
-        </div>
       </div>
 
       <div id="map-stage" class="map-stage" data-view="setup">
-        <canvas id="map-canvas" width="1200" height="900" aria-label="Recognized map and detected room locations" hidden></canvas>
+        <canvas id="map-canvas" width="1200" height="900" aria-label="Your map and marked locations" data-i18n-aria-label="Your map and marked locations" hidden></canvas>
         <video id="capture-video" muted playsinline autoplay hidden aria-hidden="true"></video>
         <div id="canvas-empty" class="map-empty">
           <span class="empty-reticle" aria-hidden="true"><i></i></span>
@@ -59,108 +52,67 @@
             <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg>
             <span data-i18n="Connect PUBG window">Connect PUBG window</span>
           </button>
-          <span id="stage-hint" class="empty-alternative" data-i18n="Keep LootLizard on your second screen. Your images stay on this device.">Keep LootLizard on your second screen. Your images stay on this device.</span>
-          <ol id="setup-steps" class="setup-steps" aria-label="Getting started">
+          <span id="stage-hint" class="empty-alternative" data-i18n="Keep LootLizard on your second screen. Your screen stays on this device.">Keep LootLizard on your second screen. Your screen stays on this device.</span>
+          <ol id="setup-steps" class="setup-steps" aria-label="Getting started" data-i18n-aria-label="Getting started">
             <li><span class="setup-step-number" aria-hidden="true">1</span><span data-i18n="Start PUBG">Start PUBG</span></li>
             <li><span class="setup-step-number" aria-hidden="true">2</span><span data-i18n="Connect its window">Connect its window</span></li>
             <li><span class="setup-step-number" aria-hidden="true">3</span><span data-i18n="Open the map">Open the map</span></li>
           </ol>
         </div>
-        <div id="demo-banner" class="demo-banner" hidden data-i18n="Synthetic demo · not a live game">Synthetic demo · not a live game</div>
-        <div id="retained-banner" class="retained-banner" role="status" hidden data-i18n="Last recognized map · open the map to refresh">Last recognized map · open the map to refresh</div>
+        <div id="retained-banner" class="retained-banner" role="status" hidden data-i18n="Last map · open the map in PUBG to refresh">Last map · open the map in PUBG to refresh</div>
       </div>
       <div class="map-footer">
-        <div class="legend" aria-label="Map legend">
-          <span><i class="legend-anchor" aria-hidden="true"></i><span data-i18n="Room">Room</span></span>
-          <span><i class="legend-inside" aria-hidden="true"></i><span data-i18n="Inside circle">Inside circle</span></span>
-          <span><i class="legend-player" aria-hidden="true"></i><span data-i18n="Position estimate">Position estimate</span></span>
-        </div>
-        <div class="scan-metrics"><span id="snapshot-age" class="snapshot-age" data-i18n="No image yet">No image yet</span><span><span data-i18n="Map updated">Map updated</span> <span id="last-update">—</span></span><span><span data-i18n="Scan">Scan</span> <span id="scan-duration">—</span></span></div>
+        <span id="snapshot-age" class="snapshot-age" data-i18n="No map yet">No map yet</span>
+        <span class="map-update"><span data-i18n="Map updated">Map updated</span> <span id="last-update">—</span></span>
       </div>
     </section>
 
-    <aside class="sidebar" aria-label="Destinations and settings">
+    <aside class="sidebar" aria-label="Locations and settings" data-i18n-aria-label="Locations and settings">
       <section class="status-card" aria-labelledby="recognition-status">
-        <div class="status-eyebrow"><span id="recognition-indicator" class="status-indicator" aria-hidden="true"></span><span data-i18n="MAP RECOGNITION">MAP RECOGNITION</span></div>
-        <h2 id="recognition-status" role="status" data-i18n="Ready when you are">Ready when you are</h2>
-        <p id="recognition-detail" data-i18n="Start sharing to scan locally. Unknown maps will not show targets.">Start sharing to scan locally. Unknown maps will not show targets.</p>
-        <p id="engine-status" class="engine-status" role="status" data-i18n="Recognition engine not loaded">Recognition engine not loaded</p>
-        <dl class="map-stats">
-          <div><dt data-i18n="Known rooms">Known rooms</dt><dd id="room-count">0</dd></div>
-          <div><dt data-i18n="Inside circle">Inside circle</dt><dd id="inside-count">—</dd></div>
-        </dl>
-        <p id="position-status" class="position-status" data-i18n="Position unknown · distances unavailable">Position unknown · distances unavailable</p>
-        <p id="circle-status" class="circle-status" data-i18n="No circle recognized">No circle recognized</p>
-      </section>
-
-      <section id="source-panel" class="source-panel" aria-labelledby="source-title" hidden>
-        <div class="source-heading"><h2 id="source-title" data-i18n="Connected source">Connected source</h2><span class="source-indicator" aria-hidden="true"></span></div>
-        <div class="source-preview-frame"><canvas id="source-preview" width="240" height="135" role="img" aria-label="Low-rate preview of the connected source"></canvas></div>
-        <p id="source-status" class="source-status" role="status" data-i18n="No source connected">No source connected</p>
-        <div class="source-controls"><button id="reset-match" class="button button-subtle reset-match" type="button" data-i18n="Reset match">Reset match</button></div>
+        <div class="status-eyebrow"><span id="recognition-indicator" class="status-indicator" aria-hidden="true"></span><span data-i18n="YOUR NEXT STOP">YOUR NEXT STOP</span></div>
+        <h2 id="recognition-status" role="status" data-i18n="Getting ready…">Getting ready…</h2>
+        <p id="recognition-detail" data-i18n="We’re getting your maps ready. Connect PUBG when you’re ready to play.">We’re getting your maps ready. Connect PUBG when you’re ready to play.</p>
       </section>
 
       <section class="targets-card" aria-labelledby="targets-title">
-        <div class="targets-heading"><h2 id="targets-title" data-i18n="Destinations">Destinations</h2><span class="sort-note" data-i18n="Inside first">Inside first</span></div>
+        <div class="targets-heading"><h2 id="targets-title" data-i18n="Locations">Locations</h2><span id="room-count" class="room-count" aria-label="Location count" data-i18n-aria-label="Location count">0</span></div>
         <div class="target-scroll">
           <table class="targets-table">
-            <thead><tr><th scope="col" class="rank-column"><span class="visually-hidden" data-i18n="Rank">Rank</span>#</th><th scope="col" data-i18n="Room">Room</th><th scope="col" class="zone-column" data-i18n="Zone">Zone</th><th scope="col" class="distance-column">≈ m</th></tr></thead>
+            <thead><tr><th scope="col" class="rank-column"><span class="visually-hidden" data-i18n="Rank">Rank</span>#</th><th scope="col" data-i18n="Location">Location</th></tr></thead>
             <tbody id="target-list"></tbody>
           </table>
-          <div id="empty-targets" class="empty-targets"><span class="empty-target-line" aria-hidden="true"></span><p data-i18n="Your rooms will appear here once the map is verified.">Your rooms will appear here once the map is verified.</p></div>
+          <div id="empty-targets" class="empty-targets"><span class="empty-target-line" aria-hidden="true"></span><p data-i18n="Open the map in PUBG to see its locations here.">Open the map in PUBG to see its locations here.</p></div>
         </div>
-        <p class="community-note" data-i18n="Community coordinates · verify in game">Community coordinates · verify in game</p>
+        <p class="community-note" data-i18n="Community locations · check them in game">Community locations · check them in game</p>
+      </section>
+
+      <section id="source-panel" class="source-panel" aria-labelledby="source-title" hidden>
+        <div class="source-heading"><h2 id="source-title" data-i18n="Game connection">Game connection</h2><span class="source-indicator" aria-hidden="true"></span></div>
+        <details id="source-details" class="source-details" open>
+          <summary><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg><span data-i18n="Game preview">Game preview</span><span class="disclosure-arrow" aria-hidden="true">⌄</span></summary>
+          <div class="source-details-body">
+            <div class="source-preview-frame"><canvas id="source-preview" width="240" height="135" role="img" aria-label="Preview of your connected game" data-i18n-aria-label="Preview of your connected game"></canvas></div>
+            <p id="source-status" class="source-status" role="status" data-i18n="Waiting for your game…">Waiting for your game…</p>
+          </div>
+        </details>
+        <div class="source-controls"><button id="reset-match" class="button button-outline reset-match" type="button" disabled><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg><span data-i18n="Reset match">Reset match</span></button></div>
       </section>
 
       <details id="settings-panel" class="settings-panel">
-        <summary><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span data-i18n="Setup & preferences">Setup &amp; preferences</span><span class="disclosure-arrow" aria-hidden="true">⌄</span></summary>
+        <summary><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span data-i18n="Settings">Settings</span><span class="disclosure-arrow" aria-hidden="true">⌄</span></summary>
         <div class="settings-body">
-          <fieldset>
-            <legend data-i18n="Map images">Map images</legend>
-            <p class="field-help" data-i18n="Erangel and Taego images load automatically. A custom complete, square map image can override a default.">Erangel and Taego images load automatically. A custom complete, square map image can override a default.</p>
-            <label for="reference-map" data-i18n="Map">Map</label>
-            <select id="reference-map"><option value="erangel">Erangel</option><option value="taego">Taego</option></select>
-            <label class="button button-outline reference-picker" for="reference-file"><span data-i18n="Import reference image">Import reference image</span></label>
-            <input id="reference-file" class="visually-hidden" type="file" accept="image/png,image/jpeg">
-            <button id="crop-reference" class="button button-outline reference-picker" type="button" data-i18n="Use current image as reference">Use current image as reference</button>
-            <p id="crop-help" class="field-help crop-help" hidden data-i18n="Drag a square around the complete, fully zoomed-out map, then save.">Drag a square around the complete, fully zoomed-out map, then save.</p>
-            <div class="crop-actions"><button id="save-crop" class="button button-primary" type="button" hidden data-i18n="Save map area">Save map area</button><button id="cancel-crop" class="button button-subtle" type="button" hidden data-i18n="Cancel selection">Cancel selection</button></div>
-            <p id="reference-status" class="field-status" role="status" data-i18n="No references loaded">No references loaded</p>
-            <ul id="reference-list" class="reference-list" aria-label="Imported map references"></ul>
-            <button id="clear-references" class="button button-subtle clear-references" type="button" disabled data-i18n="Use default images">Use default images</button>
-          </fieldset>
-          <fieldset>
-            <legend data-i18n="Preferences">Preferences</legend>
-            <label for="language-select" data-i18n="Language">Language</label>
-            <select id="language-select"><option value="en">English</option><option value="hu">Magyar</option></select>
-            <label for="scan-interval" data-i18n="Scan interval">Scan interval</label>
-            <select id="scan-interval"><option value="1500">1.5 s</option><option value="3000" selected>3 s</option><option value="5000">5 s</option></select>
-            <p class="field-help" data-i18n="A longer interval uses less CPU. Scans run only while sharing is active.">A longer interval uses less CPU. Scans run only while sharing is active.</p>
-            <label class="checkbox-field" for="cache-preferences"><input id="cache-preferences" type="checkbox" checked><span data-i18n="Remember preferences and map references on this device">Remember preferences and map references on this device</span></label>
-            <label class="checkbox-field" for="replay-mode"><input id="replay-mode" type="checkbox"><span data-i18n="Replay or spectating — disable player estimate">Replay or spectating — disable player estimate</span></label>
-          </fieldset>
-          <fieldset>
-            <legend data-i18n="Community map data">Community map data</legend>
-            <p id="metadata-status" class="field-status" role="status" data-i18n="Using bundled coordinates">Using bundled coordinates</p>
-            <p class="field-help" data-i18n="Coordinates can be updated from GitHub. Images are never uploaded.">Coordinates can be updated from GitHub. Images are never uploaded.</p>
-          </fieldset>
-          <fieldset id="performance-diagnostics" hidden>
-            <legend>Local performance diagnostics</legend>
-            <p class="field-help">Temporary test controls. Capture-only and preview-only modes pause recognition. Requested capture settings may differ from the browser's reported settings.</p>
-            <label for="capture-rate">Capture frame rate</label>
-            <select id="capture-rate"><option value="1" selected>1 FPS · low impact</option><option value="3">3 FPS · comparison</option></select>
-            <label for="capture-work">Processing mode</label>
-            <select id="capture-work"><option value="full">Normal processing</option><option value="preview-only">Capture and preview only</option><option value="capture-only">Capture only</option></select>
-            <button id="export-performance" class="button button-outline reference-picker" type="button">Download local timings</button>
-            <pre id="performance-readout" class="performance-readout" aria-label="Local performance measurements"></pre>
-          </fieldset>
+          <label for="language-select" data-i18n="Language">Language</label>
+          <select id="language-select"><option value="en">English</option><option value="hu">Magyar</option></select>
+          <label for="scan-interval" data-i18n="Map check interval">Map check interval</label>
+          <select id="scan-interval"><option value="500" data-i18n="0.5 seconds">0.5 seconds</option><option value="1000" selected data-i18n="1 second">1 second</option><option value="2000" data-i18n="2 seconds">2 seconds</option><option value="5000" data-i18n="5 seconds">5 seconds</option><option value="10000" data-i18n="10 seconds">10 seconds</option></select>
+          <p class="field-help" data-i18n="Shorter intervals refresh sooner. Longer intervals do less work.">Shorter intervals refresh sooner. Longer intervals do less work.</p>
         </div>
       </details>
     </aside>
   </main>
 
-  <footer class="privacy-bar"><span class="privacy-icon" aria-hidden="true">◇</span><p data-i18n="Images stay on this device. Sharing stays active until stopped.">Images stay on this device. Sharing stays active until stopped.</p><span class="prototype-note" data-i18n="Experimental · no verified player identity">Experimental · no verified player identity</span></footer>
-  <p class="asset-notice">Independent community project. PUBG, PLAYERUNKNOWN’S BATTLEGROUNDS and all related logos are trademarks of PUBG Corporation or its affiliates. <a href="https://github.com/molnard-labs/LootLizard/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer">Credits &amp; asset terms</a></p>
-  <noscript><div class="noscript-note">JavaScript is required for local image processing. No image is uploaded.</div></noscript>
+  <footer class="privacy-bar"><span class="privacy-icon" aria-hidden="true">◇</span><p data-i18n="Your screen stays on this device. Stop sharing whenever you want.">Your screen stays on this device. Stop sharing whenever you want.</p></footer>
+  <p class="asset-notice"><span data-i18n="Independent community project.">Independent community project.</span> PUBG, PLAYERUNKNOWN’S BATTLEGROUNDS and all related logos are trademarks of PUBG Corporation or its affiliates. <a href="https://github.com/molnard-labs/LootLizard/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer" data-i18n="Credits & asset terms">Credits &amp; asset terms</a></p>
+  <noscript><div class="noscript-note">Please enable JavaScript to use LootLizard. Your screen stays on your device.</div></noscript>
 </body>
 </html>

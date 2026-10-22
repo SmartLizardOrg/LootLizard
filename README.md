@@ -1,137 +1,128 @@
 # LootLizard
 
-A browser companion for finding PUBG secret rooms on a second screen. Open the
-website, start a screen-sharing session, return to the game and open its map.
-LootLizard periodically processes the shared image on your computer and plots
-community room coordinates when it can identify the map.
+A browser companion that keeps the PUBG map on your second monitor and estimates
+your position when the in-game map is visible. Open the website, connect the game
+window, then return to PUBG. Image processing runs on your computer.
 
-**Web alpha · 0.9.0.** The interface defaults to English, with Hungarian available.
-No desktop installation, account, API key or global hotkey is required.
+**Web alpha · 0.9.0.** English by default; Hungarian is available. No desktop
+installation, account, API key, manual reference download or global hotkey.
+
 [Open LootLizard](https://lootlizard.pages.dev/app/) ·
-[Landing page](https://lootlizard.pages.dev/) ·
-[Magyar leírás](README.hu.md) · [Contributing](CONTRIBUTING.md) ·
-[Releases](https://github.com/molnard-labs/LootLizard/releases)
+[Landing page](https://lootlizard.pages.dev/) · [Magyar](README.hu.md) ·
+[Contributing](CONTRIBUTING.md) · [Releases](https://github.com/molnard-labs/LootLizard/releases)
 
 ## Use the companion
 
-1. Open the landing page in desktop Chrome or Edge and select **Open LootLizard**.
-2. Put the companion on the second monitor. Wait for the local recognition engine
-   and map references to load on the first visit.
-3. Start PUBG, then select **Connect PUBG window**. Choose its window or monitor in the browser
-   picker and approve sharing. Return focus to PUBG.
-4. Open the game's map. Automatic local scans update the companion; you do not
-   need to click the companion for each scan. The website does not press the
-   game's map key.
-   The source appears only in a small preview. The main area asks you to open the
-   map and shows a cropped map with room anchors only after recognition succeeds.
-   Once recognized, that map stays visible through gameplay and inventory.
-   Reopen the in-game map to refresh it; position and circle have independent
-   last-known ages. **Reset match** clears the map without stopping sharing.
-5. Select **Stop**, stop sharing with the browser control, or close the page when
-   finished. Stopping invalidates any pending result and clears its geometry.
+1. Open the site in desktop Chrome or Edge on your second monitor. Wait for the
+   local recognition engine and bundled map images to load.
+2. Select **Connect PUBG window**, choose the game window or its monitor in the
+   browser picker, then return focus to PUBG.
+3. Open the complete in-game map. LootLizard identifies it automatically and shows
+   its map and any recognizable player position/circle. No per-scan browser click
+   is needed; the app does not press PUBG's map key for you.
+4. Keep playing. The last recognized map remains visible through gameplay,
+   inventory and temporary capture pauses. Reopen PUBG's map to update it. Position
+   and circle have separate last-known ages; an estimate is not live tracking
+   while the map is closed.
+5. **Reset match** clears the held map while keeping sharing active. **Stop**,
+   browser Stop sharing, or closing the page ends capture and clears the view.
 
-The app loads public map references automatically. You can optionally supply
-your own complete, square map references in settings. The normal flow does not
-require finding or downloading an image yourself. Reference availability depends
-on its external source; a failed load is reported and must not produce a guessed
-map result. Source and game-asset licensing details are in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Gameplay appears only in a small sampled source preview. The main view contains
+recognized map pixels, never old geometry placed over a newer gameplay frame.
+Positive English lobby/results evidence must repeat before automatic reset.
+Other languages and unfamiliar menus can remain uncertain; use **Reset match**
+when needed. A whole-monitor stream cannot reliably distinguish exiting PUBG
+from briefly switching to the desktop.
 
-**Load demo** runs the actual recognition worker on original synthetic artwork.
-It lets you try the app without PUBG or screen-sharing permission. Its generated
-rooms are demo data, not real secret-room locations.
+## Bundled maps and coordinates
 
-## What the alpha provides
+The release includes **11 official developer map references**: Erangel, Miramar,
+Sanhok, Vikendi, Karakin, Paramo, Haven, Taego, Deston, Rondo and Training
+(Camp Jackal). Training/Camp Jackal aliases share one reference. Map availability
+in PUBG depends on mode and rotation. These pinned historical assets do not
+establish current matchmaking availability or recognition accuracy.
 
-- Browser screen sharing with automatic scans while the game has keyboard focus.
-- Map registration, projected room locations, experimental player/cone estimation
-  and safe-circle prioritization when the required geometry is recognizable.
-- Community coordinates for **15 Erangel rooms** and **12 Taego rooms**. The lists
-  are unverified; Taego is incomplete. Displayed distances are approximate and do
-  not account for terrain, roads or entrances.
-- Local processing in a browser worker using Python, NumPy, Pillow and OpenCV
-  through the pinned Pyodide runtime. Screenshots and reference pixels are not
-  uploaded for recognition.
-- Public point-data updates from this GitHub repository, checked at startup and
-  roughly every 60 seconds. Invalid updates retain the last good data. Changed
-  anchors reproject onto a held map without resetting its match or field ages.
-- Optional browser storage for preferences and map references.
+Images and the complete local map catalog ship with the website. Users do not
+need to find or import map images, and the app does not poll GitHub metadata or
+fetch map PNGs from an external image host. The reference package is about
+**14.1 MB** before ordinary HTTP caching; decoded images and feature caches use
+additional memory. PNG sizes and SHA-256 are checked before use.
 
-Before the first verified map, unknown frames show no targets. After recognition,
-unknown gameplay retains the last map and its paired image, with a visible
-last-known label. It never places old geometry over a newer gameplay image.
-Positive English lobby/results cues must repeat three times over at least six
-seconds before an automatic match reset. A learned bottom-right footer can
-confirm continued play; a missing or changed footer alone never resets a map.
-Other UI languages or unfamiliar layouts may require **Reset match**. Closing
-PUBG clears the map when its captured window ends sharing; a whole-monitor
-capture cannot reliably infer a process exit from an arbitrary desktop image.
-Extreme zoom, map changes, HUD occlusion and team-marker ambiguity can still
-defeat recognition. A viewing-cone estimate is not proof of own-player identity.
-Replay mode disables the player estimate. Check the in-game map before choosing
-a destination.
+Community room coordinates remain available for **15 Erangel** and **12 Taego**
+locations. They are unverified; Taego is incomplete. Other maps intentionally have
+empty point lists, which does not mean no secret rooms exist. No room locations
+were invented to make a map appear supported. Distances are approximate,
+straight-line estimates, not routes or verified entrance positions.
+
+The current match stays associated with its first verified map until a confirmed
+match end, **Reset match**, or sharing interruption. Subsequent scans check that
+map rather than repeatedly comparing all eleven references. Initial recognition
+searches the complete library. **Reset match** before a new match if its transition
+was missed, including when the next match uses the same map.
+
+An unknown or ambiguous player marker remains unknown. A unique viewing cone is
+an experimental position estimate, not proof of own-player identity. Plane-phase
+symbols, occlusion, small markers, teammate overlap, changed map artwork and zoom
+can prevent detection. A circle is reported only when its required white-ring
+geometry is recognizable. Check PUBG before acting on an estimate.
 
 ## Platforms and performance
 
-The website has no Windows-specific native component. Desktop Chrome and Edge
-are the initial browser target; screen capture and background scheduling depend
-on browser, operating system and capture source. Other browsers and operating
-systems require validation. A portable website does not make the PUBG game
-itself available on another operating system. Console/mobile capture is not an
-implemented integration.
+The app has no Windows-specific native component. Desktop Chrome and Edge are
+the initial target; capture and background scheduling depend on browser, OS and
+source. Other platforms require validation. This does not make the PUBG game
+itself available on another OS; console/mobile image capture is not integrated.
+Keep LootLizard visible on the second monitor because hidden tabs can be throttled.
 
-Keep the companion visible on the second monitor. Minimized or hidden tabs may
-be throttled. Browsers require a fresh source selection for a new sharing
-session; the page cannot silently reauthorize screen capture after a reload.
+Capture requests **1 FPS** and at most 2400 pixels per side/four million sampled
+pixels. Recognition is serial: only one scan runs at once, followed by the chosen
+interval. A slow operation extends the effective interval and never creates a
+queue of screenshots. Initial all-map matching can take several seconds. Known
+map matching, reused canvases and unchanged-view checks reduce repeated work.
 
-The default capture request is **1 FPS**, with bounded frame dimensions and a
-three-second recognition interval. The sampler reuses its canvas and avoids
-unchanged preview writes. This reduces unnecessary work, but does not establish
-an insignificant game-performance cost. Earlier 3 FPS sharing measurements on
-one PC showed a small mean-FPS decrease and a larger effect on the slowest
-frames. The optimized path still needs controlled in-game measurement, including
-full recognition with references. See [web/README.md](web/README.md) for details.
+There is no FPS guarantee. Earlier 3 FPS sharing measurements on one PC showed
+small mean-FPS changes and larger slow-frame effects. The current optimized path,
+including bundled references and optional OCR, needs controlled in-game frame-time
+measurement. Functional tests do not establish an insignificant performance cost.
 
-## Privacy and network use
+## Privacy and updates
 
-Screen and image analysis runs on the user's device. There is no image-upload
-endpoint, telemetry, account or AI service. Network requests fetch public app
-files, pinned runtime packages, public map references and coordinate metadata.
-Hosting and asset providers still receive ordinary requests for those files.
-The fallback lobby/results reader lazily downloads pinned Tesseract.js and its
-verified English model. Recognition runs locally, serially with map analysis, at most
-once per 12 seconds unless confirming a possible lobby/result. Matching the
-learned footer skips this OCR work. OCR text and footer descriptors stay in
-memory and are never included in exported timings.
-The first OCR download/initialization happens in the background and does not
-hold the map-scan loop; its occasional initialization cost is not FPS-benchmarked.
+There is no image-upload endpoint, account, telemetry or AI service. Screen pixels,
+position results and local OCR remain in memory. Preferences can use localStorage;
+there is no custom-reference import/storage flow or runtime coordinate-feed cache.
+The website serves its app, map catalog and reference images. Initial runtime and
+optional English OCR packages are fetched from pinned public CDN URLs and execute
+locally; those hosts see normal asset requests, never recognition screenshots.
 
-Captured frames and results stay in memory. If remembering data is enabled,
-preferences and point metadata use localStorage and reference images use
-IndexedDB. Storage belongs to the website origin and browser profile, can be
-cleared by the user, and may be evicted by the browser. Disable remembering data
-or clear references in settings to remove saved application data. Closing or
-reloading the page ends screen capture.
+A learned bottom-right footer provides positive continued-play evidence and can
+skip OCR. Its changing suffix is ignored. A missing/changed footer or missing map
+never alone resets a match. Lazy OCR runs serially with map CV and normally no
+more than once per 12 seconds, with faster confirmation of positive menu evidence.
+Startup happens in the background. Names, OCR words and footer descriptors are
+not logged, exported or persisted. See [web/README.md](web/README.md).
 
-The project does not read game memory, inject code, intercept game traffic or
-automate gameplay. It is an independent community project. Image-based operation
-does not establish official PUBG approval or anti-cheat compatibility.
+**Code, maps and point data update together through GitHub Releases.** After a
+reviewed change reaches `main`, publishing `v0.9.0-web.NUMBER` builds and tests the
+release, attaches its static ZIP/checksum, and updates the generated `web-release`
+branch. Cloudflare Pages serves that branch. There is no separate metadata branch
+publisher or open-session data polling. Navigation/reload loads the new release;
+an existing sharing session is never forcibly reloaded mid-match. Reloading
+requires selecting the sharing source again.
 
-## Develop locally
+## Develop and publish
 
-Building the static site requires only Python 3.12+ and the standard library:
+The static build uses Python 3.12+ and its standard library:
 
 ```sh
 python scripts/build_web.py
 python scripts/serve_web.py --port 8765
 ```
 
-Open `http://127.0.0.1:8765/`; the application is at `/app/`. Internet is needed on
-the first visit for the browser runtime and public references. The development
-server binds to loopback and serves only the generated `dist/` directory. It has
-no backend or upload route.
+Open `http://127.0.0.1:8765/`; the app is `/app/`. The loopback GET/HEAD-only server
+serves curated `dist/`, with no uploads or source-checkout directory listing.
+The first browser runtime/OCR load still needs Internet access.
 
-For portable Python CV tests, also install the package dependencies:
+For developer CV and browser contract checks:
 
 ```sh
 python -m pip install .
@@ -140,59 +131,23 @@ python -B -m unittest discover -s web/tests -p 'test_*.py' -v
 node --test web/tests/*.test.mjs
 ```
 
-`web/tests/browser-smoke.cjs` runs in GitHub Actions with isolated Chromium and
-the real pinned Pyodide/OpenCV runtime. Synthetic tests exercise registration,
-projection, cancellation and stream shutdown. They do not establish recognition
-accuracy across real matches or browser/OS combinations.
+The hosted browser smoke test uses real Pyodide/OpenCV with synthetic frames;
+private captures are never part of CI or public artifacts. The builder validates
+all local map records, bundled image hashes/dimensions and the exact public asset
+allowlist before replacing a previous build.
 
-The source layout is intentionally small:
-
-| Path | Purpose |
-|---|---|
-| `web/landing/` | Landing page and launch CTA |
-| `web/app/` | Browser interface, capture/session logic and CV worker |
-| `lootlizard/` | Portable geometry, CV and offline evaluation code |
-| `data/` | Attributed community room coordinates |
-| `scripts/build_web.py` | Public-asset allowlist and static packaging |
-| `dist/` | Generated website, excluded from source control |
-
-Native GUI, installer and installed-app updater code was removed from the web
-branch. The earlier Windows version remains in Git history and the `v0.8.0` tag.
-
-## Release-based hosting
-
-Application publication follows **GitHub Releases**, rather than every source
-commit. After tested source is merged to `main`, publish a prerelease such as
-`v0.9.0-web.1`. The **Publish web release** workflow validates that its commit is
-already in `main`, tests/builds it, attaches a static ZIP and checksum, then
-updates the generated `web-release` branch without rewriting its history.
-Older release tags cannot roll production back. No Windows installer or desktop
-update feed is published by the web workflow.
-
-For Cloudflare Pages Git integration, select this repository and configure:
-
-| Setting | Value |
-|---|---|
-| Production branch | `web-release` |
-| Framework preset | None |
-| Build command | Empty |
-| Build output directory | Repository root (`/`) |
-
-That branch already contains the curated static site. Source branches and pull
-requests are not the production publish source. A direct local preview build
-uses `python scripts/build_web.py` and output `dist/` instead. The generated
-`build-info.json` records version, source commit, release tag and asset hashes.
-
-Application files revalidate on navigation/reload. An open game session keeps
-its loaded application code until reloaded, so publishing does not interrupt
-screen sharing. Community point-data updates remain separate and can arrive in
-an existing session after a data PR is merged and its metadata workflow finishes.
-GitHub/CDN caching may delay availability; updates are not guaranteed instant.
+For Cloudflare Pages Git integration: production branch `web-release`, framework
+None, empty build command, output directory `/`. The branch already contains the
+curated site. A source merge alone does not publish production. `build-info.json`
+records version, source commit, release tag and every public asset hash. Local
+preview catalogs use a deterministic content revision when no commit is supplied.
 
 ## License and attribution
 
-Project code is [MIT](LICENSE). Required coordinate attribution, upstream
-licenses and runtime/image-source notices are in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The code license does not grant
-rights to PUBG imagery or trademarks. Private captures, evaluation screenshots
-and personal profiles are never part of the public static build.
+Project code is [MIT](LICENSE). Bundled PUBG artwork retains its owners' rights
+and is not MIT licensed. Sources, hashes, publisher terms and coordinate credits
+are preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the bundled
+map manifest/notice. LootLizard is an independent community project; image-based
+operation does not establish official approval or anti-cheat compatibility.
+No private capture, user reference, profile or local evaluation catalog is shipped.
+The earlier Windows application remains in Git history and the `v0.8.0` tag.

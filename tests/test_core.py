@@ -93,12 +93,19 @@ class DataTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 MapData.from_dict(data)
 
-    def test_missing_names_invalid_sizes_and_empty_points(self):
-        for key, value in [("name", ""), ("size_m", 0), ("size_m", True), ("size_m", float("inf")), ("points", []), ("source", [])]:
+    def test_missing_names_invalid_sizes_and_non_list_points(self):
+        for key, value in [("name", ""), ("size_m", 0), ("size_m", True), ("size_m", float("inf")), ("points", None), ("points", {}), ("source", [])]:
             data = fixture()
             data[key] = value
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):
                 MapData.from_dict(data)
+
+    def test_reference_only_map_retains_identity_without_inventing_locations(self):
+        original = fixture()
+        original["points"] = []
+        data = MapData.from_dict(original)
+        self.assertEqual(data.to_dict(), original)
+        self.assertEqual(nearest(data, (.5, .5)), [])
 
     def test_oversized_file_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
