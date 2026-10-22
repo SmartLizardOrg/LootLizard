@@ -45,10 +45,16 @@ would need its image made available to the browser separately.
 
 1. Open the companion on the second monitor and wait for the local engine and
    default Erangel/Taego map images to load.
-2. Select **Start sharing** and choose the PUBG window or its monitor.
+2. Start PUBG, select **Connect PUBG window** and choose its window or monitor.
 3. Return focus to PUBG and open its full map. Periodic local scans update the
    companion without another browser click or a global hotkey.
 4. Stop sharing from the page or browser when finished.
+
+The main stage guides connection and map opening. Live gameplay stays in a
+small source thumbnail, bounded to 240×135 pixels and updated only on sampled
+frames. A successful registration reveals a cropped map with room anchors and
+any available position/circle estimates. Unknown frames hide the main canvas
+and clear guidance; Stop also clears the thumbnail and retained source image.
 
 Sharing requires a user gesture and fresh source selection for each new
 session. HTTPS (or loopback development) is required. The page cannot persist

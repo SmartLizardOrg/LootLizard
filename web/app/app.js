@@ -5,10 +5,12 @@ import {referenceStore} from './storage.mjs';
 import {applyLanguage,translate} from './i18n.mjs';
 import {displayMediaOptions,readCaptureSettings,applyCaptureRate,boundedFrameSize,setSamplerSize} from './capture.mjs';
 import {loadAutomaticReferences} from './automatic-references.mjs';
+import {mapViewport,sourcePreviewSize} from './map-view.mjs';
 
 const $=id=>document.getElementById(id);
 const session=new CaptureSession(), demo=createDemo(), references=new Map();
 const canvas=$('map-canvas'),ctx=canvas.getContext('2d'),video=$('capture-video');
+const sourcePreview=$('source-preview'),previewContext=sourcePreview.getContext('2d');
 const sampler=document.createElement('canvas'),sample=sampler.getContext('2d',{willReadFrequently:true});
 const worker=new Worker(new URL('./vision-worker.js',import.meta.url),{type:'module'});
 let nextId=0,queue=Promise.resolve(),pending=new Map(),workerFailed=false;
@@ -16,11 +18,12 @@ let maps=[],engine=null,frame=null,stream=null,timer=null,scanning=false,configu
 let phase='loading',detail='',lastWall=0,language='en',interval=3000,remember=true,revision='bundled';
 let metadataKey='Using bundled coordinates';
 let crop=null,selection=null,demoMode=false,dimensions='',sourceGeneration=0;
-let drawnFrame=null,drawnResult=null,drawnSelection=null,drawnLanguage='',captureFps=1,diagnosticMode='full';
+let drawnFrame=null,drawnResult=null,drawnSelection=null,drawnCrop=null,drawnLanguage='',captureFps=1,diagnosticMode='full';
 const diagnosticsEnabled=['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('diagnostics')==='1';
 const performanceEvents=[];
 let lastCaptureSettings={},lastConstraintResult=null;
 let referenceWarning='';
+let connecting=false,hasSourcePreview=false;
 const PREFS='lootlizard.web.preferences.v1',CATALOG='lootlizard.web.catalog.v1';
 try {const p=JSON.parse(localStorage.getItem(PREFS)||'null');if(p){language=p.language==='hu'?'hu':'en';interval=[1500,3000,5000].includes(p.interval)?p.interval:3000;}}catch{}
 const t=key=>translate(key,language);
@@ -61,6 +64,29 @@ function targets(){const map=currentMap();if(!map)return[];const visible=new Map
 function clearGuidance(){session.invalidate();lastWall=0;render();}
 function status(next,message=''){phase=next;detail=message;render();}
 function updateAge(){const age=lastWall?Date.now()-lastWall:null;put('snapshot-age',age===null?t('No current result'):`${Math.floor(age/1000)} s ${t('ago')}`);return age;}
+function renderStage(map){
+  const connected=!!stream;
+  const viewport=frame&&session.result?.registration?mapViewport(session.result.registration.matrix,frame.width,frame.height):null;
+  const view=crop?'crop':map&&viewport?'map':phase==='error'?'error':connecting?'connecting':connected?(phase==='scanning'?'scanning':'waiting'):'setup';
+  $('map-stage').dataset.view=view;
+  canvas.hidden=!['map','crop'].includes(view);
+  $('canvas-empty').hidden=!canvas.hidden;
+  $('setup-steps').hidden=view!=='setup';
+  $('stage-hint').hidden=view!=='setup';
+  $('connect-source').hidden=connected||connecting||view==='map'||view==='crop';
+  $('connect-source').disabled=$('start-sharing').disabled;
+  const messages={
+    setup:['Start PUBG','Start PUBG, then connect its window.'],
+    connecting:['Choose your PUBG window','Select the PUBG window or the monitor showing the game in the browser picker.'],
+    waiting:['Open the map for automatic recognition','Keep playing. LootLizard checks for the map automatically.'],
+    scanning:['Checking the map…','Keep playing. LootLizard checks for the map automatically.'],
+    error:['Map recognition unavailable',detail||'Reload this page to restart the recognition engine.'],
+  };
+  const [title,message]=messages[view]||messages.waiting;
+  put('stage-title',t(title));put('stage-detail',t(message));
+  $('source-panel').hidden=!connected;
+  put('source-status',t(!connected?'No source connected':stream.getVideoTracks()[0]?.muted?'Screen capture is paused.':hasSourcePreview?'Source preview · updates only when scanned':'Waiting for a readable source…'));
+}
 function render(){
   const result=session.result,map=currentMap(),points=targets();
   const names={loading:'Loading recognition engine…',idle:'Ready when you are',scanning:'Checking image…',recognized:'Map recognized',unknown:'No verified map',stopped:'Sharing stopped',error:'Could not process image',cropping:'Select the complete map'};
@@ -75,9 +101,9 @@ function render(){
   put('last-update',lastWall?new Date(lastWall).toLocaleTimeString(language==='hu'?'hu-HU':'en-GB'):'—');
   updateAge();
   put('scan-duration',result?.timings?`${Math.round(result.timings.totalMs)} ms`:'—');
-  $('start-sharing').disabled=!engine||configuring>0||workerFailed;
-  $('stop-sharing').disabled=!session.active;
-  $('canvas-empty').hidden=!!frame;$('demo-banner').hidden=!demoMode;
+  $('start-sharing').disabled=!engine||configuring>0||workerFailed||connecting||!!stream;
+  $('stop-sharing').disabled=!session.active&&!stream&&!connecting;
+  renderStage(map);$('demo-banner').hidden=!demoMode||canvas.hidden;
   $('empty-targets').hidden=!!points.length;
   const rows=points.map((p,index)=>{
     const row=document.createElement('tr');if(p.inside)row.className='is-inside';
@@ -88,12 +114,16 @@ function render(){
 function draw(points=targets(),force=false){
   // Status/age changes do not require uploading the same snapshot again.
   const overlay=session.result?.registration?session.result:null;
-  if(!force&&drawnFrame===frame&&drawnResult===overlay&&drawnSelection===selection&&drawnLanguage===language)return;
-  drawnFrame=frame;drawnResult=overlay;drawnSelection=selection;drawnLanguage=language;
-  if(!frame){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
-  if(canvas.width!==frame.width||canvas.height!==frame.height){canvas.width=frame.width;canvas.height=frame.height;}
-  ctx.putImageData(frame,0,0);const r=session.result;
+  if(!force&&drawnFrame===frame&&drawnResult===overlay&&drawnSelection===selection&&drawnCrop===crop&&drawnLanguage===language)return;
+  drawnFrame=frame;drawnResult=overlay;drawnSelection=selection;drawnCrop=crop;drawnLanguage=language;
+  const viewport=frame&&(crop?{x:0,y:0,width:frame.width,height:frame.height}:overlay?mapViewport(overlay.registration.matrix,frame.width,frame.height):null);
+  if(!viewport){setSamplerSize(canvas,1,1);ctx.clearRect(0,0,1,1);return;}
+  setSamplerSize(canvas,viewport.width,viewport.height);
+  // Only the map pixels enter the main canvas. Gameplay remains a small source
+  // thumbnail, rather than a full-size low-frame-rate mirror of the game.
+  ctx.putImageData(frame,-viewport.x,-viewport.y,viewport.x,viewport.y,viewport.width,viewport.height);const r=session.result;
   const box=canvas.getBoundingClientRect(),unit=1/Math.max(.05,Math.min(box.width/canvas.width,box.height/canvas.height));
+  ctx.save();ctx.translate(-viewport.x,-viewport.y);
   if(r?.registration){
     const matrix=r.registration.matrix;
     if(r.zone){ctx.save();ctx.strokeStyle='#fafafa';ctx.lineWidth=1.5*unit;ctx.setLineDash([7*unit,5*unit]);ctx.beginPath();for(let i=0;i<=100;i++){const a=i*Math.PI/50,p=project(matrix,r.zone.centerX+Math.cos(a)*r.zone.radius,r.zone.centerY+Math.sin(a)*r.zone.radius);if(p)i?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.stroke();ctx.restore();}
@@ -105,13 +135,16 @@ function draw(points=targets(),force=false){
     if(r.position){const p=project(matrix,r.position.x,r.position.y);if(p){ctx.save();ctx.translate(...p);ctx.scale(unit,unit);ctx.strokeStyle='#7ae8ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,7,0,Math.PI*2);ctx.moveTo(-12,0);ctx.lineTo(12,0);ctx.moveTo(0,-12);ctx.lineTo(0,12);ctx.stroke();ctx.font='bold 12px sans-serif';ctx.fillStyle='#7ae8ff';ctx.fillText(t('YOU?'),13,18);ctx.restore();}}
   }
   if(selection){const{x,y,side}=selection;ctx.fillStyle='#45dac627';ctx.fillRect(x,y,side,side);ctx.strokeStyle='#55e0d0';ctx.lineWidth=2;ctx.strokeRect(x,y,side,side);}
+  ctx.restore();
 }
 
 function stop(){
   sourceGeneration++;clearTimeout(timer);timer=null;session.stop();
   if(stream)lastCaptureSettings=readCaptureSettings(stream.getVideoTracks()[0]);
   const old=stream;stream=null;if(old)old.getTracks().forEach(track=>track.stop());video.srcObject=null;
-  cancelCrop();demoMode=false;dimensions='';lastWall=0;phase='stopped';detail='';render();
+  cancelCrop();demoMode=false;connecting=false;hasSourcePreview=false;frame=null;
+  previewContext.clearRect(0,0,sourcePreview.width,sourcePreview.height);
+  dimensions='';lastWall=0;phase='stopped';detail='';render();
 }
 function schedule(){clearTimeout(timer);if(session.active&&session.source==='screen')timer=setTimeout(scanScreen,interval);}
 function capture(){
@@ -120,7 +153,11 @@ function capture(){
   if(dimensions&&native!==dimensions)clearGuidance();dimensions=native;
   const size=boundedFrameSize(video.videoWidth,video.videoHeight);
   setSamplerSize(sampler,size.width,size.height);
-  sample.drawImage(video,0,0,sampler.width,sampler.height);return sample.getImageData(0,0,sampler.width,sampler.height);
+  sample.drawImage(video,0,0,sampler.width,sampler.height);
+  const previewSize=sourcePreviewSize(sampler.width,sampler.height);
+  setSamplerSize(sourcePreview,previewSize.width,previewSize.height);
+  previewContext.drawImage(sampler,0,0,sourcePreview.width,sourcePreview.height);hasSourcePreview=true;
+  return sample.getImageData(0,0,sampler.width,sampler.height);
 }
 async function analyze(image,{owned=false,captureMetrics={}}={}){
   const ticket=session.issue();if(!ticket)return null;
@@ -180,7 +217,7 @@ async function attachStream(media,token,useDemo=false){
   try{
     await video.play();await setWorkerReferences(useDemo);
     if(token!==sourceGeneration||track.readyState!=='live')return;
-    session.begin('screen');demoMode=useDemo;
+    connecting=false;session.begin('screen');demoMode=useDemo;
     status(diagnosticMode==='capture-only'?'idle':'unknown',diagnosticMode==='capture-only'?'Performance test: capture only; preview and recognition are paused.':'Open the full map in game. Targets appear automatically when it is recognized.');scanScreen();
   }catch(error){if(stream===media)stop();throw error;}
 }
@@ -188,9 +225,12 @@ function startSharing(){
   // The picker must run directly inside the click's transient user activation.
   stop();const token=sourceGeneration;
   if(!navigator.mediaDevices?.getDisplayMedia){status('error','Screen sharing needs a supported desktop browser on HTTPS or localhost.');return;}
-  const picked=navigator.mediaDevices.getDisplayMedia(displayMediaOptions(captureFps));
-  status('idle','Choose the screen where PUBG is running.');
-  picked.then(media=>attachStream(media,token)).catch(error=>{if(token===sourceGeneration)status('error',errorText(error));});
+  connecting=true;
+  let picked;
+  try{picked=navigator.mediaDevices.getDisplayMedia(displayMediaOptions(captureFps));}
+  catch(error){connecting=false;status('error',errorText(error));return;}
+  status('idle','Select the PUBG window or the monitor showing the game in the browser picker.');
+  picked.then(media=>attachStream(media,token)).catch(error=>{if(token===sourceGeneration){connecting=false;status('error',errorText(error));}});
 }
 async function analyzeImageData(image,{source='image'}={}){
   stop();const token=sourceGeneration;await ready;if(token!==sourceGeneration)return null;demoMode=source==='demo';
@@ -254,7 +294,7 @@ async function updateMetadata(){
   finally{configuring--;renderReferences();render();schedule();}
 }
 
-$('start-sharing').addEventListener('click',startSharing);$('stop-sharing').addEventListener('click',stop);
+$('start-sharing').addEventListener('click',startSharing);$('connect-source').addEventListener('click',startSharing);$('stop-sharing').addEventListener('click',stop);
 $('load-demo').addEventListener('click',()=>loadDemo().catch(e=>status('error',errorText(e))));
 $('open-image').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(!file)return;stop();const token=sourceGeneration;try{const image=await decodeImage(file,2400);if(token===sourceGeneration)await analyzeImageData(image);}catch(e){if(token===sourceGeneration)status('error',errorText(e));}});
 $('reference-file').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(file)try{await ready;await addReference($('reference-map').value,await decodeImage(file));}catch(e){put('reference-status',errorText(e));}});

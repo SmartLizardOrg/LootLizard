@@ -21,7 +21,7 @@
       <span id="capture-status" class="capture-status" role="status" data-i18n="Not sharing">Not sharing</span>
       <button id="start-sharing" class="button button-primary" type="button">
         <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg>
-        <span data-i18n="Start sharing">Start sharing</span>
+        <span data-i18n="Connect PUBG window">Connect PUBG window</span>
       </button>
       <button id="stop-sharing" class="button button-stop" type="button" disabled>
         <span class="stop-icon" aria-hidden="true"></span><span data-i18n="Stop">Stop</span>
@@ -46,14 +46,25 @@
         </div>
       </div>
 
-      <div id="map-stage" class="map-stage">
-        <canvas id="map-canvas" width="1200" height="900" aria-label="Current screenshot and detected room locations"></canvas>
+      <div id="map-stage" class="map-stage" data-view="setup">
+        <canvas id="map-canvas" width="1200" height="900" aria-label="Recognized map and detected room locations" hidden></canvas>
         <video id="capture-video" muted playsinline autoplay hidden aria-hidden="true"></video>
         <div id="canvas-empty" class="map-empty">
           <span class="empty-reticle" aria-hidden="true"><i></i></span>
-          <h2 data-i18n="A clearer view of your next stop">A clearer view of your next stop</h2>
-          <p data-i18n="Share your game screen, then open the full map. Default map images load automatically.">Share your game screen, then open the full map. Default map images load automatically.</p>
-          <span class="empty-alternative" data-i18n="Or try the synthetic demo without sharing.">Or try the synthetic demo without sharing.</span>
+          <div class="stage-message" role="status" aria-live="polite">
+            <h2 id="stage-title" data-i18n="Start PUBG">Start PUBG</h2>
+            <p id="stage-detail" data-i18n="Start PUBG, then connect its window.">Start PUBG, then connect its window.</p>
+          </div>
+          <button id="connect-source" class="button button-primary connect-source" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg>
+            <span data-i18n="Connect PUBG window">Connect PUBG window</span>
+          </button>
+          <span id="stage-hint" class="empty-alternative" data-i18n="Keep LootLizard on your second screen. Your images stay on this device.">Keep LootLizard on your second screen. Your images stay on this device.</span>
+          <ol id="setup-steps" class="setup-steps" aria-label="Getting started">
+            <li><span class="setup-step-number" aria-hidden="true">1</span><span data-i18n="Start PUBG">Start PUBG</span></li>
+            <li><span class="setup-step-number" aria-hidden="true">2</span><span data-i18n="Connect its window">Connect its window</span></li>
+            <li><span class="setup-step-number" aria-hidden="true">3</span><span data-i18n="Open the map">Open the map</span></li>
+          </ol>
         </div>
         <div id="demo-banner" class="demo-banner" hidden data-i18n="Synthetic demo · not a live game">Synthetic demo · not a live game</div>
       </div>
@@ -78,6 +89,13 @@
           <div><dt data-i18n="Inside circle">Inside circle</dt><dd id="inside-count">—</dd></div>
         </dl>
         <p id="position-status" class="position-status" data-i18n="Position unknown · distances unavailable">Position unknown · distances unavailable</p>
+      </section>
+
+      <section id="source-panel" class="source-panel" aria-labelledby="source-title" hidden>
+        <div class="source-heading"><h2 id="source-title" data-i18n="Connected source">Connected source</h2><span class="source-indicator" aria-hidden="true"></span></div>
+        <div class="source-preview-frame"><canvas id="source-preview" width="240" height="135" role="img" aria-label="Low-rate preview of the connected source"></canvas></div>
+        <p id="source-status" class="source-status" role="status" data-i18n="No source connected">No source connected</p>
+        <p class="source-preview-note" data-i18n="Source preview · updates only when scanned">Source preview · updates only when scanned</p>
       </section>
 
       <section class="targets-card" aria-labelledby="targets-title">

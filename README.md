@@ -17,11 +17,13 @@ No desktop installation, account, API key or global hotkey is required.
 1. Open the landing page in desktop Chrome or Edge and select **Open LootLizard**.
 2. Put the companion on the second monitor. Wait for the local recognition engine
    and map references to load on the first visit.
-3. Select **Start sharing**, choose the PUBG window or its monitor in the browser
+3. Start PUBG, then select **Connect PUBG window**. Choose its window or monitor in the browser
    picker and approve sharing. Return focus to PUBG.
 4. Open the game's map. Automatic local scans update the companion; you do not
    need to click the companion for each scan. The website does not press the
    game's map key.
+   The source appears only in a small preview. The main area asks you to open the
+   map and shows a cropped map with room anchors only after recognition succeeds.
 5. Select **Stop**, stop sharing with the browser control, or close the page when
    finished. Stopping invalidates any pending result and clears its geometry.
 
