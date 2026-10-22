@@ -6,7 +6,7 @@
     "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
     "license": "MIT",
     "attribution": "Copyright (c) 2026 Axiom",
-    "notes": "15 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. Only the 15 source secret_room points are imported. The three separate basement annotations, vehicles and other categories are excluded. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
+    "notes": "18 community annotations from pinned, MIT-licensed source files: 15 secret rooms and three separate Los Leones underground entrances (source type basement). The entrances are not three additional key-locked rooms. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 8000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. Vehicles and unrelated categories are excluded. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
   "points": [
     {
@@ -98,6 +98,27 @@
       "name": "Secret room 15",
       "x": 0.6431884765625,
       "y": 0.7706298828125
+    },
+    {
+      "id": "miramar-entrance-01",
+      "name": "Los Leones underground entrance 01",
+      "x": 0.599365234375,
+      "y": 0.7635498046875,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "miramar-entrance-02",
+      "name": "Los Leones underground entrance 02",
+      "x": 0.612548828125,
+      "y": 0.7685546875,
+      "kind": "tunnel_entrance"
+    },
+    {
+      "id": "miramar-entrance-03",
+      "name": "Los Leones underground entrance 03",
+      "x": 0.6151123046875,
+      "y": 0.775146484375,
+      "kind": "tunnel_entrance"
     }
   ]
 }
