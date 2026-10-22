@@ -1,0 +1,11 @@
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/app/*.py
+  Content-Type: text/x-python; charset=utf-8
+
+/cv/*.py
+  Content-Type: text/x-python; charset=utf-8
