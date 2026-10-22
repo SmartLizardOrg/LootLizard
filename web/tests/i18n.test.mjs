@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {applyLanguage, translate} from '../poc/i18n.mjs';
+import {applyLanguage, translate} from '../app/i18n.mjs';
 
-const html = readFileSync(new URL('../poc/index.html', import.meta.url), 'utf8');
-const controller = readFileSync(new URL('../poc/app.js', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../app/index.html', import.meta.url), 'utf8');
+const controller = readFileSync(new URL('../app/app.js', import.meta.url), 'utf8');
 const staticKeys = [...new Set([...html.matchAll(/data-i18n="([^"]+)"/g)].map(match => match[1]))];
 
 test('every current static UI message has a nonempty Hungarian translation', () => {

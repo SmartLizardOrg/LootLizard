@@ -3,13 +3,14 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
 
-SOURCE = Path(__file__).resolve().parents[1] / "web/poc/python_bridge.py"
+SOURCE = Path(__file__).resolve().parents[1] / "web/app/python_bridge.py"
 SPEC = importlib.util.spec_from_file_location("browser_python_bridge", SOURCE)
 bridge = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(bridge)
@@ -170,6 +171,53 @@ class WebBridgeTests(unittest.TestCase):
         self.assertIsNone(result["registration"])
         self.assertEqual(result["points"], [])
         self.assertIn("No canonical", result["reason"])
+
+    def test_no_references_validate_without_decoding_or_registering(self):
+        engine = bridge.BrowserVisionEngine([data("map-a")])
+        pixels = memoryview(bytes((12, 34, 56, 255, 78, 90, 12, 255)))
+        ticket = {"epoch": 7, "sequence": 3}
+        with patch.object(bridge, "_rgba_image") as decode, \
+                patch.object(bridge, "register_map") as register, \
+                patch.object(bridge.time, "perf_counter", side_effect=(10., 10.004)):
+            result = engine.analyze_rgba(pixels, 2, 1, context="replay", ticket=ticket)
+        decode.assert_not_called()
+        register.assert_not_called()
+        timings = result.pop("timings")
+        self.assertEqual(result, dict(ticket=ticket, width=2, height=1, registration=None,
+            position=None, zone=None, points=[], reason="No canonical map references are loaded",
+            markerReason="Map layout is not verified; player position is unknown.",
+            zoneReason="Map layout is not verified; safe zone is unknown."))
+        self.assertEqual({key: value for key, value in timings.items() if key != "totalMs"},
+                         dict(decodeMs=0., registrationMs=0., markerMs=0., zoneMs=0.))
+        self.assertAlmostEqual(timings["totalMs"], 4.)
+        json.dumps(result, allow_nan=False)
+
+    def test_no_references_still_reject_invalid_input(self):
+        engine = bridge.BrowserVisionEngine([])
+        opaque = bytes((12, 34, 56, 255))
+        cases = (
+            (opaque, 1, 1, "unknown"),
+            (opaque, True, 1, "live"),
+            (opaque, 1., 1, "live"),
+            (opaque, 0, 1, "live"),
+            (opaque, 1, -1, "live"),
+            (b"", 2401, 1, "live"),
+            (b"", 2400, 2400, "live"),
+            (object(), 1, 1, "live"),
+            (opaque[:-1], 1, 1, "live"),
+            (opaque + opaque, 1, 1, "live"),
+            (memoryview(bytearray(8))[::2], 1, 1, "live"),
+            (memoryview(np.array((1, 2), dtype=np.uint16)), 1, 1, "live"),
+            (bytes((12, 34, 56, 254)), 1, 1, "live"),
+        )
+        with patch.object(bridge, "_rgba_image") as decode, \
+                patch.object(bridge, "register_map") as register:
+            for pixels, width, height, context in cases:
+                with self.subTest(size=(width, height), context=context, buffer_type=type(pixels)), \
+                        self.assertRaises(ValueError):
+                    engine.analyze_rgba(pixels, width, height, context=context)
+        decode.assert_not_called()
+        register.assert_not_called()
 
     def test_bad_buffers_context_and_catalog_are_rejected(self):
         engine = self.engine()

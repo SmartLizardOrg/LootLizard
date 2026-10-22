@@ -1,9 +1,9 @@
-/* Hosted CI only. Real Chromium + Pyodide/OpenCV; all image inputs are synthetic. */
+/* Hosted CI only. Synthetic screen frames and official public map references. */
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const {spawn} = require('node:child_process');
+const {spawn, spawnSync} = require('node:child_process');
 
 if (process.env.GITHUB_ACTIONS !== 'true' || !process.env.RUNNER_TEMP) {
   throw new Error('The headless browser probe is restricted to hosted CI. Use the approved visible browser for local review.');
@@ -22,14 +22,16 @@ const deadline = setTimeout(() => { report.status = 'timeout'; save(); server?.k
 deadline.unref();
 
 async function main() {
-  server = spawn(process.env.PYTHON || 'python', ['-B', 'scripts/serve_web_poc.py', '--port', '8765'],
+  const build = spawnSync(process.env.PYTHON || 'python', ['-B', 'scripts/build_web.py'], {cwd: root, windowsHide: true, encoding: 'utf8'});
+  assert.equal(build.status, 0, `Static site build failed: ${build.stderr || build.stdout}`);
+  server = spawn(process.env.PYTHON || 'python', ['-B', 'scripts/serve_web.py', '--port', '8765'],
     {cwd: root, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']});
   server.on('error', error => { report.serverError = String(error); });
   for (const stream of [server.stdout, server.stderr]) stream.on('data', value => { serverOutput = (serverOutput + value).slice(-100_000); });
   let up = false;
   for (let i = 0; i < 100; i++) {
     if (server.exitCode !== null) throw new Error('The static server exited before browser startup.');
-    try { up = (await fetch(base + '/web/poc/')).ok; } catch {}
+    try { up = (await fetch(base + '/app/')).ok; } catch {}
     if (up) break;
     await new Promise(resolve => setTimeout(resolve, 100));
   }
@@ -42,19 +44,24 @@ async function main() {
   page.on('console', message => report.console.push({type: message.type(), text: message.text().slice(0, 2500)}));
   page.on('pageerror', error => report.pageErrors.push(String(error)));
   page.on('request', request => report.requests.push({method: request.method(), url: request.url()}));
-  await page.goto(base + '/web/poc/?test=1', {waitUntil: 'domcontentloaded'});
-  await page.waitForFunction(() => Boolean(window.lootLizardPoc), null, {timeout: 30_000});
-  const engine = await page.evaluate(async () => window.lootLizardPoc.ready);
+  await page.goto(base + '/app/?test=1&diagnostics=1', {waitUntil: 'domcontentloaded'});
+  await page.waitForFunction(() => Boolean(window.lootLizard), null, {timeout: 30_000});
+  page.setDefaultTimeout(240_000);
+  const engine = await page.evaluate(async () => window.lootLizard.ready);
+  page.setDefaultTimeout(30_000);
   const capabilities = engine.capabilities || engine;
   assert.equal(capabilities.sift, true, 'Actual WASM OpenCV SIFT must be exercised');
   assert.equal(capabilities.affine, true, 'Actual WASM affine estimators must be exercised');
   report.engine = engine;
   report.steps.push('real-pyodide-sift-and-affine-ready');
+  report.defaultReferences = await page.evaluate(() => window.lootLizard.getState().referenceCount);
+  assert.equal(report.defaultReferences, 2, 'Erangel and Taego references must load without user file import');
+  report.steps.push('official-default-references-load-automatically');
 
   const workerResults = await page.evaluate(async () => {
-    const {createDemo} = await import('/web/poc/demo.mjs');
+    const {createDemo} = await import('/app/demo.mjs');
     const demo = createDemo();
-    const worker = new Worker('/web/poc/vision-worker.js', {type: 'module'});
+    const worker = new Worker('/app/vision-worker.js', {type: 'module'});
     let sequence = 0;
     const pending = new Map();
     worker.onmessage = ({data}) => {
@@ -108,19 +115,19 @@ async function main() {
   report.steps.push('real-cv-map-gameplay-rejection-map-return-and-projection');
 
   await page.locator('#load-demo').click();
-  await page.waitForFunction(() => window.lootLizardPoc.getState().mapId === 'demo', null, {timeout: 60_000});
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   assert.ok(await page.locator('#target-list tr').count() > 0);
   await page.screenshot({path: path.join(evidence, 'synthetic-demo.png'), fullPage: true});
-  report.demoState = await page.evaluate(() => window.lootLizardPoc.getState());
+  report.demoState = await page.evaluate(() => window.lootLizard.getState());
   report.steps.push('demo-button-renders-real-cv-targets');
 
   const stale = await page.evaluate(async () => {
-    const {createDemo} = await import('/web/poc/demo.mjs');
+    const {createDemo} = await import('/app/demo.mjs');
     const {mapFrame} = createDemo();
-    const pending = window.lootLizardPoc.analyzeImageData(mapFrame, {source: 'demo'});
-    window.lootLizardPoc.stop();
+    const pending = window.lootLizard.analyzeImageData(mapFrame, {source: 'demo'});
+    window.lootLizard.stop();
     await pending;
-    return window.lootLizardPoc.getState();
+    return window.lootLizard.getState();
   });
   assert.equal(stale.mapId, null);
   assert.deepEqual(stale.points, []);
@@ -130,23 +137,23 @@ async function main() {
   report.steps.push('immediate-stop-cancels-async-session-start');
 
   const inflight = await page.evaluate(async () => {
-    const {createDemo} = await import('/web/poc/demo.mjs');
+    const {createDemo} = await import('/app/demo.mjs');
     let scanningState;
     const stopped = new Promise(resolve => {
       const observer = new MutationObserver(() => {
-        if (window.lootLizardPoc.getState().phase !== 'scanning') return;
+        if (window.lootLizard.getState().phase !== 'scanning') return;
         observer.disconnect();
-        scanningState = window.lootLizardPoc.getState();
+        scanningState = window.lootLizard.getState();
         // request() posts in its already-enqueued Promise microtask. Queue Stop
         // behind that post, before a worker reply can run as a new event task.
-        queueMicrotask(() => { window.lootLizardPoc.stop(); resolve(); });
+        queueMicrotask(() => { window.lootLizard.stop(); resolve(); });
       });
       observer.observe(document.querySelector('#recognition-status'), {childList: true, characterData: true, subtree: true});
     });
-    const pending = window.lootLizardPoc.analyzeImageData(createDemo().mapFrame, {source: 'demo'});
+    const pending = window.lootLizard.analyzeImageData(createDemo().mapFrame, {source: 'demo'});
     await Promise.race([stopped, new Promise((_, reject) => setTimeout(() => reject(Error('No in-flight scanning phase observed')), 15_000))]);
     const reply = await pending;
-    return {scanningState, reply, stopped: window.lootLizardPoc.getState()};
+    return {scanningState, reply, stopped: window.lootLizard.getState()};
   });
   assert.equal(inflight.scanningState.phase, 'scanning');
   assert.equal(inflight.scanningState.mapId, null);
@@ -161,7 +168,7 @@ async function main() {
   // granting or bypassing getDisplayMedia permission. Available only on the
   // loopback ?test=1 page, never a normal site/capture-picker replacement.
   await page.evaluate(async () => {
-    const {createDemo} = await import('/web/poc/demo.mjs');
+    const {createDemo} = await import('/app/demo.mjs');
     const demo = createDemo(), frame = demo.mapFrame;
     const canvas = document.createElement('canvas');
     canvas.width = frame.width; canvas.height = frame.height;
@@ -169,21 +176,21 @@ async function main() {
     const stream = canvas.captureStream(2);
     window.__syntheticCapture = {canvas, stream, frames: demo.frames, scans: []};
     const observer = new MutationObserver(() => {
-      const state = window.lootLizardPoc.getState();
+      const state = window.lootLizard.getState();
       if (state.phase === 'scanning') window.__syntheticCapture.scans.push(state);
     });
     observer.observe(document.querySelector('#recognition-status'), {childList: true, characterData: true, subtree: true});
     window.__syntheticCapture.observer = observer;
-    await window.lootLizardPoc.startTestStream(stream, {demo: true});
+    await window.lootLizard.startTestStream(stream, {demo: true});
   });
   const otherTab = await context.newPage();
   await otherTab.goto('about:blank');
   await otherTab.bringToFront();
   await page.waitForFunction(() => {
-    const state = window.lootLizardPoc.getState();
+    const state = window.lootLizard.getState();
     return state.sharing && state.mapId === 'demo' && state.points.length > 0;
   }, null, {timeout: 60_000});
-  report.passiveStreamState = await page.evaluate(() => window.lootLizardPoc.getState());
+  report.passiveStreamState = await page.evaluate(() => window.lootLizard.getState());
   await page.evaluate(() => {
     const fixture = window.__syntheticCapture;
     fixture.scans.length = 0;
@@ -191,10 +198,10 @@ async function main() {
     fixture.stream.getVideoTracks()[0].requestFrame?.();
   });
   await page.waitForFunction(() => {
-    const state = window.lootLizardPoc.getState();
+    const state = window.lootLizard.getState();
     return state.sharing && state.phase === 'unknown' && state.mapId === null && state.points.length === 0;
   }, null, {timeout: 60_000});
-  const gameplayUI = await page.evaluate(() => ({state: window.lootLizardPoc.getState(), scans: window.__syntheticCapture.scans}));
+  const gameplayUI = await page.evaluate(() => ({state: window.lootLizard.getState(), scans: window.__syntheticCapture.scans}));
   assert.ok(gameplayUI.scans.length > 0, 'Automatic stream must actually process the changed frame');
   assert.ok(gameplayUI.scans.every(state => state.mapId === null && state.points.length === 0), 'A newer displayed frame must never carry old geometry while scanning');
   assert.equal(await page.locator('#target-list tr').count(), 0);
@@ -203,9 +210,9 @@ async function main() {
     fixture.canvas.getContext('2d').putImageData(fixture.frames[2], 0, 0);
     fixture.stream.getVideoTracks()[0].requestFrame?.();
   });
-  await page.waitForFunction(() => window.lootLizardPoc.getState().mapId === 'demo', null, {timeout: 60_000});
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   report.streamGameplay = gameplayUI;
-  report.streamMapReturn = await page.evaluate(() => window.lootLizardPoc.getState());
+  report.streamMapReturn = await page.evaluate(() => window.lootLizard.getState());
   report.steps.push('automatic-stream-map-gameplay-map-and-no-old-geometry-while-scanning');
   await page.evaluate(() => {
     const track = window.__syntheticCapture.stream.getVideoTracks()[0];
@@ -215,14 +222,127 @@ async function main() {
     track.dispatchEvent(new Event('ended'));
     window.__syntheticCapture.observer.disconnect();
   });
-  await page.waitForFunction(() => !window.lootLizardPoc.getState().sharing);
-  const ended = await page.evaluate(() => window.lootLizardPoc.getState());
+  await page.waitForFunction(() => !window.lootLizard.getState().sharing);
+  const ended = await page.evaluate(() => window.lootLizard.getState());
   assert.equal(ended.mapId, null);
   assert.deepEqual(ended.points, []);
   assert.equal(ended.position, null);
   assert.equal(ended.zone, null);
   report.endedState = ended;
   report.steps.push('synthetic-stream-automatic-scan-and-ended-clears-state');
+
+  await page.bringToFront();
+  await page.locator('#settings-panel > summary').click();
+  assert.equal(await page.locator('#performance-diagnostics').isVisible(), true);
+  await page.evaluate(async () => {
+    const fixture = window.__syntheticCapture;
+    fixture.stream = fixture.canvas.captureStream(2);
+    await window.lootLizard.startTestStream(fixture.stream, {demo: true});
+  });
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
+  await page.locator('#capture-work').selectOption('capture-only');
+  const modeCleared = await page.evaluate(() => ({state: window.lootLizard.getState(),
+    mode: window.lootLizard.getPerformance().mode}));
+  assert.equal(modeCleared.mode, 'capture-only');
+  assert.equal(modeCleared.state.sharing, true, 'Pausing processing must retain the approved capture stream');
+  assert.equal(modeCleared.state.mapId, null);
+  assert.deepEqual(modeCleared.state.points, []);
+  assert.equal(modeCleared.state.position, null);
+  assert.equal(modeCleared.state.zone, null);
+  assert.equal(await page.locator('#target-list tr').count(), 0);
+
+  await page.locator('#capture-work').selectOption('full');
+  const inflightMode = await page.evaluate(async () => {
+    const {createDemo} = await import('/app/demo.mjs');
+    let scanningState;
+    const switched = new Promise(resolve => {
+      const observer = new MutationObserver(() => {
+        if (window.lootLizard.getState().phase !== 'scanning') return;
+        observer.disconnect();
+        scanningState = window.lootLizard.getState();
+        // As in the Stop test, queue the real control's change event after the
+        // already-enqueued worker post, before its reply can run as a task.
+        queueMicrotask(() => {
+          const control = document.querySelector('#capture-work');
+          control.value = 'capture-only';
+          control.dispatchEvent(new Event('change', {bubbles: true}));
+          resolve();
+        });
+      });
+      observer.observe(document.querySelector('#recognition-status'), {childList: true, characterData: true, subtree: true});
+    });
+    const pending = window.lootLizard.analyzeImageData(createDemo().mapFrame, {source: 'demo'});
+    await Promise.race([switched, new Promise((_, reject) => setTimeout(() => reject(Error('No in-flight mode switch observed')), 15_000))]);
+    const reply = await pending;
+    return {scanningState, reply, state: window.lootLizard.getState(),
+      mode: window.lootLizard.getPerformance().mode};
+  });
+  assert.equal(inflightMode.scanningState.phase, 'scanning');
+  assert.equal(inflightMode.mode, 'capture-only');
+  assert.equal(inflightMode.reply, null, 'A worker reply invalidated by a diagnostic mode change must be discarded');
+  assert.equal(inflightMode.state.mapId, null);
+  assert.deepEqual(inflightMode.state.points, []);
+  assert.equal(inflightMode.state.position, null);
+  assert.equal(inflightMode.state.zone, null);
+  assert.equal(await page.locator('#target-list tr').count(), 0);
+  report.modeCleared = modeCleared;
+  report.inflightMode = inflightMode;
+  report.steps.push('diagnostic-mode-clears-map-and-rejects-in-flight-worker-geometry');
+
+  await page.locator('#capture-work').selectOption('full');
+  await page.locator('#load-demo').click();
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
+  await page.evaluate(async () => {
+    const {createDemo} = await import('/app/demo.mjs');
+    const {mapFrame} = createDemo();
+    const canvas = document.createElement('canvas');
+    canvas.width = mapFrame.width; canvas.height = mapFrame.height;
+    canvas.getContext('2d').putImageData(mapFrame, 0, 0);
+    const stream = canvas.captureStream(2);
+    // Observe actual worker traffic, not just the timing fields which the
+    // controller chooses to emit. This leaves real worker results untouched.
+    const originalPost = Worker.prototype.postMessage;
+    const probe = {canvas, stream, originalPost, analyzePosts: [], startEpochMs: performance.timeOrigin + performance.now()};
+    window.__noReferenceCapture = probe;
+    Worker.prototype.postMessage = function(message) {
+      if (message?.type === 'analyze') probe.analyzePosts.push({id: message.id, rgbaBytes: message.rgba?.byteLength || 0});
+      return Reflect.apply(originalPost, this, arguments);
+    };
+    // A fresh browser context has no imported references. Explicitly avoid the
+    // synthetic reference used by the earlier automatic stream tests.
+    await window.lootLizard.startTestStream(stream, {demo: false, withoutReferences: true});
+  });
+  await page.waitForFunction(() => {
+    const state = window.lootLizard.getState(), probe = window.__noReferenceCapture;
+    return state.sharing && state.phase === 'unknown' && window.lootLizard.getPerformance().events.some(
+      event => event.path === 'no-references' && event.epochMs >= probe.startEpochMs);
+  }, null, {timeout: 60_000});
+  const noReferences = await page.evaluate(() => {
+    const probe = window.__noReferenceCapture;
+    return {state: window.lootLizard.getState(), analyzePosts: probe.analyzePosts,
+      scans: window.lootLizard.getPerformance().events.filter(event => event.type === 'scan' && event.epochMs >= probe.startEpochMs)};
+  });
+  assert.equal(noReferences.state.mapId, null, 'The earlier demo geometry must be cleared');
+  assert.deepEqual(noReferences.state.points, []);
+  assert.equal(noReferences.state.position, null);
+  assert.equal(noReferences.state.zone, null);
+  assert.deepEqual(noReferences.analyzePosts, [], 'An empty reference library must not transfer screenshots to the worker');
+  assert.ok(noReferences.scans.length > 0, 'The live synthetic screen must actually be sampled');
+  for (const scan of noReferences.scans) {
+    assert.equal(scan.path, 'no-references');
+    assert.ok(Number.isFinite(scan.captureMs) && scan.captureMs >= 0);
+    assert.equal(Object.hasOwn(scan, 'transferCopyMs'), false);
+    assert.equal(Object.hasOwn(scan, 'workerRoundTripMs'), false);
+    assert.equal(Object.hasOwn(scan, 'python'), false);
+  }
+  assert.equal(await page.locator('#target-list tr').count(), 0);
+  await page.evaluate(() => {
+    window.lootLizard.stop();
+    Worker.prototype.postMessage = window.__noReferenceCapture.originalPost;
+    delete window.__noReferenceCapture;
+  });
+  report.noReferences = noReferences;
+  report.steps.push('empty-reference-screen-fast-path-samples-without-worker-transfer-or-stale-geometry');
   assert.ok(report.requests.every(request => ['GET', 'HEAD'].includes(request.method)), 'No image upload request may be issued');
   assert.deepEqual(report.pageErrors, [], 'No unhandled main-page error');
   report.status = 'passed';

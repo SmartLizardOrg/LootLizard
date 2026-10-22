@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CaptureSession, orderTargets} from '../poc/session.mjs';
+import {CaptureSession, orderTargets} from '../app/session.mjs';
 
 test('stopping clears a displayed result and rejects the in-flight reply', () => {
   const session = new CaptureSession();

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateMaps, validateSnapshot, readBoundedJSON} from '../poc/metadata.mjs';
+import {validateMaps, validateSnapshot, readBoundedJSON} from '../app/metadata.mjs';
 
 const map = () => ({id: 'test-map', name: 'Test map', size_m: 8000, source: {license: 'MIT'},
   points: [{id: 'test-01', name: 'Test room', x: .2, y: .8}]});

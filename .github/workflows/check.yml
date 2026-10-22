@@ -1,8 +1,8 @@
-name: Check
+name: Check web application
 
 on:
   push:
-    branches: [main]
+    branches: [main, poc/browser-client]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: windows-latest
+  core:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -22,12 +22,52 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: pyproject.toml
-      - name: Install
+      - name: Install portable CV test dependencies
         run: python -m pip install .
-      - name: Check source syntax
-        run: python -m compileall -q lootlizard launcher.py
-      - name: Validate community map snapshot
-        shell: pwsh
-        run: python scripts/build_map_catalog.py --revision $env:GITHUB_SHA --output "$env:RUNNER_TEMP/maps.json"
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -v
+      - name: Check Python syntax and CV contracts
+        run: |
+          python -B -m compileall -q lootlizard scripts web/app/python_bridge.py
+          python -B -m unittest discover -s tests -v
+      - name: Validate community metadata and build only public assets
+        run: |
+          python scripts/build_map_catalog.py --revision "$GITHUB_SHA" --output "$RUNNER_TEMP/maps.json"
+          python scripts/build_web.py --revision "$GITHUB_SHA"
+          python -B -m unittest discover -s web/tests -p 'test_*.py' -v
+          node --test web/tests/*.test.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: LootLizard-web-preview
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Build the public site
+        run: python scripts/build_web.py --revision "$GITHUB_SHA"
+      - name: Install isolated browser-test tools
+        run: |
+          node -e 'if (Number(process.versions.node.split(".")[0]) < 20) process.exit(1)'
+          npm install --prefix "$RUNNER_TEMP/lootlizard-web-tools" --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          node "$RUNNER_TEMP/lootlizard-web-tools/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Exercise real browser CV and session clearing
+        env:
+          LOOTLIZARD_PLAYWRIGHT_MODULE: ${{ runner.temp }}/lootlizard-web-tools/node_modules/playwright
+          LOOTLIZARD_WEB_EVIDENCE: ${{ runner.temp }}/lootlizard-web-evidence
+        run: node web/tests/browser-smoke.cjs
+      - name: Upload synthetic browser evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: LootLizard-browser-evidence
+          path: ${{ runner.temp }}/lootlizard-web-evidence/
+          if-no-files-found: ignore
+          retention-days: 7

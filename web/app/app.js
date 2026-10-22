@@ -3,6 +3,8 @@ import {FEED_URL,validateMaps,validateSnapshot,readBoundedJSON} from './metadata
 import {createDemo} from './demo.mjs';
 import {referenceStore} from './storage.mjs';
 import {applyLanguage,translate} from './i18n.mjs';
+import {displayMediaOptions,readCaptureSettings,applyCaptureRate,boundedFrameSize,setSamplerSize} from './capture.mjs';
+import {loadAutomaticReferences} from './automatic-references.mjs';
 
 const $=id=>document.getElementById(id);
 const session=new CaptureSession(), demo=createDemo(), references=new Map();
@@ -14,11 +16,21 @@ let maps=[],engine=null,frame=null,stream=null,timer=null,scanning=false,configu
 let phase='loading',detail='',lastWall=0,language='en',interval=3000,remember=true,revision='bundled';
 let metadataKey='Using bundled coordinates';
 let crop=null,selection=null,demoMode=false,dimensions='',sourceGeneration=0;
+let drawnFrame=null,drawnResult=null,drawnSelection=null,drawnLanguage='',captureFps=1,diagnosticMode='full';
+const diagnosticsEnabled=['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('diagnostics')==='1';
+const performanceEvents=[];
+let lastCaptureSettings={},lastConstraintResult=null;
+let referenceWarning='';
 const PREFS='lootlizard.web.preferences.v1',CATALOG='lootlizard.web.catalog.v1';
 try {const p=JSON.parse(localStorage.getItem(PREFS)||'null');if(p){language=p.language==='hu'?'hu':'en';interval=[1500,3000,5000].includes(p.interval)?p.interval:3000;}}catch{}
 const t=key=>translate(key,language);
 const put=(id,value)=>{$(id).textContent=String(value);};
 const errorText=error=>String(error?.message||error).slice(0,700);
+function performanceSnapshot(){return{requestedFrameRate:captureFps,settings:stream?readCaptureSettings(stream.getVideoTracks()[0]):lastCaptureSettings,mode:diagnosticMode,active:!!stream,events:performanceEvents.slice()};}
+function recordPerformance(event){
+  performanceEvents.push(event);if(performanceEvents.length>128)performanceEvents.shift();
+  if(diagnosticsEnabled)$('performance-readout').textContent=JSON.stringify({requestedFrameRate:captureFps,settings:stream?readCaptureSettings(stream.getVideoTracks()[0]):lastCaptureSettings,constraints:lastConstraintResult,mode:diagnosticMode,lastEvent:event},null,2);
+}
 
 function request(type,payload={},transfer=[]) {
   const run=()=>new Promise((resolve,reject)=>{
@@ -73,7 +85,11 @@ function render(){
     return row;
   });$('target-list').replaceChildren(...rows);draw(points);
 }
-function draw(points=targets()){
+function draw(points=targets(),force=false){
+  // Status/age changes do not require uploading the same snapshot again.
+  const overlay=session.result?.registration?session.result:null;
+  if(!force&&drawnFrame===frame&&drawnResult===overlay&&drawnSelection===selection&&drawnLanguage===language)return;
+  drawnFrame=frame;drawnResult=overlay;drawnSelection=selection;drawnLanguage=language;
   if(!frame){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
   if(canvas.width!==frame.width||canvas.height!==frame.height){canvas.width=frame.width;canvas.height=frame.height;}
   ctx.putImageData(frame,0,0);const r=session.result;
@@ -93,6 +109,7 @@ function draw(points=targets()){
 
 function stop(){
   sourceGeneration++;clearTimeout(timer);timer=null;session.stop();
+  if(stream)lastCaptureSettings=readCaptureSettings(stream.getVideoTracks()[0]);
   const old=stream;stream=null;if(old)old.getTracks().forEach(track=>track.stop());video.srcObject=null;
   cancelCrop();demoMode=false;dimensions='';lastWall=0;phase='stopped';detail='';render();
 }
@@ -101,20 +118,34 @@ function capture(){
   if(!video.videoWidth||!video.videoHeight||video.readyState<2)return null;
   const native=`${video.videoWidth}x${video.videoHeight}`;
   if(dimensions&&native!==dimensions)clearGuidance();dimensions=native;
-  const scale=Math.min(1,2400/Math.max(video.videoWidth,video.videoHeight),Math.sqrt(4000000/(video.videoWidth*video.videoHeight)));
-  sampler.width=Math.max(1,Math.floor(video.videoWidth*scale));sampler.height=Math.max(1,Math.floor(video.videoHeight*scale));
+  const size=boundedFrameSize(video.videoWidth,video.videoHeight);
+  setSamplerSize(sampler,size.width,size.height);
   sample.drawImage(video,0,0,sampler.width,sampler.height);return sample.getImageData(0,0,sampler.width,sampler.height);
 }
-async function analyze(image){
+async function analyze(image,{owned=false,captureMetrics={}}={}){
   const ticket=session.issue();if(!ticket)return null;
+  const started=performance.now(),metrics={type:'scan',epochMs:performance.timeOrigin+started,...captureMetrics,width:image.width,height:image.height};
   session.result=null;
-  frame=new ImageData(new Uint8ClampedArray(image.data),image.width,image.height);status('scanning');
-  // Transfer a copy: the displayed frame is retained only on this device.
-  const buffer=new Uint8Array(image.data).buffer;
-  try{
-    const result=await request('analyze',{rgba:buffer,width:image.width,height:image.height,context:$('replay-mode').checked?'replay':'live',ticket},[buffer]);
+  frame=owned?image:new ImageData(new Uint8ClampedArray(image.data),image.width,image.height);
+  metrics.retainMs=performance.now()-started;
+  let stage=performance.now();status('scanning');metrics.initialRenderMs=performance.now()-stage;
+  // No reference means no registration is possible. Keep the current preview,
+  // but avoid transferring millions of pixels into Python just to abstain.
+  if(session.source==='screen'&&!demoMode&&!references.size){
+    const result={width:image.width,height:image.height,registration:null,position:null,zone:null,points:[],reason:'No canonical map references are loaded'};
     if(!session.accept(ticket,result))return null;
-    lastWall=Date.now();status(result.registration?'recognized':'unknown',result.registration?'Small anchors mark exact coordinates. Distances are straight-line estimates.':result.reason);return result;
+    lastWall=Date.now();stage=performance.now();status('unknown',result.reason);
+    Object.assign(metrics,{path:'no-references',resultRenderMs:performance.now()-stage,totalMs:performance.now()-started});recordPerformance(metrics);return result;
+  }
+  // Transfer a copy: the displayed frame is retained only on this device.
+  stage=performance.now();const buffer=new Uint8Array(image.data).buffer;metrics.transferCopyMs=performance.now()-stage;
+  try{
+    stage=performance.now();
+    const result=await request('analyze',{rgba:buffer,width:image.width,height:image.height,context:$('replay-mode').checked?'replay':'live',ticket},[buffer]);
+    metrics.workerRoundTripMs=performance.now()-stage;
+    if(!session.accept(ticket,result))return null;
+    lastWall=Date.now();stage=performance.now();status(result.registration?'recognized':'unknown',result.registration?'Small anchors mark exact coordinates. Distances are straight-line estimates.':result.reason);
+    Object.assign(metrics,{path:'worker',python:result.timings,resultRenderMs:performance.now()-stage,totalMs:performance.now()-started});recordPerformance(metrics);return result;
   }catch(error){if(session.accepts(ticket)){session.accept(ticket,null);status('error',errorText(error));}throw error;}
 }
 async function scanScreen(){
@@ -123,7 +154,16 @@ async function scanScreen(){
   const track=stream?.getVideoTracks()[0];
   if(!track||track.readyState!=='live'){stop();return;}
   if(track.muted){clearGuidance();status('unknown','Screen capture is paused.');schedule();return;}
-  scanning=true;try{const image=capture();if(image)await analyze(image);else{clearGuidance();status('unknown','Waiting for a readable shared image…');}}catch{}finally{scanning=false;schedule();}
+  if(diagnosticsEnabled&&diagnosticMode==='capture-only'){schedule();return;}
+  scanning=true;try{
+    const start=performance.now(),image=capture(),captureMs=performance.now()-start;
+    if(image){
+      if(diagnosticsEnabled&&diagnosticMode==='preview-only'){
+        session.invalidate();frame=image;lastWall=Date.now();const renderStart=performance.now();status('idle','Performance test: preview only; recognition is paused.');
+        recordPerformance({type:'scan',path:'preview-only',epochMs:performance.timeOrigin+start,captureMs,renderMs:performance.now()-renderStart,width:image.width,height:image.height});
+      }else await analyze(image,{owned:true,captureMetrics:{captureEpochMs:performance.timeOrigin+start,captureMs}});
+    }else{clearGuidance();status('unknown','Waiting for a readable shared image…');}
+  }catch{}finally{scanning=false;schedule();}
 }
 async function setWorkerReferences(useDemo=demoMode){
   const records=useDemo?[{mapId:'demo',image:demo.reference}]:[...references].map(([mapId,r])=>({mapId,image:r.image}));
@@ -133,20 +173,22 @@ async function setWorkerReferences(useDemo=demoMode){
 async function attachStream(media,token,useDemo=false){
   if(token!==sourceGeneration){media.getTracks().forEach(t=>t.stop());return;}
   stream=media;video.srcObject=media;const track=media.getVideoTracks()[0];if(!track){stop();throw Error('No video track was selected.');}
+  lastConstraintResult=null;lastCaptureSettings=readCaptureSettings(track);recordPerformance({type:'capture-start',epochMs:Date.now(),requestedFrameRate:captureFps,settings:lastCaptureSettings});
   track.addEventListener('ended',()=>{if(stream===media)stop();});
   track.addEventListener('mute',()=>{if(stream===media){clearGuidance();status('unknown','Screen capture is paused.');}});
   track.addEventListener('unmute',()=>{if(stream===media){clearGuidance();schedule();}});
   try{
     await video.play();await setWorkerReferences(useDemo);
     if(token!==sourceGeneration||track.readyState!=='live')return;
-    session.begin('screen');demoMode=useDemo;status('unknown','Open the full map in game. Targets appear automatically when it is recognized.');scanScreen();
+    session.begin('screen');demoMode=useDemo;
+    status(diagnosticMode==='capture-only'?'idle':'unknown',diagnosticMode==='capture-only'?'Performance test: capture only; preview and recognition are paused.':'Open the full map in game. Targets appear automatically when it is recognized.');scanScreen();
   }catch(error){if(stream===media)stop();throw error;}
 }
 function startSharing(){
   // The picker must run directly inside the click's transient user activation.
   stop();const token=sourceGeneration;
   if(!navigator.mediaDevices?.getDisplayMedia){status('error','Screen sharing needs a supported desktop browser on HTTPS or localhost.');return;}
-  const picked=navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:3,max:5}},audio:false,selfBrowserSurface:'exclude'});
+  const picked=navigator.mediaDevices.getDisplayMedia(displayMediaOptions(captureFps));
   status('idle','Choose the screen where PUBG is running.');
   picked.then(media=>attachStream(media,token)).catch(error=>{if(token===sourceGeneration)status('error',errorText(error));});
 }
@@ -179,10 +221,16 @@ async function addReference(mapId,image){
   if(session.source==='image'&&frame)await analyze(frame);else schedule();
 }
 function renderReferences(){
-  const list=[...references].map(([id,r])=>{const li=document.createElement('li');li.textContent=`${maps.find(m=>m.id===id)?.name||id} · ${r.image.width} × ${r.image.height}`;return li;});
-  $('reference-list').replaceChildren(...list);$('clear-references').disabled=!references.size;
-  put('reference-status',references.size?`${references.size} ${t('map references loaded')}`:t('No references loaded'));
+  const list=[...references].map(([id,r])=>{const li=document.createElement('li');li.textContent=`${maps.find(m=>m.id===id)?.name||id} · ${t(r.source==='official'?'Default image':'Custom image')} · ${r.image.width} × ${r.image.height}`;return li;});
+  $('reference-list').replaceChildren(...list);$('clear-references').disabled=!engine||configuring>0;
+  put('reference-status',referenceWarning?t(referenceWarning):references.size?`${references.size} ${t('map references loaded')}`:t('No references loaded'));
   const selected=$('reference-map').value;$('reference-map').replaceChildren(...maps.map(map=>{const o=document.createElement('option');o.value=map.id;o.textContent=map.name;return o;}));if(maps.some(m=>m.id===selected))$('reference-map').value=selected;
+}
+async function loadDefaults(){
+  const result=await loadAutomaticReferences({knownMapIds:maps.map(map=>map.id),existingMapIds:[...references.keys()],decode:blob=>decodeImage(blob)});
+  for(const record of result.loaded)references.set(record.mapId,{image:record.image,source:'official'});
+  referenceWarning=result.failures.length?'Some default map images could not be loaded. Use default images to retry.':'';
+  return result;
 }
 function cancelCrop(){crop=null;selection=null;canvas.classList.remove('is-cropping');for(const id of ['save-crop','cancel-crop','crop-help'])if($(id))$(id).hidden=true;}
 function startCrop(){if(!frame){status('idle','Start sharing or open an image before selecting a reference.');return;}clearGuidance();crop={image:frame,mapId:$('reference-map').value};selection=null;canvas.classList.add('is-cropping');for(const id of ['save-crop','cancel-crop','crop-help'])$(id).hidden=false;status('cropping','Drag a square around the complete, fully zoomed-out map, then save.');}
@@ -199,7 +247,7 @@ async function updateMetadata(){
   configuring++;clearGuidance();const previous=maps;maps=snapshot.maps;
   try{
     await request('init',{maps:[...maps,demo.map]});for(const id of references.keys())if(!maps.some(m=>m.id===id))references.delete(id);
-    await setWorkerReferences();revision=snapshot.revision;
+    await loadDefaults();await setWorkerReferences();revision=snapshot.revision;
     if(remember)try{localStorage.setItem(CATALOG,JSON.stringify(snapshot));}catch{}
     metadataKey='GitHub coordinates';
   }catch(error){maps=previous;status('error',errorText(error));}
@@ -210,15 +258,20 @@ $('start-sharing').addEventListener('click',startSharing);$('stop-sharing').addE
 $('load-demo').addEventListener('click',()=>loadDemo().catch(e=>status('error',errorText(e))));
 $('open-image').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(!file)return;stop();const token=sourceGeneration;try{const image=await decodeImage(file,2400);if(token===sourceGeneration)await analyzeImageData(image);}catch(e){if(token===sourceGeneration)status('error',errorText(e));}});
 $('reference-file').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(file)try{await ready;await addReference($('reference-map').value,await decodeImage(file));}catch(e){put('reference-status',errorText(e));}});
-$('clear-references').addEventListener('click',async()=>{configuring++;clearGuidance();try{await request('references',{references:[]});references.clear();await referenceStore('clear');}catch(e){put('reference-status',errorText(e));}finally{configuring--;renderReferences();render();schedule();}});
+$('clear-references').addEventListener('click',async()=>{
+  configuring++;clearGuidance();render();
+  try{await referenceStore('clear');references.clear();await loadDefaults();await setWorkerReferences();}
+  catch(e){referenceWarning=errorText(e);}
+  finally{configuring--;renderReferences();render();schedule();}
+});
 $('crop-reference')?.addEventListener('click',startCrop);$('save-crop')?.addEventListener('click',()=>saveCrop().catch(e=>put('reference-status',errorText(e))));$('cancel-crop')?.addEventListener('click',()=>{cancelCrop();render();schedule();});
 $('language-select').value=language;$('scan-interval').value=String(interval);
 $('language-select').addEventListener('change',()=>{language=$('language-select').value;applyLanguage(language);savePreferences();renderReferences();render();});
 $('scan-interval').addEventListener('change',()=>{interval=Number($('scan-interval').value);savePreferences();schedule();});
-$('cache-preferences').addEventListener('change',async()=>{remember=$('cache-preferences').checked;savePreferences();try{if(!remember){localStorage.removeItem(CATALOG);await referenceStore('clear');}else{for(const[mapId,r]of references)await referenceStore('put',{mapId,blob:await imageBlob(r.image)});}}catch{}});
+$('cache-preferences').addEventListener('change',async()=>{remember=$('cache-preferences').checked;savePreferences();try{if(!remember){localStorage.removeItem(CATALOG);await referenceStore('clear');}else{for(const[mapId,r]of references)if(r.source!=='official')await referenceStore('put',{mapId,blob:await imageBlob(r.image)});}}catch{}});
 $('replay-mode').addEventListener('change',()=>{clearGuidance();if(session.active&&session.source!=='screen'&&frame)analyze(frame).catch(()=>{});else schedule();});
 window.addEventListener('pagehide',stop);
-new ResizeObserver(()=>draw()).observe($('map-stage'));
+new ResizeObserver(()=>draw(undefined,true)).observe($('map-stage'));
 setInterval(()=>{
   const age=updateAge();
   if(session.source==='screen'&&age!==null&&age>Math.max(15000,interval*3)&&session.result){clearGuidance();status('unknown','The last result expired. Waiting for a fresh frame.');}
@@ -226,14 +279,40 @@ setInterval(()=>{
 
 const ready=(async()=>{
   applyLanguage(language);render();
-  maps=validateMaps(await Promise.all(['erangel','taego'].map(async id=>readBoundedJSON(await fetch(`../../data/${id}.json`)))));
+  maps=validateMaps(await Promise.all(['erangel','taego'].map(async id=>readBoundedJSON(await fetch(`../data/${id}.json`)))));
   try{const cached=JSON.parse(localStorage.getItem(CATALOG)||'null');if(cached){validateSnapshot(cached);maps=cached.maps;revision=cached.revision;}}catch{}
   const response=await request('init',{maps:[...maps,demo.map]});engine=response.capabilities;
   put('engine-status',`${t('Local engine ready')} · OpenCV ${engine.opencv}`);
-  try{const saved=await referenceStore('read');for(const record of saved.slice(0,8)){if(maps.some(m=>m.id===record.mapId))references.set(record.mapId,{image:await decodeImage(record.blob)});}await setWorkerReferences(false);}catch{references.clear();}
-  renderReferences();status('idle');updateMetadata().catch(()=>{});setInterval(()=>updateMetadata().catch(()=>{}),60000);return response;
+  try{const saved=await referenceStore('read');for(const record of saved.slice(0,8)){if(maps.some(m=>m.id===record.mapId))references.set(record.mapId,{image:await decodeImage(record.blob)});}}catch{references.clear();}
+  put('engine-status',t('Preparing default map images…'));await loadDefaults();await setWorkerReferences(false);
+  renderReferences();status('idle',references.size?'Share your game screen, then open the full map.':'Default map images are unavailable. Use default images to retry, or import a custom image.');
+  updateMetadata().catch(()=>{});setInterval(()=>updateMetadata().catch(()=>{}),60000);return response;
 })();
 ready.catch(error=>{status('error',errorText(error));put('engine-status',t('Engine unavailable. Reload to retry.'));});
-const api={ready,demo:loadDemo,analyzeImageData,stop,getState:()=>({...session.snapshot(),phase,mapId:currentMap()?.id||null,points:targets(),position:session.result?.position||null,zone:session.result?.zone||null,engine})};
-if(['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('test')==='1')api.startTestStream=async (media,{demo:synthetic=false}={})=>{stop();const token=sourceGeneration;await ready;await attachStream(media,token,synthetic);};
-window.lootLizardPoc=Object.freeze(api);
+const api={ready,demo:loadDemo,analyzeImageData,stop,getState:()=>({...session.snapshot(),phase,mapId:currentMap()?.id||null,points:targets(),position:session.result?.position||null,zone:session.result?.zone||null,referenceCount:references.size,engine}),getPerformance:performanceSnapshot};
+if(['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('test')==='1')api.startTestStream=async (media,{demo:synthetic=false,withoutReferences=false}={})=>{stop();const token=sourceGeneration;await ready;if(withoutReferences){references.clear();await request('references',{references:[]});renderReferences();}await attachStream(media,token,synthetic);};
+window.lootLizard=Object.freeze(api);
+
+if(diagnosticsEnabled){
+  $('performance-diagnostics').hidden=false;
+  $('capture-rate').addEventListener('change',async()=>{
+    const control=$('capture-rate'),requestedFps=Number(control.value),token=sourceGeneration,track=stream?.getVideoTracks()[0];
+    captureFps=requestedFps;control.disabled=true;
+    try{
+      const result=track?await applyCaptureRate(track,requestedFps):null;
+      if(token!==sourceGeneration||track!==stream?.getVideoTracks()[0])return;
+      lastConstraintResult=result;if(result)lastCaptureSettings=result.settings;
+      recordPerformance({type:'capture-rate',epochMs:Date.now(),requestedFrameRate:requestedFps,result});
+    }finally{control.disabled=false;}
+  });
+  $('capture-work').addEventListener('change',()=>{
+    diagnosticMode=$('capture-work').value;clearGuidance();
+    if(diagnosticMode==='capture-only'){frame=null;status('idle','Performance test: capture only; preview and recognition are paused.');}
+    recordPerformance({type:'work-mode',epochMs:Date.now(),mode:diagnosticMode});schedule();
+  });
+  $('export-performance').addEventListener('click',()=>{
+    const url=URL.createObjectURL(new Blob([JSON.stringify(performanceSnapshot(),null,2)],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='lootlizard-performance.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  recordPerformance({type:'page-ready',epochMs:Date.now()});
+}

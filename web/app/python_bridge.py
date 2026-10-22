@@ -46,7 +46,8 @@ def _json_safe(value):
     return value
 
 
-def _rgba_image(rgba, width, height, *, reference=False):
+def _rgba_view(rgba, width, height, *, reference=False):
+    """Validate a borrowed byte view without allocating an RGB image."""
     if (type(width) is not int or type(height) is not int or min(width, height) < 1
             or max(width, height) > MAX_INPUT_SIDE
             or width * height > (MAX_REFERENCE_PIXELS if reference else MAX_FRAME_PIXELS)):
@@ -59,6 +60,11 @@ def _rgba_image(rgba, width, height, *, reference=False):
         raise ValueError("RGBA buffer length does not match the image dimensions.")
     if np.any(np.frombuffer(view, dtype=np.uint8)[3::4] != 255):
         raise ValueError("Use a fully opaque screenshot or reference image.")
+    return view
+
+
+def _rgba_image(rgba, width, height, *, reference=False):
+    view = _rgba_view(rgba, width, height, reference=reference)
     # frombytes owns a copy; a transferred JavaScript buffer may then be freed.
     return Image.frombytes("RGBA", (width, height), view.tobytes()).convert("RGB")
 
@@ -151,6 +157,17 @@ class BrowserVisionEngine:
         if context not in ("live", "replay"):
             raise ValueError("Choose live or replay context explicitly.")
         start = time.perf_counter()
+        if not self.references:
+            _rgba_view(rgba, width, height)
+            result = dict(ticket=ticket, width=width, height=height, registration=None,
+                          position=None, zone=None, points=[],
+                          reason="No canonical map references are loaded",
+                          markerReason="Map layout is not verified; player position is unknown.",
+                          zoneReason="Map layout is not verified; safe zone is unknown.")
+            # Input validation is included in totalMs; none of these stages ran.
+            result["timings"] = dict(decodeMs=0., registrationMs=0., markerMs=0.,
+                                     zoneMs=0., totalMs=(time.perf_counter()-start)*1000)
+            return _json_safe(result)
         image = _rgba_image(rgba, width, height)
         decoded = time.perf_counter()
         registration = register_map(image, self.references)

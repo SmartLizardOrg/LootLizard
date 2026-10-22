@@ -1,160 +1,131 @@
-# LootLizard browser experiment
+# LootLizard browser application
 
-This separate proof of concept runs map recognition in a browser worker using
-Pyodide, NumPy, Pillow and OpenCV. It imports the same pure Python geometry and
-CV modules as the desktop application. It does not replace the released Windows
-application, and it is not a hosted production service.
+The browser application lives in `web/app/`; the landing page is in
+`web/landing/`. Visitors open `/` and launch the companion at `/app/`.
+Recognition runs on the visitor's computer in a dedicated worker using Pyodide
+314.0.7, Python OpenCV, NumPy and Pillow. There is no image-upload endpoint.
 
-The browser downloads the pinned **Pyodide 314.0.7** runtime and its packages from
-jsDelivr. The official package set includes `opencv-python`; this experiment
-uses Python OpenCV, rather than assuming the stock OpenCV.js build exposes all
-required functions. The worker checks real SIFT, descriptor matching and affine
-estimators before reporting ready. See [Pyodide packages](https://pyodide.org/en/stable/usage/packages-in-pyodide.html).
+## Build and preview
 
-## Open the local preview
+The static build needs Python 3.12 or newer and no installed CV dependencies:
 
-From the repository root, with Python 3.12 or newer:
-
-```powershell
-py -3.12 scripts/serve_web_poc.py --port 8765
+```sh
+python scripts/build_web.py
+python scripts/serve_web.py --port 8766
 ```
 
-Open **<http://127.0.0.1:8765/web/poc/>** in desktop Chrome or Edge. Move that
-browser window to the second monitor. The server does not open a browser for
-you. Stop the server with **Ctrl+C** when finished.
+Open `http://127.0.0.1:8766/`. The server serves only the curated `dist/` output,
+not the checkout. It refuses directory listings, uploads and escaping links.
+The published package contains the landing, app, seven Python CV source files,
+point JSON, notices and hosting metadata. Runtime packages and public reference
+PNGs are downloaded by the client rather than bundled.
 
-There is no frontend build step or local Python package installation required
-for this static server. Internet access is required to load the browser runtime
-and packages on a cold start. The first load can take substantially longer than
-subsequent frame processing. An offline/PWA cache is not implemented.
+For development tests, install the Python project dependencies and run:
 
-The server binds only `127.0.0.1`. It serves the web experiment, direct Python
-source modules and point JSON through GET/HEAD. It rejects uploads, mutation
-methods, directory listings, traversal and links escaping the public paths.
-It is a local development server, not an internet-facing deployment server.
-
-## Try it without a game
-
-Wait for the engine to become ready, then choose **Load demo**. This creates
-original deterministic artwork in memory and sends it through the actual CV
-worker. The demo has six synthetic rooms and no PUBG imagery. It exercises
-registration, point projection and optional marker/circle estimation; it is not
-evidence of general accuracy on PUBG screenshots.
-
-**Open image** analyzes a selected PNG or JPEG locally. A real game image needs
-a suitable local reference for its map; an arbitrary screenshot is not a
-reference or independent confirmation of player identity.
-
-## Use your own map reference and sharing session
-
-1. Open **Setup & preferences**. Under **Local map reference**, choose Erangel or
-   Taego, then **Import reference image**. Supply your own complete, fully
-   zoomed-out map, cropped to its exact square extent. Alternatively open/share
-   an image, choose **Use current image as reference**, drag around the complete
-   square map and save it. Exclude surrounding HUD; the selected square must
-   represent the entire normalized map, not a zoomed viewport.
-2. Choose **Start sharing** and select the PUBG window or the game monitor in
-   the browser's picker. Permission and source selection are required each time
-   a new capture session starts. The page cannot silently choose a remembered
-   game window or monitor.
-3. Return focus to PUBG and open its map. Keep the companion visible on the
-   second monitor. While sharing stays active, it requests periodic local
-   analysis at the selected **Scan interval**. No per-frame click on the browser
-   is required. The browser does not press the game's map key for you.
-4. Close the map and the next processed non-map frame must clear its map
-   targets, position and circle. **Stop**, or the browser's Stop sharing control,
-   clears the current result and invalidates replies from earlier frames.
-
-The default language is English; **Language > Magyar** changes the interface.
-Use the explicit replay setting when examining replay/observer images; player
-estimation is disabled in that context. A reference image is user-owned input,
-not a distributed or downloaded game map.
-
-The bundled data contains 15 Erangel and 12 Taego points. Both community lists
-remain unverified and Taego is incomplete. Point data alone cannot identify a
-map. Updated public point metadata is separate from image references and from
-application code. The page checks GitHub's public point feed on startup and
-roughly every 60 seconds; failures retain the last valid or bundled data.
-Required credits remain in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
-
-## Browser differences and limits
-
-- Starting screen capture requires a user gesture in a focused, active page.
-  Capture consent cannot be persisted. Repeated frame processing uses the same
-  live stream until it is stopped or interrupted. See [Screen Capture](https://www.w3.org/TR/screen-capture/).
-- A visible browser on monitor 2 can be unfocused while the game has focus.
-  This is different from a hidden/minimized tab. Hidden-tab timers and repaint
-  callbacks can be throttled, and capture availability depends on the browser,
-  OS and selected surface. Do not rely on fixed scan timing or unattended
-  background execution. See [page lifecycle](https://developer.chrome.com/docs/web-platform/page-lifecycle-api).
-- A normal webpage does not reproduce the desktop companion's Windows global
-  **Ctrl+Shift+B** while PUBG owns keyboard focus. This experiment uses an
-  already-approved sharing session and automatic scans instead. Keyboard Lock
-  concerns a web app's own fullscreen keyboard input; it does not register a
-  Windows global hotkey for another foreground application. See [Keyboard Lock](https://developer.chrome.com/docs/capabilities/web-apis/keyboard-lock).
-- Monitor placement is manual. Automatic cross-monitor placement would require
-  separate Window Management support and permission, which is not universal.
-- The CV worker bounds frame size and reference count to contain memory use.
-  It accepts at most eight references, reduces reference sides to at most
-  1800 pixels and caps processed frames at four million pixels/2400 pixels per
-  side. WASM processing speed and memory use must be measured on the target PC.
-- Unknown, insufficiently detailed or ambiguous maps abstain. Extreme zoom can
-  still fail. Circle priority is unavailable for clipped, rotated or distorted
-  full-map geometry. Position/cone estimates remain experimental and do not
-  establish own-player identity or distinguish every teammate reliably.
-- Desktop Windows OCR, saved desktop icon profiles, Steam launch, native global
-  hotkeys and installed-app update handling are not ported by this experiment.
-  Closing or reloading the page ends its in-memory capture session.
-
-## Local data and network behavior
-
-Image processing occurs in the worker on the user's device. Screenshots and
-reference pixels are not sent to the local server, GitHub, jsDelivr or another
-service. There is no image POST endpoint, telemetry, account or AI API key.
-Network requests load public runtime/packages, source/data and public point
-metadata. Screen sharing grants the page access to the selected surface;
-choose the narrowest suitable surface and stop sharing when finished.
-
-With **Remember preferences and map references on this device** enabled, selected reference PNG
-blobs are saved in this site's IndexedDB. Language/scan preferences and the last
-valid point catalog are saved in localStorage. Captured frames and recognition
-results remain in memory. Disabling this checkbox removes the saved references,
-preferences and point catalog; currently loaded references remain usable for
-the current page session. **Clear references** removes the reference library.
-
-Browser storage belongs to the origin, including the hostname and port. Opening
-`localhost:8765` instead of `127.0.0.1:8765`, changing the port, using another
-browser/profile or moving to a hosted domain creates a different storage scope.
-It does not import the desktop application's AppData paths. Browser-managed
-storage is best-effort and can be evicted or cleared; this prototype does not
-request persistent storage or provide a reference-library export. Keep original
-images and backups outside the page. See [storage quotas and eviction](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
-
-## Tests and evidence
-
-Run the non-browser tests from the repository root:
-
-```powershell
-py -3.12 -B -m unittest discover -s web/tests -p 'test_*.py' -v
+```sh
+python -m pip install -e .
+python -B -m unittest discover -s tests -v
+python -B -m unittest discover -s web/tests -p 'test_*.py' -v
 node --test web/tests/*.test.mjs
 ```
 
-The separate **Browser experiment** workflow runs these checks and installs
-Playwright 1.64.1/Chromium into the disposable CI environment. Its actual-browser
-probe loads the real pinned Pyodide packages, checks SIFT/affine functionality,
-registers synthetic map → non-map gameplay → map frames, verifies known point
-projection, tests the demo UI, and checks late replies and ended-stream clearing.
-An explicitly gated loopback `?test=1` hook accepts a real synthetic canvas
-MediaStream for these tests; it does not replace or bypass the normal screen
-picker. Tests do not use real game screenshots, screen-sharing permissions or
-user profiles. Reports, traces and screenshots contain synthetic data only.
+The browser smoke test is restricted to hosted GitHub Actions. It exercises the
+real WASM engine, automatic public references, synthetic map/gameplay/map
+transitions, projection, stale-reply rejection, diagnostic mode changes and
+ended-stream clearing. Its loopback `?test=1` hook accepts generated canvas
+streams; it never bypasses screen-sharing consent. Local browser review uses
+the approved visible browser tooling instead of bypassing the CI guard.
 
-The CI browser script is intentionally restricted to GitHub Actions. Use the
-approved visible browser tooling for local visual validation. A source/syntax
-test passing locally is separate from an actual successful browser/CI run; see
-[Actions](https://github.com/SmartLizardOrg/LootLizard/actions) for recorded runs.
-No production deployment or public hosting is performed by this workflow.
+## Player flow
 
-The project code license does not grant rights to PUBG imagery or trademarks.
-Screenshot-based operation is not proof of official PUBG approval or anti-cheat
-compatibility. All existing recognition and dataset limitations still apply.
+Use a desktop browser that supports `getDisplayMedia`; desktop Chrome/Edge are
+the initial target. This is a browser architecture, not evidence of tested
+capture on every operating system, browser or console. A console/mobile game
+would need its image made available to the browser separately.
+
+1. Open the companion on the second monitor and wait for the local engine and
+   default Erangel/Taego map images to load.
+2. Select **Start sharing** and choose the PUBG window or its monitor.
+3. Return focus to PUBG and open its full map. Periodic local scans update the
+   companion without another browser click or a global hotkey.
+4. Stop sharing from the page or browser when finished.
+
+Sharing requires a user gesture and fresh source selection for each new
+session. HTTPS (or loopback development) is required. The page cannot persist
+capture permission, silently choose a source or register another foreground
+application's Windows global hotkey. Hidden/minimized tabs may be throttled;
+keep the companion visible on the second monitor.
+
+The default UI is English; **Setup & preferences > Language > Magyar** enables
+Hungarian. **Replay or spectating** disables player estimation. Marker appearance
+is not verified own-player identity; unknown or ambiguous images withhold
+geometry. Points remain community observations, with an incomplete Taego list.
+
+## Automatic reference images and local overrides
+
+`automatic-references.mjs` lists reviewed official PUBG developer map images at
+a pinned public commit. The client verifies PNG type, size and SHA-256, then
+uses the images locally. No user download/import step is required for Erangel
+or Taego. Each map can fail independently; the app remains usable for the demo
+and local images if the reference host is unavailable.
+
+These historical assets can differ from the current game. **Map images** under
+Setup accepts an optional complete, square custom image. A custom image overrides
+its map's default. **Use default images** removes saved custom references and
+retries the reviewed defaults. Image rights remain with their owners; see
+[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+
+Private captures and custom references stay on this device. Optional custom
+references use IndexedDB; preferences and coordinate snapshots use localStorage.
+Automatic references use the browser's ordinary public HTTP cache. Disabling
+local remembering clears the saved custom references/preferences/catalog for
+this origin. Browser-managed storage can be cleared or evicted.
+
+The public coordinate feed remains separate:
+`https://raw.githubusercontent.com/SmartLizardOrg/LootLizard/metadata/maps.json`.
+Startup and roughly 60-second checks validate whole snapshots and preserve the
+last valid data on failure. A coordinate PR does not add an unreviewed image URL
+or execute application code.
+
+## Performance diagnostics
+
+Capture requests 1 FPS and at most 2400 pixels per side; sampled frames are
+bounded to four million pixels. The default recognition interval is three
+seconds after the previous operation finishes. Browser constraints describe the
+output track and do not guarantee the internal capture/GPU work or a particular
+PUBG FPS cost.
+
+The sampler reuses bitmap dimensions. Owned capture ImageData is retained
+directly, with a separate copy only for a worker request. Status-only changes
+do not rewrite the same snapshot. An empty reference library updates the preview
+and abstains before worker transfer; the Python adapter also avoids PIL/RGB
+conversion for valid no-reference inputs. This path is not map recognition.
+
+On loopback only, add `?diagnostics=1` and expand Setup. Temporary controls switch
+1/3 FPS on the existing track and select capture-only, preview-only or normal
+processing. Mode changes clear old geometry. Reported settings and constraint
+failures remain visible. Downloaded timings contain at most 128 local events,
+image dimensions and stage durations, never pixels, labels or device IDs.
+
+`captureMs` measures canvas sampling. `totalMs` measures the subsequent controller
+operation, excluding capture. Worker round trip includes conversion and queueing;
+Python's nested timings cover Python stages only. Track frameRate is a reported
+setting, not a delivery-rate measurement. No continuous OS focus or GPU queue
+trace is collected. Synthetic tests establish functionality; fresh controlled
+game measurements are needed for performance claims with full recognition.
+
+## Publishing and updates
+
+Source changes merge into `main`. Publish an alpha release such as
+`v0.9.0-web.1` from a tested main commit. The trusted **Publish web release**
+workflow validates the tag, runs checks, attaches the static ZIP and checksum,
+and commits the exact public build to `web-release` without force-pushing.
+An older web release cannot replace a newer production build.
+
+Cloudflare Pages connects to `SmartLizardOrg/LootLizard` with production branch
+`web-release`, framework **None**, no build command and output directory `/`.
+The generated branch already contains the deployable files. Therefore a source
+merge alone does not update the public application; a published web release does.
+Application files revalidate on new page loads. An already open sharing session
+keeps its running code until the player reloads; it is never forcibly reloaded
+mid-game. Reloading ends capture and requires a new sharing selection.

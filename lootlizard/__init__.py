@@ -1,3 +1,3 @@
-"""An on-demand, second-screen map companion."""
+"""Portable geometry and image recognition for the LootLizard web companion."""
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"

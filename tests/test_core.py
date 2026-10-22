@@ -4,7 +4,8 @@ import tempfile
 import unittest
 
 from lootlizard.core import Bounds, MapData, SafeZone, nearest
-from lootlizard.storage import read_preferences, save_preferences, resource_path
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def fixture():
@@ -109,7 +110,7 @@ class DataTests(unittest.TestCase):
     def test_bundled_data_is_normalized_and_attributed(self):
         for map_id, expected_count in [("erangel", 15), ("taego", 12)]:
             with self.subTest(map_id=map_id):
-                data = MapData.load(resource_path(f"data/{map_id}.json"))
+                data = MapData.load(ROOT / "data" / f"{map_id}.json")
                 self.assertEqual(data.id, map_id)
                 self.assertEqual(len(data.points), expected_count)
                 self.assertEqual(data.size_m, 8000)
@@ -123,19 +124,6 @@ class DataTests(unittest.TestCase):
             path = Path(folder) / "map.json"
             path.write_text(json.dumps(fixture()), encoding="utf-8-sig")
             self.assertEqual(MapData.load(path).id, "test")
-
-
-class PreferenceTests(unittest.TestCase):
-    def test_preferences_round_trip_and_tolerant_recovery(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / "new" / "settings.json"
-            self.assertEqual(read_preferences(path), {})
-            save_preferences({"output_monitor": "DISPLAY2"}, path)
-            self.assertEqual(read_preferences(path), {"output_monitor": "DISPLAY2"})
-            path.write_text("not json", encoding="utf-8")
-            self.assertEqual(read_preferences(path), {})
-            path.write_text("[]", encoding="utf-8")
-            self.assertEqual(read_preferences(path), {})
 
 
 if __name__ == "__main__":

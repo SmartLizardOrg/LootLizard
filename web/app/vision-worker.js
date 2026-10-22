@@ -1,7 +1,7 @@
 /* Client-only CV worker. No screenshots/references are uploaded. */
 const PYODIDE_VERSION = "314.0.7";
 const PYODIDE_INDEX = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
-const SOURCE_ROOT = new URL("../../lootlizard/", import.meta.url);
+const SOURCE_ROOT = new URL("../cv/", import.meta.url);
 const MODULES = ["__init__", "core", "registration", "marker_pipeline", "self_marker", "vision", "zone_vision"];
 let runtimePromise = null;
 let runtime = null;

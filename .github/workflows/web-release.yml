@@ -1,0 +1,106 @@
+name: Publish web release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-web-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.release.prerelease && contains(github.event.release.tag_name, '-web.')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+    steps:
+      # Only a published release runs this write-enabled job. A tag must resolve
+      # to a commit already in main before its builder or tests can execute.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Validate the release and select its trusted source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c 'import os; from scripts.build_web import release_key; release_key(os.environ["RELEASE_TAG"])'
+          git fetch --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          revision="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          git merge-base --is-ancestor "$revision" HEAD
+          git checkout --detach "$revision"
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+      - name: Test and build the tagged web release
+        env:
+          SOURCE_REVISION: ${{ steps.source.outputs.revision }}
+        run: |
+          python -m pip install .
+          python -B -m unittest discover -s tests -v
+          python -B -m unittest discover -s web/tests -p 'test_*.py' -v
+          node --test web/tests/*.test.mjs
+          python scripts/build_map_catalog.py --revision "$SOURCE_REVISION" --output "$RUNNER_TEMP/maps.json"
+          python scripts/build_web.py --revision "$SOURCE_REVISION" --tag "$RELEASE_TAG"
+      - name: Package and attach the exact static build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          root = pathlib.Path('dist')
+          destination = pathlib.Path(os.environ['RUNNER_TEMP']) / f"LootLizard-{os.environ['RELEASE_TAG']}-web.zip"
+          with zipfile.ZipFile(destination, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+              for asset in sorted(root.rglob('*')):
+                  if asset.is_file():
+                      archive.write(asset, asset.relative_to(root).as_posix())
+          checksum = destination.with_suffix('.zip.sha256')
+          checksum.write_text(hashlib.sha256(destination.read_bytes()).hexdigest() + '  ' + destination.name + '\n')
+          PY
+          gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/LootLizard-$RELEASE_TAG-web.zip" "$RUNNER_TEMP/LootLizard-$RELEASE_TAG-web.zip.sha256" --clobber
+      - name: Publish the generated production branch without rewriting its history
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REVISION: ${{ steps.source.outputs.revision }}
+        run: |
+          set -euo pipefail
+          destination="$RUNNER_TEMP/lootlizard-web-release"
+          if git ls-remote --exit-code --heads origin web-release >/dev/null; then
+            git fetch origin web-release:refs/remotes/origin/web-release
+            git show refs/remotes/origin/web-release:build-info.json > "$RUNNER_TEMP/previous-web-build.json"
+            python - <<'PY'
+          import json, os, pathlib
+          from scripts.build_web import release_key
+          previous = json.loads((pathlib.Path(os.environ['RUNNER_TEMP']) / 'previous-web-build.json').read_text())
+          if release_key(os.environ['RELEASE_TAG']) < release_key(previous['tag']):
+              raise SystemExit('An older release cannot replace the production website.')
+          if release_key(os.environ['RELEASE_TAG']) == release_key(previous['tag']) and previous['revision'] != os.environ['SOURCE_REVISION']:
+              raise SystemExit('A published web release cannot be replaced with different source.')
+          PY
+            git worktree add --detach "$destination" refs/remotes/origin/web-release
+          else
+            git worktree add --detach "$destination" HEAD
+            git -C "$destination" switch --orphan web-release-publish
+          fi
+          git -C "$destination" rm -r -f --ignore-unmatch .
+          cp -a dist/. "$destination/"
+          git -C "$destination" add --all
+          if git -C "$destination" diff --cached --quiet; then
+            echo 'This release is already published.'
+            exit 0
+          fi
+          git -C "$destination" -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Publish $RELEASE_TAG"
+          gh auth setup-git
+          git -C "$destination" push origin HEAD:refs/heads/web-release
