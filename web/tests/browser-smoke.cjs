@@ -237,7 +237,22 @@ async function main() {
   await page.evaluate(async () => {
     const fixture = window.__syntheticCapture;
     fixture.stream = fixture.canvas.captureStream(2);
-    await window.lootLizard.startTestStream(fixture.stream, {demo: true});
+    // A restarted canvas stream needs a fresh paint. Repaint until video.play()
+    // receives its first frame; an unchanged, previously stopped canvas may
+    // otherwise never emit one in headless Chromium.
+    const paint = () => {
+      fixture.canvas.getContext('2d').putImageData(fixture.frames[0], 0, 0);
+      fixture.stream.getVideoTracks()[0].requestFrame?.();
+    };
+    const repaint = setInterval(paint, 200);
+    let timeout;
+    try {
+      const started = window.lootLizard.startTestStream(fixture.stream, {demo: true});
+      paint();
+      await Promise.race([started, new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(Error('Restarted synthetic stream produced no playable frame')), 30_000);
+      })]);
+    } finally { clearInterval(repaint); clearTimeout(timeout); }
   });
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   await page.locator('#capture-work').selectOption('capture-only');
