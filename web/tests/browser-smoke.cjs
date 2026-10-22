@@ -318,7 +318,9 @@ async function main() {
   assert.equal(demoView.navigation.zoom, '100%');
   assert.equal(demoView.navigation.fitDisabled, true);
   await page.mouse.move(canvasBox.x+canvasBox.width*.5,canvasBox.y+canvasBox.height*.55);
-  await page.mouse.wheel(0,-240);await nextPaint();
+  await page.mouse.wheel(0,-240);
+  await page.waitForFunction(()=>parseInt(document.querySelector('#map-zoom-level').textContent)>100);
+  await nextPaint();
   const zoomedView = await readMapView();
   assert.ok(parseInt(zoomedView.navigation.zoom)>100);
   assert.notEqual(zoomedView.main.pixelHash,demoView.main.pixelHash);
