@@ -32,6 +32,7 @@ class Point:
     name: str
     x: float
     y: float
+    kind: str = "secret_room"
 
 
 @dataclass(frozen=True)
@@ -91,7 +92,10 @@ class MapData:
                 raise ValueError(f"Duplicate point id: {point_id}")
             if not isinstance(name, str) or not name.strip() or len(name) > 160:
                 raise ValueError("Each point needs a short name")
-            points.append(Point(point_id, name, unit(record.get("x"), "x"), unit(record.get("y"), "y")))
+            kind = record.get("kind", "secret_room")
+            if not isinstance(kind, str) or kind not in {"secret_room", "security_room", "bear_cave", "tunnel_entrance", "supply_cache"}:
+                raise ValueError("Unknown location kind")
+            points.append(Point(point_id, name, unit(record.get("x"), "x"), unit(record.get("y"), "y"), kind))
             seen.add(point_id)
         return cls(data["id"], data["name"], size, source, tuple(points))
 
@@ -105,7 +109,9 @@ class MapData:
     def to_dict(self) -> dict:
         return {"id": self.id, "name": self.name, "size_m": self.size_m,
                 "source": self.source,
-                "points": [dict(id=p.id, name=p.name, x=p.x, y=p.y) for p in self.points]}
+                "points": [dict(id=p.id, name=p.name, x=p.x, y=p.y,
+                                **({"kind": p.kind} if p.kind != "secret_room" else {}))
+                           for p in self.points]}
 
 
 @dataclass(frozen=True)

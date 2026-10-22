@@ -391,6 +391,12 @@ async function main() {
   const sharedMapView = await readMapView();
   assertCroppedMap(sharedMapView);
   assertCollapsedSource(sharedMapView);
+  const markerLegend = await page.locator('#location-legend li').allTextContents();
+  assert.deepEqual(markerLegend, ['Secret room', 'Security room', 'Bear cave entrance', 'Tunnel entrance', 'Pillar supply cache']);
+  const rowSymbols = await page.locator('#target-list .location-icon').evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')));
+  assert.deepEqual(rowSymbols, ['Secret room', 'Security room', 'Bear cave entrance', 'Tunnel entrance', 'Pillar supply cache', 'Secret room']);
+  report.markerLegend = markerLegend;
+  report.steps.push('all-five-location-types-share-accessible-map-list-and-legend-symbols');
   await page.screenshot({path: path.join(evidence, 'recognized-map-collapsed-source.png'), fullPage: true});
   assert.equal(sharedMapView.reset.disabled, false);
   assert.equal(sharedMapView.retainedBannerVisible, false, 'A current recognized map needs no retained-map notice');

@@ -1,0 +1,240 @@
+{
+  "source_url": "https://www.inven.co.kr/board/battlegrounds/5074/3400",
+  "source_image_url": "https://upload3.inven.co.kr/upload/2021/03/25/bbs/i15985128602.png",
+  "source_image_sha256": "a0a815d5c1f95a0a42b1922180fe1878e83036a38e7d9e04f7d52962a21657e6",
+  "source_posted": "2020-12-10 12:23",
+  "source_image_revision_in_url": "2021-03-25",
+  "attribution": "Original Inven post by 핑핑위; image credits Nabae-_- / HwapYong",
+  "license": "LootLizard's independent factual coordinate annotations are MIT. The original author's map/artwork retains its rights and is not redistributed.",
+  "kind": "possible Pillar Supply Cache building; historical community observation",
+  "availability": "Source reports 5 active caches per match among candidate buildings, most randomly selected. Current live/custom-mode validity not verified.",
+  "normalization": "Georegistered marker centres to bundled official 819x819 Haven reference; x/819, y/819; top-left origin, right/down positive. Approximate building centres, not exact doors.",
+  "registration": {
+    "source_size": [
+      1127,
+      1135
+    ],
+    "reference_size": [
+      819,
+      819
+    ],
+    "method": "SIFT, Lowe ratio .72, partial affine RANSAC3px",
+    "good_matches": 517,
+    "inliers": 406,
+    "median_residual_px": 0.23509807884693146,
+    "p95_residual_px": 1.160797357559204,
+    "matrix": [
+      [
+        0.7280558896931704,
+        -0.00006709551706914482,
+        -0.03486764859112118
+      ],
+      [
+        0.00006709551706914482,
+        0.7280558896931704,
+        -5.996754225757421
+      ]
+    ]
+  },
+  "points": [
+    {
+      "source_marker_x": 190.5,
+      "source_marker_y": 275.13157894736844,
+      "x": 0.16928121,
+      "y": 0.23727376,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-01",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 621.013698630137,
+      "source_marker_y": 280.56164383561645,
+      "x": 0.55198895,
+      "y": 0.24213612,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-02",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 444.5,
+      "source_marker_y": 297.13157894736844,
+      "x": 0.39507453,
+      "y": 0.25685162,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-03",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 492.5,
+      "source_marker_y": 306.13157894736844,
+      "x": 0.43774373,
+      "y": 0.26485617,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-04",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 873.5949367088608,
+      "source_marker_y": 365.30379746835445,
+      "x": 0.77651594,
+      "y": 0.31748893,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-05",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 639.6025641025641,
+      "source_marker_y": 409.38461538461536,
+      "x": 0.56850313,
+      "y": 0.35665569,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-06",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 215.59493670886076,
+      "source_marker_y": 423.30379746835445,
+      "x": 0.19157741,
+      "y": 0.36899456,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-07",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 322.59493670886076,
+      "source_marker_y": 431.30379746835445,
+      "x": 0.28669515,
+      "y": 0.37611495,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-08",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 683.5,
+      "source_marker_y": 591.1315789473684,
+      "x": 0.60751115,
+      "y": 0.51822458,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-09",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 825,
+      "source_marker_y": 611.4,
+      "x": 0.73329701,
+      "y": 0.53625395,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-10",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 978.5949367088608,
+      "source_marker_y": 611.3037974683544,
+      "x": 0.86983631,
+      "y": 0.53618099,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-11",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 683.5,
+      "source_marker_y": 622.8235294117648,
+      "x": 0.60750858,
+      "y": 0.54639738,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-12",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 683.5,
+      "source_marker_y": 663.8235294117648,
+      "x": 0.60750523,
+      "y": 0.58284464,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-13",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 391.59493670886076,
+      "source_marker_y": 712.3037974683544,
+      "x": 0.34801016,
+      "y": 0.62591754,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-14",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 409.92537313432837,
+      "source_marker_y": 745.955223880597,
+      "x": 0.36430238,
+      "y": 0.65583378,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-15",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 292.5,
+      "source_marker_y": 761.1315789473684,
+      "x": 0.25991503,
+      "y": 0.66931532,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-16",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 889.6025641025641,
+      "source_marker_y": 808.3846153846154,
+      "x": 0.7907097,
+      "y": 0.71137011,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-17",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 657,
+      "source_marker_y": 833.4,
+      "x": 0.583934,
+      "y": 0.73358862,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-18",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 889.6025641025641,
+      "source_marker_y": 833.3846153846154,
+      "x": 0.79070769,
+      "y": 0.73359406,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-19",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 657.6052631578947,
+      "source_marker_y": 978.4736842105264,
+      "x": 0.58446017,
+      "y": 0.862553,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-20",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 597.6025641025641,
+      "source_marker_y": 998.3846153846154,
+      "x": 0.53111865,
+      "y": 0.88024805,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-21",
+      "kind": "supply_cache"
+    },
+    {
+      "source_marker_x": 747.5949367088608,
+      "source_marker_y": 998.3037974683544,
+      "x": 0.66445554,
+      "y": 0.88018844,
+      "source": "independently transcribed candidate-building centre, not guaranteed live cache or door",
+      "id": "haven-22",
+      "kind": "supply_cache"
+    }
+  ],
+  "notes": "The registration residual measures alignment of public source imagery to the bundled reference, not precision of an actual cache door. Coordinates represent historical possible building centres. Do not imply all 22 are active or verified in the current game."
+}

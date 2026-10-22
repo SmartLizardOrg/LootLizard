@@ -3,10 +3,59 @@
   "name": "Paramo",
   "size_m": 3000,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Paramo_Main_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance. Paramo terrain changes between matches; a fixed historical reference can abstain or align only partly."
+    "url": "https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js",
+    "license": "MIT",
+    "attribution": "Copyright (c) 2026 Axiom",
+    "notes": "8 community annotations from pinned, MIT-licensed source files. Coordinates are source-image pixels divided by 8192, with a top-left origin, x increasing east/right and y south/down. The nominal 3000 m side length is not the pixel divisor. No in-game verification was performed for LootLizard; completeness, current access and entrance precision are unverified. Paramo landmarks can change between matches; compare reference locations with the current in-game map. These are eight known candidate positions, not a promise that every room is usable in every match. Exact source ids/pixels are retained in data-sources/secret-locations.json. No source artwork is copied by this import. Licenses: THIRD_PARTY_NOTICES.md. Reviewed 2026-10-22."
   },
-  "points": []
+  "points": [
+    {
+      "id": "paramo-01",
+      "name": "Secret room 01",
+      "x": 0.128173828125,
+      "y": 0.6356201171875
+    },
+    {
+      "id": "paramo-02",
+      "name": "Secret room 02",
+      "x": 0.2764892578125,
+      "y": 0.3590087890625
+    },
+    {
+      "id": "paramo-03",
+      "name": "Secret room 03",
+      "x": 0.3973388671875,
+      "y": 0.3165283203125
+    },
+    {
+      "id": "paramo-04",
+      "name": "Secret room 04",
+      "x": 0.433349609375,
+      "y": 0.6314697265625
+    },
+    {
+      "id": "paramo-05",
+      "name": "Secret room 05",
+      "x": 0.517578125,
+      "y": 0.803955078125
+    },
+    {
+      "id": "paramo-06",
+      "name": "Secret room 06",
+      "x": 0.6243896484375,
+      "y": 0.4910888671875
+    },
+    {
+      "id": "paramo-07",
+      "name": "Secret room 07",
+      "x": 0.81787109375,
+      "y": 0.57421875
+    },
+    {
+      "id": "paramo-08",
+      "name": "Secret room 08",
+      "x": 0.604248046875,
+      "y": 0.6029052734375
+    }
+  ]
 }

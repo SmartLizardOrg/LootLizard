@@ -9,6 +9,7 @@ import {mapViewport,sourcePreviewSize} from './map-view.mjs';
 import {MatchMapMemory} from './match-memory.mjs';
 import {NonMatchGate,createFooterDescriptor,matchFooterDescriptor} from './match-context.mjs';
 import {createMatchContextReader} from './match-context-reader.mjs';
+import {locationKind,locationLabel,locationIconSVG,presentLocationKinds,layoutLocationMarkers,drawLocationMarkers} from './location-markers.mjs';
 
 const $=id=>document.getElementById(id);
 const testing=['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('test')==='1';
@@ -97,10 +98,17 @@ function render(){
   $('start-sharing').disabled=!prepared||workerFailed||connecting||!!stream;
   $('stop-sharing').disabled=!session.active&&!stream&&!connecting;renderStage(map);
   $('empty-targets').hidden=!!points.length;
+  $('paramo-note').hidden=map?.id!=='paramo';
+  $('haven-note').hidden=map?.id!=='haven'||!points.length;
+  const legend=presentLocationKinds(points).map(kind=>{
+    const item=document.createElement('li'),icon=document.createElement('span'),label=document.createElement('span');
+    icon.className='location-icon';icon.innerHTML=locationIconSVG(kind);label.textContent=t(locationLabel(kind));item.append(icon,label);return item;
+  });$('location-legend').replaceChildren(...legend);$('location-legend').hidden=!legend.length;
   const empty=$('empty-targets').querySelector('p');if(empty)empty.textContent=t(map?'No locations listed for this map yet.':'Locations appear here when your map is recognized.');
   const rows=points.map((point,index)=>{
-    const row=document.createElement('tr');
-    for(const value of [index+1,point.name]){const cell=document.createElement('td');cell.textContent=String(value);row.append(cell);}return row;
+    const row=document.createElement('tr'),rank=document.createElement('td'),cell=document.createElement('td'),icon=document.createElement('span'),name=document.createElement('span');
+    rank.textContent=String(index+1);icon.className='location-icon';icon.innerHTML=locationIconSVG(locationKind(point));icon.setAttribute('role','img');icon.setAttribute('aria-label',t(locationLabel(locationKind(point))));
+    name.textContent=point.name;cell.className='location-cell';cell.append(icon,name);row.append(rank,cell);return row;
   });$('target-list').replaceChildren(...rows);draw(points);
 }
 function draw(points=targets(),force=false){
@@ -112,12 +120,11 @@ function draw(points=targets(),force=false){
   setSamplerSize(canvas,viewport.width,viewport.height);
   ctx.putImageData(mapFrame,-viewport.x,-viewport.y,viewport.x,viewport.y,viewport.width,viewport.height);
   const box=canvas.getBoundingClientRect(),unit=1/Math.max(.05,Math.min(box.width/canvas.width,box.height/canvas.height));
-  ctx.save();ctx.translate(-viewport.x,-viewport.y);
-  points.forEach((point,index)=>{
-    if(!point.visible)return;const projected=project(overlay.registration.matrix,point.x,point.y);if(!projected)return;
-    ctx.save();ctx.translate(...projected);ctx.scale(unit,unit);ctx.strokeStyle='#0b1118';ctx.lineWidth=2;ctx.fillStyle='#f6bd69';ctx.beginPath();ctx.arc(0,0,3.5,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.strokeStyle='#f6bd69';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(4,-4);ctx.lineTo(10,-13);ctx.stroke();ctx.fillStyle='#101923';ctx.fillRect(8,-28,23,19);ctx.strokeRect(8,-28,23,19);ctx.fillStyle='#f6bd69';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText(String(index+1),19.5,-14);ctx.restore();
-  });ctx.restore();
+  const projectedPoints=points.flatMap((point,index)=>{
+    if(!point.visible)return[];const projected=project(overlay.registration.matrix,point.x,point.y);if(!projected)return[];
+    return[{id:point.id,index:index+1,kind:locationKind(point),x:(projected[0]-viewport.x)/unit,y:(projected[1]-viewport.y)/unit}];
+  });
+  ctx.save();ctx.scale(unit,unit);drawLocationMarkers(ctx,layoutLocationMarkers(projectedPoints,canvas.width/unit,canvas.height/unit));ctx.restore();
 }
 function updatePreview(image,{sampled=false}={}){
   if(!image||!$('source-details').open)return;

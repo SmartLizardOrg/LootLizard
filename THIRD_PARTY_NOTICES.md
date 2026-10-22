@@ -100,7 +100,7 @@ official battleground asset, not a claim about the current matchmaking rotation.
 
 Source, byte hashes and PNG dimensions verified: 2026-10-22.
 
-## Erangel and Taego secret-room coordinates
+## Original Erangel and Taego coordinates, and Deston supplements
 
 Source: adzpm/pubg-map, `web/src/data/secrets.js`.
 Source commit: 10dc2faa743835fc2fe00cd745c9f9e3373322b1
@@ -114,7 +114,7 @@ Source image dimensions (8192 by 8192 pixels for each map):
 
 License: MIT.
 
-The 15 Erangel entries in data/erangel.json and 12 Taego entries in data/taego.json are adapted from the source file. Changes: x and y were divided by 8192 to produce whole-map coordinates between 0 and 1; stable ids and English display names were added. The upstream order was retained for Taego. These are community observations that have not been verified in the game for this app. Completeness, accuracy and continued validity are unverified. The Taego import is explicitly an incomplete list and must not be presented as a complete inventory of Taego secret rooms.
+The 15 Erangel entries and 11 retained Taego entries are adapted from this source. Taego keeps its stable ids: taego-01 is corrected from the second licensed source below, and taego-13 through taego-15 are added from that source, giving 15 source-listed rooms. Deston adds five distinct positions from this dataset (source pixels 3144/2713, 6395/4568, 6649/4966, 6714/4229 and 6764/4345) to the second source's 34. Exact upstream indices and native pixels for every imported point are recorded in data-sources/secret-locations.json. Coordinates were divided by 8192 with a top-left origin, x right/east and y down/south; stable ids and English names were added. Community observations are not in-game verification for LootLizard. Completeness, accuracy and current access remain unverified.
 
 The 8192 source-image pixels do not mean 8192 metres. Both datasets use size_m: 8000 as an approximate distance scale for the nominal 8 by 8 kilometre maps. Displayed distances are straight-line estimates and do not account for roads, terrain or entrances.
 
@@ -130,6 +130,64 @@ The full upstream license follows.
 MIT License
 
 Copyright (c) 2026 Aleksei Reuk
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+## Expanded secret locations: ziphow/pubg-map-toolkit
+
+Source commit: 3b68a2f10b29a64603ea88aae36f90ee20cb3c68
+
+- Coordinate source: https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/points.js
+- Coordinate convention: https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/src/app.js
+- License: https://github.com/ziphow/pubg-map-toolkit/blob/3b68a2f10b29a64603ea88aae36f90ee20cb3c68/LICENSE
+
+License: MIT; Copyright (c) 2026 Axiom. Retrieved/reviewed 2026-10-22.
+
+The source declares user-annotated native image pixels and MAP_PX=8192 for all maps, with a top-left origin and y increasing downwards. We normalize x/8192 and y/8192; nominal map size in metres is never the divisor. The source's obsolete Vikendi kmSize=6 is not imported; the separate official reference uses the reborn 8 km map.
+
+Imported categories: 15 Miramar secret rooms; 15 Rondo secret rooms with the individual correction below; 34 Deston security rooms (supplemented with five adzpm records above); 10 Vikendi security rooms and 10 bear-cave entrances; 8 Paramo room positions; and 22 Karakin basement/tunnel-entrance markers. Taego uses S403 for its first-point correction and S413-S415 for the three additions. Erangel retains its existing source. New English names and stable ids were assigned; distinct location kinds drive the interface's room, security, cave and tunnel icons. Vehicles, gas stations, lab camps, crowbar locations and Miramar's separate three basement annotations are excluded. Multiple Karakin markers may enter one tunnel system; cave/entrance counts are not counts of distinct key-locked rooms.
+
+These are community-listed positions, not an exhaustive inventory or a claim that every entrance is accessible in the current game/mode. Deston's closely spaced or multilevel rooms have no floor/door metadata. Paramo's changing landmarks and historical reference imagery require comparison with the current match. Sanhok and Training retain empty point lists because no suitable precise secret-location coordinates were included; this is not evidence that those maps have no hidden places. Haven's separate historical candidate-building observations are documented below. No source images, tiles or game artwork are copied by this coordinate import.
+
+### Haven: independently transcribed historical candidate buildings
+
+Original source: https://www.inven.co.kr/board/battlegrounds/5074/3400, posted 2020-12-10 by 핑핑위. The map credits Nabae-_- / HwapYong; its image URL records a 2021-03-25 revision: https://upload3.inven.co.kr/upload/2021/03/25/bbs/i15985128602.png . The source map is not openly licensed and is not redistributed or represented as MIT artwork.
+
+LootLizard independently transcribed the 22 observed marker centres as factual possible-building coordinates and aligned them to its separately licensed official Haven reference. Only these new numerical observations and the reproducible affine transform are included in data-sources/haven-candidate-buildings.json, under the project's MIT license. No original image, map plate, author prose or bulk third-party coordinate dataset is copied. Original map/artwork rights remain with their owners.
+
+The source reports five active Pillar Supply Caches per match among possible buildings, most randomly chosen. Accordingly, these records use the distinct supply_cache kind, names beginning 'Possible Pillar cache', and a player-visible historical/conditional warning. They mark approximate building centres, not exact doors or 22 guaranteed active caches. Current live/custom-game validity and completeness have not been verified. Image alignment (406 inliers, median residual 0.235 reference pixels) measures registration quality, not cache-door accuracy. A static catalogue cannot determine which candidates activate in a given match.
+
+Sanhok's ordinary named Cave POI was deliberately not substituted for a precise hidden-room entrance. The absence of suitable records does not establish absence of hidden loot.
+
+### Independent corroboration and one Rondo position correction
+
+Public first-party key-use observations at https://pubgstatistics.com/secretrooms (page dated 2026-09-20; itself pending manual verification) and original authored room maps at https://steamcommunity.com/sharedfiles/filedetails/?id=3583051048 were consulted to cross-check position/type outliers. They are not treated as MIT-licensed datasets or artwork, and neither bulk dataset nor map image is redistributed. This is not LootLizard live-game verification.
+
+One individual factual coordinate is corrected: stable id rondo-08, upstream S608 at 5615/6109 source pixels, now uses normalized (0.69952, 0.74753). Recent key-use observations and the original authored map independently place the room northwest of Tu Ling, about 114 m east of the source annotation. The original pixel pair and correction sources remain in the audit file, so the change does not misrepresent the upstream dataset. Taego's first marker correction and three additions are likewise corroborated, but use the MIT coordinate records themselves.
+
+The source's full MIT license follows.
+
+---
+MIT License
+
+Copyright (c) 2026 Axiom
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

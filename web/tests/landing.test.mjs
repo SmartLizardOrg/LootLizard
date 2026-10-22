@@ -33,7 +33,18 @@ test('map and location availability claims match the bundled source catalog', ()
     .filter(map => typeof map.id === 'string' && Array.isArray(map.points));
   assert.match(text, new RegExp(`${maps.length} bundled maps`));
   assert.match(text, /including Training/);
-  assert.deepEqual(maps.filter(map => map.points.length).map(map => map.id).sort(), ['erangel', 'taego']);
-  assert.match(text, /Room locations (?:currently on|are currently listed for) Erangel and Taego/);
+  const mapsWithPoints = maps.filter(map => map.points.length);
+  const mapTags = [...html.matchAll(/<span\b[^>]*\bdata-map-id="([^"]+)"[^>]*>([^<]+)<\/span>/g)];
+  assert.deepEqual(mapTags.map(([, id]) => id).sort(), mapsWithPoints.map(map => map.id).sort());
+  for (const [, id, label] of mapTags) {
+    assert.equal(label, mapsWithPoints.find(map => map.id === id).name.toUpperCase());
+  }
+  assert.match(text, new RegExp(`Hidden-loot locations on ${mapsWithPoints.length} maps`));
+  assert.match(text, /Community coordinates · verify in game/);
+  assert.match(text, /lists may be incomplete or out of date/);
+  assert.match(text, /Paramo landmarks can change between matches/);
+  assert.match(text, /check its locations on your current map/);
+  assert.match(text, /Haven markers show historical possible Pillar cache buildings/);
+  assert.match(text, /Only some are active each match/);
   assert.match(text, /Built for desktop Chrome and Edge/);
 });

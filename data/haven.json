@@ -3,10 +3,165 @@
   "name": "Haven",
   "size_m": 1000,
   "source": {
-    "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Haven_Main_Low_Res.png",
-    "license": "PUBG developer asset terms; not MIT",
-    "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
-    "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance. Availability depends on the game mode and rotation; this historical official asset is not a claim of current matchmaking availability."
+    "url": "https://www.inven.co.kr/board/battlegrounds/5074/3400",
+    "license": "MIT for LootLizard's factual coordinate annotations; original map artwork is not licensed by this import",
+    "attribution": "Original map: 핑핑위 / Nabae-_- / HwapYong (Inven); coordinate transcription: LootLizard contributors",
+    "notes": "22 independently transcribed possible Pillar Supply Cache building centres from an original community post dated 2020-12-10 with a map image revised 2021-03-25. The source reports only five active caches per match among possible buildings; activation/current-game validity is not verified. These are historical candidate BUILDING centres, not exact doors or guaranteed active caches. Marker centres were georegistered onto the bundled official 819x819 reference using 406 affine inliers (517 matches; median geometric residual 0.235 reference px, p95 1.161 px). These residuals describe image alignment, not entrance-location accuracy. Coordinates are normalized on the full reference, top-left origin, x right/east, y down/south. Native marked map uses a separate image size and affine transform, not an 8192-pixel divisor. No original map artwork or text is redistributed. Exact observed marker centres, transform, source URLs and uncertainty are recorded in data-sources/haven-candidate-buildings.json. Reviewed 2026-10-22; not verified in-game for LootLizard."
   },
-  "points": []
+  "points": [
+    {
+      "id": "haven-01",
+      "name": "Possible Pillar cache 01",
+      "x": 0.16928121,
+      "y": 0.23727376,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-02",
+      "name": "Possible Pillar cache 02",
+      "x": 0.55198895,
+      "y": 0.24213612,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-03",
+      "name": "Possible Pillar cache 03",
+      "x": 0.39507453,
+      "y": 0.25685162,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-04",
+      "name": "Possible Pillar cache 04",
+      "x": 0.43774373,
+      "y": 0.26485617,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-05",
+      "name": "Possible Pillar cache 05",
+      "x": 0.77651594,
+      "y": 0.31748893,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-06",
+      "name": "Possible Pillar cache 06",
+      "x": 0.56850313,
+      "y": 0.35665569,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-07",
+      "name": "Possible Pillar cache 07",
+      "x": 0.19157741,
+      "y": 0.36899456,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-08",
+      "name": "Possible Pillar cache 08",
+      "x": 0.28669515,
+      "y": 0.37611495,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-09",
+      "name": "Possible Pillar cache 09",
+      "x": 0.60751115,
+      "y": 0.51822458,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-10",
+      "name": "Possible Pillar cache 10",
+      "x": 0.73329701,
+      "y": 0.53625395,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-11",
+      "name": "Possible Pillar cache 11",
+      "x": 0.86983631,
+      "y": 0.53618099,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-12",
+      "name": "Possible Pillar cache 12",
+      "x": 0.60750858,
+      "y": 0.54639738,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-13",
+      "name": "Possible Pillar cache 13",
+      "x": 0.60750523,
+      "y": 0.58284464,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-14",
+      "name": "Possible Pillar cache 14",
+      "x": 0.34801016,
+      "y": 0.62591754,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-15",
+      "name": "Possible Pillar cache 15",
+      "x": 0.36430238,
+      "y": 0.65583378,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-16",
+      "name": "Possible Pillar cache 16",
+      "x": 0.25991503,
+      "y": 0.66931532,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-17",
+      "name": "Possible Pillar cache 17",
+      "x": 0.7907097,
+      "y": 0.71137011,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-18",
+      "name": "Possible Pillar cache 18",
+      "x": 0.583934,
+      "y": 0.73358862,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-19",
+      "name": "Possible Pillar cache 19",
+      "x": 0.79070769,
+      "y": 0.73359406,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-20",
+      "name": "Possible Pillar cache 20",
+      "x": 0.58446017,
+      "y": 0.862553,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-21",
+      "name": "Possible Pillar cache 21",
+      "x": 0.53111865,
+      "y": 0.88024805,
+      "kind": "supply_cache"
+    },
+    {
+      "id": "haven-22",
+      "name": "Possible Pillar cache 22",
+      "x": 0.66445554,
+      "y": 0.88018844,
+      "kind": "supply_cache"
+    }
+  ]
 }

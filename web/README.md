@@ -35,9 +35,31 @@ explicitly selected visible browser.
 
 ## Release map catalog and references
 
-`data/*.json` contains eleven normalized map records. Empty `points: []` is valid
-and means no POI coordinates are supplied. Only Erangel (15) and Taego (12) currently
-have room data; these lists remain unverified, with Taego incomplete.
+`data/*.json` contains eleven normalized map records. Nine have community location
+data: Erangel, Taego, Miramar, Deston, Rondo, Vikendi, Paramo, Karakin and Haven. Taego
+contains 15 source-listed secret rooms. Depending on the map, markers identify
+secret rooms, security rooms, bear cave entrances, tunnel entrances or possible
+Pillar cache buildings. These source-based lists have
+not been independently verified in game for this project and may be incomplete
+or outdated. Their presence does not establish recognition accuracy.
+
+Empty `points: []` is valid and means no POI coordinates are supplied; this applies
+to Sanhok and Training. It is not evidence that no secret locations exist.
+Paramo's landmarks can change between matches. Check its locations against the
+current in-game map.
+
+Haven's 22 `supply_cache` markers are possible building centres transcribed from a
+historical community guide. Only some caches are active each match. The list needs
+current-game verification; it does not identify 22 guaranteed active rooms. The app
+shows that caveat whenever Haven markers are displayed.
+
+`location-markers.mjs` shares five vector symbols between the map, sidebar and
+present-types-only legend. Optional point `kind` values are `secret_room` (legacy
+default), `security_room`, `bear_cave`, `tunnel_entrance` and `supply_cache`; other values fail
+catalog validation. Map coordinates remain fixed while constant CSS-pixel badges
+are placed around them. Badges avoid other badges and anchors, use bounded leader
+lines, and can omit numbers or disappear when no free space remains. Exact small
+anchors are drawn last. No remote marker images are loaded.
 
 `scripts/build_map_catalog.py` validates safe ids, normalized points, attribution,
 size/count limits and duplicate identities using only the standard library/pure
@@ -61,7 +83,7 @@ decoded images, descriptors and runtime memory add to that download size.
 All assets are unchanged public files from official `pubg/api-assets` commit
 `32b13b51128b8d8909ae5e77f3b833e01230b24d` (2024-10-28), still its latest master
 when checked on 2026-10-22. This is historical reference coverage, not proof that
-every map is in the current rotation or matches the current game. Paramo's terrain
+every map is in the current rotation or matches the current game. Paramo's landmarks
 can change between matches. PUBG imagery is not covered by the project's code
 license; retain the manifest, `map-assets/NOTICE.txt` and root third-party notices.
 

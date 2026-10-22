@@ -38,9 +38,13 @@ class MapCatalogTests(unittest.TestCase):
         self.assertEqual(set(catalog), {"schema_version", "revision", "maps"})
         self.assertEqual(catalog["revision"], SHA)
         self.assertEqual(len(catalog["maps"]), 11)
-        self.assertEqual({m["id"]: len(m["points"]) for m in catalog["maps"] if m["points"]}, {"erangel": 15, "taego": 12})
+        self.assertEqual({m["id"]: len(m["points"]) for m in catalog["maps"] if m["points"]},
+                         {"erangel": 15, "taego": 15, "miramar": 15, "deston": 39,
+                          "rondo": 15, "vikendi": 20, "paramo": 8, "karakin": 22, "haven": 22})
         self.assertEqual(next(m for m in catalog["maps"] if m["id"] == "erangel")["source"]["license"], "MIT")
-        self.assertIn("incomplete", next(m for m in catalog["maps"] if m["id"] == "taego")["source"]["notes"].lower())
+        self.assertIn("15 rooms", next(m for m in catalog["maps"] if m["id"] == "taego")["source"]["notes"])
+        vikendi = next(m for m in catalog["maps"] if m["id"] == "vikendi")
+        self.assertEqual({p["kind"] for p in vikendi["points"]}, {"security_room", "bear_cave"})
 
     def test_deterministic_whole_snapshot_and_valid_empty_removal(self):
         self.save(record("map-b"), "z.json")
