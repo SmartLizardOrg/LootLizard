@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "revision": "db452b933b5216215eb20fb464628e7269c5105f",
+  "maps": [
+    {
+      "id": "deston",
+      "name": "Deston",
+      "size_m": 8000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Deston_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    },
+    {
+      "id": "erangel",
+      "name": "Erangel",
+      "size_m": 8000.0,
+      "source": {
+        "url": "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Aleksei Reuk",
+        "notes": "The 15 points are adapted from the adzpm/pubg-map community dataset. They have not been verified in-game for this project; completeness and current validity are unverified. Original x/y values are source-image pixels; the upstream info.json records an 8192 x 8192 px image. Values here are normalized as x/8192 and y/8192, with a top-left origin, x increasing rightward and y increasing downward. size_m:8000 is an approximate metre scale based on Erangel's nominal 8 x 8 km map size; 8192 image pixels do not mean 8192 metres. Distances are estimated straight-line values. Stable ids and English display names were added. No source map image is included. The full MIT license is in THIRD_PARTY_NOTICES.md. Source recorded: 2026-10-21."
+      },
+      "points": [
+        {
+          "id": "erangel-01",
+          "name": "Secret basement 01",
+          "x": 0.1683349609375,
+          "y": 0.2215576171875
+        },
+        {
+          "id": "erangel-02",
+          "name": "Secret basement 02",
+          "x": 0.3165283203125,
+          "y": 0.2701416015625
+        },
+        {
+          "id": "erangel-03",
+          "name": "Secret basement 03",
+          "x": 0.1810302734375,
+          "y": 0.4326171875
+        },
+        {
+          "id": "erangel-04",
+          "name": "Secret basement 04",
+          "x": 0.3677978515625,
+          "y": 0.4583740234375
+        },
+        {
+          "id": "erangel-05",
+          "name": "Secret basement 05",
+          "x": 0.503662109375,
+          "y": 0.240478515625
+        },
+        {
+          "id": "erangel-06",
+          "name": "Secret basement 06",
+          "x": 0.7969970703125,
+          "y": 0.253662109375
+        },
+        {
+          "id": "erangel-07",
+          "name": "Secret basement 07",
+          "x": 0.66748046875,
+          "y": 0.4183349609375
+        },
+        {
+          "id": "erangel-08",
+          "name": "Secret basement 08",
+          "x": 0.5692138671875,
+          "y": 0.5404052734375
+        },
+        {
+          "id": "erangel-09",
+          "name": "Secret basement 09",
+          "x": 0.824951171875,
+          "y": 0.597900390625
+        },
+        {
+          "id": "erangel-10",
+          "name": "Secret basement 10",
+          "x": 0.33447265625,
+          "y": 0.62939453125
+        },
+        {
+          "id": "erangel-11",
+          "name": "Secret basement 11",
+          "x": 0.154296875,
+          "y": 0.67529296875
+        },
+        {
+          "id": "erangel-12",
+          "name": "Secret basement 12",
+          "x": 0.537353515625,
+          "y": 0.722900390625
+        },
+        {
+          "id": "erangel-13",
+          "name": "Secret basement 13",
+          "x": 0.4031982421875,
+          "y": 0.818603515625
+        },
+        {
+          "id": "erangel-14",
+          "name": "Secret basement 14",
+          "x": 0.69287109375,
+          "y": 0.8218994140625
+        },
+        {
+          "id": "erangel-15",
+          "name": "Secret basement 15",
+          "x": 0.6258544921875,
+          "y": 0.08154296875
+        }
+      ]
+    },
+    {
+      "id": "haven",
+      "name": "Haven",
+      "size_m": 1000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Haven_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance. Availability depends on the game mode and rotation; this historical official asset is not a claim of current matchmaking availability."
+      },
+      "points": []
+    },
+    {
+      "id": "karakin",
+      "name": "Karakin",
+      "size_m": 2000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Karakin_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    },
+    {
+      "id": "miramar",
+      "name": "Miramar",
+      "size_m": 8000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Miramar_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    },
+    {
+      "id": "paramo",
+      "name": "Paramo",
+      "size_m": 3000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Paramo_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance. Paramo terrain changes between matches; a fixed historical reference can abstain or align only partly."
+      },
+      "points": []
+    },
+    {
+      "id": "rondo",
+      "name": "Rondo",
+      "size_m": 8000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Rondo_Main_No_Text_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    },
+    {
+      "id": "sanhok",
+      "name": "Sanhok",
+      "size_m": 4000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Sanhok_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    },
+    {
+      "id": "taego",
+      "name": "Taego",
+      "size_m": 8000.0,
+      "source": {
+        "url": "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js",
+        "license": "MIT",
+        "attribution": "Copyright (c) 2026 Aleksei Reuk",
+        "notes": "The 12 points are adapted from the adzpm/pubg-map community dataset. They have not been verified in-game for this project. This is an incomplete, unverified list; it must not be treated as a complete list of Taego secret rooms. Coordinate accuracy and current validity are unverified. Original x/y values are source-image pixels; the upstream web/public/assets/tiles/taego/info.json at the same commit records an 8192 x 8192 px image. Values here are normalized as x/8192 and y/8192, with a top-left origin, x increasing rightward and y increasing downward. size_m:8000 is an approximate metre scale based on Taego's nominal 8 x 8 km map size; 8192 image pixels do not mean 8192 metres. Distances are estimated straight-line values. Stable ids and English display names were added in upstream order. No source map image is included. The full MIT license is in THIRD_PARTY_NOTICES.md. Source recorded: 2026-10-21."
+      },
+      "points": [
+        {
+          "id": "taego-01",
+          "name": "Secret room 01",
+          "x": 0.176025390625,
+          "y": 0.1458740234375
+        },
+        {
+          "id": "taego-02",
+          "name": "Secret room 02",
+          "x": 0.3154296875,
+          "y": 0.165283203125
+        },
+        {
+          "id": "taego-03",
+          "name": "Secret room 03",
+          "x": 0.5926513671875,
+          "y": 0.2108154296875
+        },
+        {
+          "id": "taego-04",
+          "name": "Secret room 04",
+          "x": 0.8475341796875,
+          "y": 0.254638671875
+        },
+        {
+          "id": "taego-05",
+          "name": "Secret room 05",
+          "x": 0.124755859375,
+          "y": 0.4173583984375
+        },
+        {
+          "id": "taego-06",
+          "name": "Secret room 06",
+          "x": 0.87060546875,
+          "y": 0.412841796875
+        },
+        {
+          "id": "taego-07",
+          "name": "Secret room 07",
+          "x": 0.542724609375,
+          "y": 0.6094970703125
+        },
+        {
+          "id": "taego-08",
+          "name": "Secret room 08",
+          "x": 0.297119140625,
+          "y": 0.7913818359375
+        },
+        {
+          "id": "taego-09",
+          "name": "Secret room 09",
+          "x": 0.6041259765625,
+          "y": 0.787841796875
+        },
+        {
+          "id": "taego-10",
+          "name": "Secret room 10",
+          "x": 0.786865234375,
+          "y": 0.6829833984375
+        },
+        {
+          "id": "taego-11",
+          "name": "Secret room 11",
+          "x": 0.7796630859375,
+          "y": 0.8814697265625
+        },
+        {
+          "id": "taego-12",
+          "name": "Secret room 12",
+          "x": 0.116943359375,
+          "y": 0.6451416015625
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "name": "Training (Camp Jackal)",
+      "size_m": 2000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Training_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    },
+    {
+      "id": "vikendi",
+      "name": "Vikendi",
+      "size_m": 8000.0,
+      "source": {
+        "url": "https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Vikendi_Main_Low_Res.png",
+        "license": "PUBG developer asset terms; not MIT",
+        "attribution": "PUBG Corporation/KRAFTON and affiliates. See THIRD_PARTY_NOTICES.md.",
+        "notes": "No secret-room or other POI coordinates are bundled for this map; an empty list is not evidence that no rooms exist. The official reference image is pinned to the 2024-10-28 developer asset snapshot and may differ from the current game. Coordinates use the full-map top-left origin, x east/right, y south/down. size_m is an approximate nominal side length, not a measured route distance."
+      },
+      "points": []
+    }
+  ]
+}

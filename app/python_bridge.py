@@ -1,4 +1,4 @@
-"""Browser-only adapter around the unchanged desktop geometry/CV modules.
+"""Browser-only adapter around the portable geometry/CV modules.
 
 RGBA buffers and reference images exist only in this worker's memory. No GUI,
 screen capture, filesystem persistence, OCR subprocess, or network client is
@@ -21,7 +21,7 @@ from lootlizard.registration import MapReference, register_map
 from lootlizard.zone_vision import detect_safe_zone
 
 
-MAX_REFERENCES = 8
+MAX_REFERENCES = 32
 REFERENCE_SIDE = 1800
 MAX_INPUT_SIDE = 2400
 MAX_FRAME_PIXELS = 4_000_000
@@ -136,7 +136,7 @@ class BrowserVisionEngine:
     def set_references(self, records):
         """Replace all references atomically; failure preserves the prior set."""
         if not isinstance(records, (list, tuple)) or len(records) > MAX_REFERENCES:
-            raise ValueError("Provide at most eight complete map references.")
+            raise ValueError("Provide at most 32 complete map references.")
         replacements, seen = [], set()
         for record in records:
             if not isinstance(record, dict):
@@ -153,60 +153,79 @@ class BrowserVisionEngine:
             {"mapId": reference.map_id, "width": reference.image_size[0], "height": reference.image_size[1]}
             for reference in replacements]}
 
-    def analyze_rgba(self, rgba, width, height, context="live", ticket=None):
-        if context not in ("live", "replay"):
-            raise ValueError("Choose live or replay context explicitly.")
+    def analyze_rgba(self, rgba, width, height, context="live", ticket=None, map_id=None):
+        if context not in ("live", "replay", "map-only"):
+            raise ValueError("Choose live, replay, or map-only context explicitly.")
+        map_only = context == "map-only"
+        # The controller supplies a map only after a verified frame in this
+        # match. Recheck its geometry on each frame, without matching all eleven
+        # maps again. Reset/Stop removes the hint for the next match's full search.
+        references = self.references
+        if map_id is not None:
+            if not map_only or not isinstance(map_id, str):
+                raise ValueError("A map lock is supported only in map-only context.")
+            references = tuple(reference for reference in references if reference.map_id == map_id)
+            if not references:
+                raise ValueError("The locked map must have a loaded reference.")
+        marker_reason = ("Position analysis is disabled in map-only mode." if map_only else
+                         "Map layout is not verified; player position is unknown.")
+        zone_reason = ("Circle analysis is disabled in map-only mode." if map_only else
+                       "Map layout is not verified; safe zone is unknown.")
         start = time.perf_counter()
         if not self.references:
             _rgba_view(rgba, width, height)
             result = dict(ticket=ticket, width=width, height=height, registration=None,
                           position=None, zone=None, points=[],
                           reason="No canonical map references are loaded",
-                          markerReason="Map layout is not verified; player position is unknown.",
-                          zoneReason="Map layout is not verified; safe zone is unknown.")
+                          markerReason=marker_reason, zoneReason=zone_reason)
             # Input validation is included in totalMs; none of these stages ran.
             result["timings"] = dict(decodeMs=0., registrationMs=0., markerMs=0.,
                                      zoneMs=0., totalMs=(time.perf_counter()-start)*1000)
             return _json_safe(result)
         image = _rgba_image(rgba, width, height)
         decoded = time.perf_counter()
-        registration = register_map(image, self.references)
+        registration = register_map(image, references)
         registered = time.perf_counter()
         result = dict(ticket=ticket, width=width, height=height, registration=None,
                       position=None, zone=None, points=[], reason=registration.reason,
-                      markerReason="Map layout is not verified; player position is unknown.",
-                      zoneReason="Map layout is not verified; safe zone is unknown.")
+                      markerReason=marker_reason, zoneReason=zone_reason)
         if registration.map_id is not None:
             result["registration"] = dict(mapId=registration.map_id,
                 matrix=registration.map_to_image.tolist(), viewport=list(registration.viewport),
                 diagnostics=_json_safe(registration.diagnostics))
-            try:
-                marker = recognize_registered_marker(image, registration, view_context=context)
-                result["markerReason"] = marker.reason
-            except Exception as error:
-                marker = None
-                result["markerReason"] = "Marker detection unavailable: " + str(error)[:500]
-            if marker is not None and marker.position is not None:
-                result["position"] = dict(x=marker.position[0], y=marker.position[1],
-                    headingDegrees=marker.heading_degrees, method=marker.method, score=marker.score,
-                    screenCenter=marker.screen_center, identityVerified=False)
-            marked = time.perf_counter()
-            bounds = _full_map_bounds(registration, image.size)
-            if bounds is None:
-                result["zoneReason"] = "Circle priority is unavailable for clipped, rotated, or distorted map views."
+            if map_only:
+                # This path deliberately performs registration/projection only.
+                # Do not invoke or time either optional detector, even when the
+                # frame contains a clear marker or a complete white circle.
+                marked = registered
             else:
-                detected = detect_safe_zone(image, bounds)
-                result["zoneReason"] = detected.reason
-                if detected.zone is not None:
-                    zone = detected.zone
-                    center = registration.image_point_to_map(
-                        bounds.left + zone.center_x * (bounds.right - bounds.left),
-                        bounds.top + zone.center_y * (bounds.bottom - bounds.top))
-                    if center is not None:
-                        radius_pixels = zone.radius * ((bounds.right - bounds.left) + (bounds.bottom - bounds.top)) / 2
-                        map_scale = (registration.map_to_image[0, 0] + registration.map_to_image[1, 1]) / 2
-                        result["zone"] = dict(centerX=center[0], centerY=center[1],
-                                              radius=float(radius_pixels / map_scale), score=detected.score)
+                try:
+                    marker = recognize_registered_marker(image, registration, view_context=context)
+                    result["markerReason"] = marker.reason
+                except Exception as error:
+                    marker = None
+                    result["markerReason"] = "Marker detection unavailable: " + str(error)[:500]
+                if marker is not None and marker.position is not None:
+                    result["position"] = dict(x=marker.position[0], y=marker.position[1],
+                        headingDegrees=marker.heading_degrees, method=marker.method, score=marker.score,
+                        screenCenter=marker.screen_center, identityVerified=False)
+                marked = time.perf_counter()
+                bounds = _full_map_bounds(registration, image.size)
+                if bounds is None:
+                    result["zoneReason"] = "Circle priority is unavailable for clipped, rotated, or distorted map views."
+                else:
+                    detected = detect_safe_zone(image, bounds)
+                    result["zoneReason"] = detected.reason
+                    if detected.zone is not None:
+                        zone = detected.zone
+                        center = registration.image_point_to_map(
+                            bounds.left + zone.center_x * (bounds.right - bounds.left),
+                            bounds.top + zone.center_y * (bounds.bottom - bounds.top))
+                        if center is not None:
+                            radius_pixels = zone.radius * ((bounds.right - bounds.left) + (bounds.bottom - bounds.top)) / 2
+                            map_scale = (registration.map_to_image[0, 0] + registration.map_to_image[1, 1]) / 2
+                            result["zone"] = dict(centerX=center[0], centerY=center[1],
+                                                  radius=float(radius_pixels / map_scale), score=detected.score)
             data = self.maps[registration.map_id]
             for point in data.points:
                 projected = registration.project_poi(point.x, point.y)
@@ -217,6 +236,8 @@ class BrowserVisionEngine:
             marked = registered
         finished = time.perf_counter()
         result["timings"] = dict(decodeMs=(decoded-start)*1000,
-            registrationMs=(registered-decoded)*1000, markerMs=(marked-registered)*1000,
-            zoneMs=(finished-marked)*1000, totalMs=(finished-start)*1000)
+            registrationMs=(registered-decoded)*1000,
+            markerMs=0. if map_only else (marked-registered)*1000,
+            zoneMs=0. if map_only else (finished-marked)*1000,
+            totalMs=(finished-start)*1000)
         return _json_safe(result)

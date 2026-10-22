@@ -1,7 +1,7 @@
 {
   "id": "erangel",
   "name": "Erangel",
-  "size_m": 8000,
+  "size_m": 8000.0,
   "source": {
     "url": "https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/web/src/data/secrets.js",
     "license": "MIT",

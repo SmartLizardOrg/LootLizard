@@ -1,16 +1,90 @@
-// Official PUBG developer assets, pinned so upstream changes require review.
-// Attribution and asset terms are documented in THIRD_PARTY_NOTICES.md.
-const ASSET_ROOT = 'https://raw.githubusercontent.com/pubg/api-assets/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/';
+// Official public PUBG developer assets are shipped with this release.
+// Sources, original names, hashes and rights are recorded in map-assets/manifest.json
+// and THIRD_PARTY_NOTICES.md. No runtime GitHub or image-host request is made.
 const MAX_BYTES = 2_000_000;
 const DOWNLOAD_TIMEOUT_MS = 30_000;
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
-
-export const AUTOMATIC_REFERENCES = Object.freeze([
-  Object.freeze({mapId: 'erangel', url: `${ASSET_ROOT}Erangel_Main_Low_Res.png`,
-    sha256: '56bd4bf0bdcd5e902ef4c232bc54d9546ae0a6cc8b881833f45f0f0a9e93aea9', width: 819, height: 819}),
-  Object.freeze({mapId: 'taego', url: `${ASSET_ROOT}Taego_Main_Low_Res.png`,
-    sha256: 'dcf2679fa735b0b112d69783fc022b7699ee2523d6e765640b8a0b279bfe4c45', width: 819, height: 819}),
-]);
+const BUNDLED_REFERENCES = [
+  {
+    "mapId": "erangel",
+    "file": "erangel.png",
+    "sha256": "56bd4bf0bdcd5e902ef4c232bc54d9546ae0a6cc8b881833f45f0f0a9e93aea9",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "miramar",
+    "file": "miramar.png",
+    "sha256": "25e47254abf6a1b339f4a030ed323f8947fcbd0628c530eba7c0973d5d45ea14",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "sanhok",
+    "file": "sanhok.png",
+    "sha256": "184561634b90ab2e981df6edd4813f2ac6e165d5d62ed3cbe684eec079b03855",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "vikendi",
+    "file": "vikendi.png",
+    "sha256": "a2fcd39d6ae87d82fc5747389f946e1f03ddb946ea9ac67e9944a0dcd3c05516",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "karakin",
+    "file": "karakin.png",
+    "sha256": "87fd5c4f956a1a05858cc069fdd4da33d8ffa56d31eb9182b6038a0fbe6f216b",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "paramo",
+    "file": "paramo.png",
+    "sha256": "dd40f9ede3225abc07421c46148f8fc76a4f87997612e68536c6c6a89c4ac4b1",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "haven",
+    "file": "haven.png",
+    "sha256": "287435cb7b9e5f92862ac79f65c86839f9a4dcbf61c7287342caa3c85907c5fa",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "taego",
+    "file": "taego.png",
+    "sha256": "dcf2679fa735b0b112d69783fc022b7699ee2523d6e765640b8a0b279bfe4c45",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "deston",
+    "file": "deston.png",
+    "sha256": "be35aeb55781edd47ac547fa51b2d9c84244b55dcbc2fd621198b60aeb4da0b7",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "rondo",
+    "file": "rondo.png",
+    "sha256": "47872f9f34bf817e37dcb7b92d2e00e054d8cc03aa0ba955eb4dd6efb17750a2",
+    "width": 819,
+    "height": 819
+  },
+  {
+    "mapId": "training",
+    "file": "training.png",
+    "sha256": "acd5e86e095680aec13830a8e26622cba4dc787cfc675ae9b4674d569203449d",
+    "width": 819,
+    "height": 819
+  }
+];
+export const AUTOMATIC_REFERENCES = Object.freeze(BUNDLED_REFERENCES.map(({file, ...record}) =>
+  Object.freeze({...record, url: new URL(`./map-assets/${file}`, import.meta.url).href})));
 
 export async function fetchReference(record, {fetchImpl = globalThis.fetch, cryptoImpl = globalThis.crypto, signal} = {}) {
   const pinned = AUTOMATIC_REFERENCES.find(item => item.mapId === record?.mapId);
@@ -23,7 +97,7 @@ export async function fetchReference(record, {fetchImpl = globalThis.fetch, cryp
   else signal?.addEventListener('abort', abort, {once: true});
   const timeout = setTimeout(() => controller.abort(Error('Automatic reference download timed out')), DOWNLOAD_TIMEOUT_MS);
   try {
-    const response = await fetchImpl(pinned.url, {credentials: 'omit', cache: 'force-cache', redirect: 'error', signal: controller.signal});
+    const response = await fetchImpl(pinned.url, {credentials: 'omit', cache: 'no-cache', redirect: 'error', signal: controller.signal});
     if (!response.ok) throw Error(`Automatic reference HTTP ${response.status}`);
     if (response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'image/png') throw Error('Automatic reference is not a PNG');
     if (Number(response.headers.get('content-length')) > MAX_BYTES) throw Error('Automatic reference is too large');

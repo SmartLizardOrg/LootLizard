@@ -36,41 +36,69 @@ verified before loading. No recognition image or OCR text is uploaded.
 The footer descriptor and OCR words are session memory only. User names and
 screen captures are not bundled, logged or added to the public distribution.
 
-## Automatic Erangel and Taego reference images
+## Bundled official PUBG developer map references
 
-Source: the official PUBG API developer asset repository, pubg/api-assets,
-commit 32b13b51128b8d8909ae5e77f3b833e01230b24d (2024-10-28).
+The static application includes eleven unchanged public PNGs from the official
+PUBG API developer asset repository, `pubg/api-assets`, pinned to commit
+`32b13b51128b8d8909ae5e77f3b833e01230b24d` (2024-10-28). That commit was still
+its latest master when checked on 2026-10-22.
 
-- Erangel: https://github.com/pubg/api-assets/blob/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Erangel_Main_Low_Res.png
-- Taego: https://github.com/pubg/api-assets/blob/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps/Taego_Main_Low_Res.png
+| Map | Original official filename |
+|---|---|
+| Erangel | `Erangel_Main_Low_Res.png` |
+| Miramar | `Miramar_Main_Low_Res.png` |
+| Sanhok | `Sanhok_Main_Low_Res.png` |
+| Vikendi | `Vikendi_Main_Low_Res.png` |
+| Karakin | `Karakin_Main_Low_Res.png` |
+| Paramo | `Paramo_Main_Low_Res.png` |
+| Haven | `Haven_Main_Low_Res.png` |
+| Taego | `Taego_Main_Low_Res.png` |
+| Deston | `Deston_Main_Low_Res.png` |
+| Rondo | `Rondo_Main_No_Text_Low_Res.png` |
+| Training / Camp Jackal | `Training_Main_Low_Res.png` |
 
-The client downloads these reviewed 819 x 819 PNGs directly from the public
-raw.githubusercontent.com source and verifies their pinned SHA-256 before use.
-The original images are not committed to or bundled with LootLizard. User
-screenshots and custom references are never uploaded to that source.
+The complete source URL, original bytes, SHA-256, dimensions and byte count of each
+asset are preserved in `web/app/map-assets/manifest.json`. All selected PNGs measure
+819×819; the total is 14,079,121 bytes. Only local filenames were shortened. Rondo
+uses the official no-text variant because the upstream file named
+`Rondo_Main_Low_Res.png` actually contains JPEG data. Training/Camp Jackal duplicate
+aliases are included once, not treated as distinct maps.
 
-PUBG imagery remains owned by its rights holders and is NOT covered by this
-project's MIT code license. The official asset repository directs users to
-PUBG's Terms of Use and Player-created Content rules:
+The files are served as part of LootLizard's free community application, with local
+hash checks before use. They are not sold or offered as a standalone asset pack.
+No private capture, user reference or personal profile is bundled. No screen image
+is uploaded to GitHub, the publisher or another recognition service.
 
-- https://github.com/pubg/api-assets
-- https://developer.pubg.com/tos
-- https://www.pubg.com/player-created-content/
+PUBG imagery remains owned by its rights holders and is **not covered by this
+project's MIT code license**. The official asset repository directs its users to
+the publisher's Terms of Use and Player-created Content rules. Its Terms describe
+use and distribution of data in software products and prohibit removing proprietary
+notices or distributing that data separately from a product. This notice does not
+relicense the assets or claim additional permissions beyond the publisher's terms.
 
-The latter link was unavailable when checked on 2026-10-22. Preserve the
-upstream asset notices and consult the current publisher rules before changing
-asset use or adding monetization. This free community alpha does not use the
-PUBG Developer API, require an API key, sell assets or claim endorsement.
+- Official repository and upstream instructions: https://github.com/pubg/api-assets/blob/32b13b51128b8d8909ae5e77f3b833e01230b24d/README.md
+- Original map directory: https://github.com/pubg/api-assets/tree/32b13b51128b8d8909ae5e77f3b833e01230b24d/Assets/Maps
+- Publisher Terms of Use: https://developer.pubg.com/tos
+- Player-created Content URL supplied by upstream: https://www.pubg.com/player-created-content/
+
+The Player-created Content URL could not be resolved during the automated check
+on 2026-10-22; no additional license is inferred from that unavailable link. Keep
+upstream notices and review the current publisher terms when changing asset use
+or monetization. This application does not use the PUBG Developer API, require an
+API key, or claim publisher approval.
 
 PUBG, PLAYERUNKNOWN’S BATTLEGROUNDS and all related logos are trademarks of PUBG
 Corporation or its affiliates. LootLizard is an independent community project.
-No official PUBG logo is included in the landing page or application branding.
+No official PUBG logo is included in its application or landing-page branding.
 
-These historical reference images may differ from the current game. Recognition
-can abstain or misalign; default-reference loading is not a general accuracy
-claim. A local custom full-map image can override a default for the session.
+These historical assets can differ from current game maps. Paramo's terrain changes
+between matches; rotation/mode availability also changes. Bundled reference coverage
+is not a guarantee of identification, current availability, exact projection or
+own-player accuracy. Current publisher map descriptions are available at
+https://www.pubg.com/en/game-info/maps/erangel . Haven is included as a historical
+official battleground asset, not a claim about the current matchmaking rotation.
 
-Retrieved and checksum-verified: 2026-10-22.
+Source, byte hashes and PNG dimensions verified: 2026-10-22.
 
 ## Erangel and Taego secret-room coordinates
 
@@ -92,7 +120,7 @@ The 8192 source-image pixels do not mean 8192 metres. Both datasets use size_m: 
 
 No map image or other KRAFTON asset is included in this data import. The source repository states that its MIT license covers code and does not cover PUBG map imagery or other KRAFTON assets: https://github.com/adzpm/pubg-map/blob/10dc2faa743835fc2fe00cd745c9f9e3373322b1/README.md .
 
-Default map images are fetched directly from the official public source described above. Optional custom reference images remain local. No game image binaries, private captured evaluation fixtures, personal profiles or local catalogs are included in this source or static distribution. Importing or matching a reference does not transfer ownership, grant redistribution rights or extend this MIT license to the image. PUBG imagery and trademarks retain their owners' rights.
+Official public reference PNGs are bundled separately under the source and publisher terms described above. This coordinate import includes no image, and its MIT license does not license the separately bundled PUBG artwork. Private evaluation captures, personal profiles, custom user references and local catalogs are never included in the source or static distribution. Matching a reference does not transfer ownership or extend the project's MIT license to that image. PUBG imagery and trademarks retain their owners' rights.
 
 Retrieved: 2026-10-21.
 

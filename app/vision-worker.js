@@ -3,6 +3,7 @@ const PYODIDE_VERSION = "314.0.7";
 const PYODIDE_INDEX = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 const SOURCE_ROOT = new URL("../cv/", import.meta.url);
 const MODULES = ["__init__", "core", "registration", "marker_pipeline", "self_marker", "vision", "zone_vision"];
+const MAX_REFERENCES = 32;
 let runtimePromise = null;
 let runtime = null;
 let engine = null;
@@ -97,8 +98,8 @@ self.onmessage = async ({data: message}) => {
     } else {
       if (!engine) throw new Error("Initialize the worker before loading references or analyzing.");
       if (type === "references") {
-        if (!Array.isArray(message.references) || message.references.length > 8)
-          throw new Error("Provide at most eight complete map references.");
+        if (!Array.isArray(message.references) || message.references.length > MAX_REFERENCES)
+          throw new Error("Provide at most 32 complete map references.");
         const records = message.references.map(record => ({mapId: record.mapId,
           rgba: byteView(record.rgba), width: record.width, height: record.height}));
         converted = py.toPy(records);
@@ -113,7 +114,9 @@ self.onmessage = async ({data: message}) => {
         // exact structured-cloned value in JavaScript rather than turning an
         // {epoch,sequence} object into a Python JsProxy and back again.
         const result = plain(engine.analyze_rgba(converted, message.width, message.height,
-          message.context || "live"));
+          // In this pinned Pyodide, undefined becomes Python None; JS null is
+          // the distinct jsnull object and must not become an absent map lock.
+          message.context || "live", undefined, message.mapId ?? undefined));
         if (requestGeneration !== generation) throw new Error("Stale analysis was discarded.");
         self.postMessage({id, type: "result", ...result, ticket: ticket ?? null});
       }
