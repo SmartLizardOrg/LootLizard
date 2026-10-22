@@ -17,11 +17,13 @@ Nem kell asztali programot telepíteni, fiókot vagy API-kulcsot létrehozni.
    **Open LootLizard** gombot. Helyezd az ablakot a második monitorra.
 2. Várd meg a helyi felismerőmotor és a térképreferenciák betöltését. Az első
    indítás a nagy böngészős futtatókörnyezet miatt hosszabb lehet.
-3. A **Start sharing** gombbal válaszd ki a PUBG ablakát vagy monitorát a
+3. Indítsd el a PUBG-t, majd a **Connect PUBG window** gombbal válaszd ki az ablakát vagy monitorát a
    böngésző képernyőválasztójában. Kattints vissza a játékra.
 4. Nyisd meg a játéktérképet. Az alkalmazás időszakosan, helyben frissít;
    minden új vizsgálathoz nem kell átkattintanod. A térkép megnyitásához tartozó
    játékbillentyűt az alkalmazás nem nyomja meg helyetted.
+   A játék képe csak kis forrás-előnézetben jelenik meg. A nagy nézet térképnyitást
+   kér, és sikeres felismerés után a kivágott térképet mutatja a pincepontokkal.
 5. A **Stop**, a böngésző megosztásleállító gombja vagy az oldal bezárása
    befejezi a megosztást. Az alkalmazás eldobja a későn érkező eredményeket is.
 

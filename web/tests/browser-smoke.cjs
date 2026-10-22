@@ -21,6 +21,56 @@ const save = () => fs.writeFileSync(path.join(evidence, 'browser-report.json'), 
 const deadline = setTimeout(() => { report.status = 'timeout'; save(); server?.kill(); process.exit(1); }, 8 * 60_000);
 deadline.unref();
 
+// Observe the rendered interface independently of the controller's state API.
+// Hidden ancestors count: an old bitmap must not remain visible after its map
+// registration has been invalidated, even if the canvas retains its dimensions.
+async function readMapView() {
+  return page.evaluate(() => {
+    const visible = element => Boolean(element && !element.hidden &&
+      element.getClientRects().length && getComputedStyle(element).visibility !== 'hidden');
+    const main = document.querySelector('#map-canvas');
+    const preview = document.querySelector('#source-preview');
+    const connect = document.querySelector('#connect-source');
+    return {
+      view: document.querySelector('#map-stage')?.dataset.view || null,
+      title: document.querySelector('#stage-title')?.textContent.trim() || '',
+      main: {visible: visible(main), width: main?.width || 0, height: main?.height || 0},
+      sourcePanelVisible: visible(document.querySelector('#source-panel')),
+      preview: {visible: visible(preview), width: preview?.width || 0, height: preview?.height || 0,
+        centerPixel: preview?.width && preview?.height ? Array.from(preview.getContext('2d').getImageData(
+          Math.floor(preview.width / 2), Math.floor(preview.height / 2), 1, 1).data) : []},
+      connect: {visible: visible(connect), disabled: connect?.disabled ?? true},
+    };
+  });
+}
+
+function assertCroppedMap(view) {
+  assert.equal(view.view, 'map', 'Only a verified map may occupy the central map view');
+  assert.equal(view.main.visible, true, 'A recognized map must be visible in the main stage');
+  // The original fixture is 960 x 720. Its registered full map is the square
+  // from (160, 40) to (800, 680); allow integer rounding of the fitted transform.
+  assert.ok(Math.abs(view.main.width - 640) <= 4, `Expected a map crop near 640 pixels, got ${view.main.width}`);
+  assert.ok(Math.abs(view.main.height - 640) <= 4, `Expected a map crop near 640 pixels, got ${view.main.height}`);
+  assert.ok(Math.abs(view.main.width - view.main.height) <= 4, 'The full fixture map must stay square');
+}
+
+function assertSourcePreview(view) {
+  assert.equal(view.sourcePanelVisible, true, 'An active shared source needs its small confirmation panel');
+  assert.equal(view.preview.visible, true, 'The shared-source preview must remain visible independently of map recognition');
+  assert.ok(view.preview.width > 0 && view.preview.width <= 240, 'Preview bitmap width must be bounded before drawing');
+  assert.ok(view.preview.height > 0 && view.preview.height <= 135, 'Preview bitmap height must be bounded before drawing');
+  assert.ok(Math.abs(view.preview.width / view.preview.height - 960 / 720) < .02,
+    'The small preview must preserve the 4:3 source aspect ratio');
+  assert.equal(view.preview.centerPixel[3], 255, 'The source preview must contain an actual sampled frame');
+}
+
+function assertStoppedView(view) {
+  assert.equal(view.main.visible, false, 'Stopping must hide the old recognized map bitmap');
+  assert.equal(view.sourcePanelVisible, false, 'Stopping must hide the source confirmation panel');
+  assert.equal(view.preview.visible, false, 'Stopping must hide the source preview');
+  assert.notEqual(view.view, 'map', 'Stopped geometry must not leave a recognized-map presentation');
+}
+
 async function main() {
   const build = spawnSync(process.env.PYTHON || 'python', ['-B', 'scripts/build_web.py'], {cwd: root, windowsHide: true, encoding: 'utf8'});
   assert.equal(build.status, 0, `Static site build failed: ${build.stderr || build.stdout}`);
@@ -57,6 +107,15 @@ async function main() {
   report.defaultReferences = await page.evaluate(() => window.lootLizard.getState().referenceCount);
   assert.equal(report.defaultReferences, 2, 'Erangel and Taego references must load without user file import');
   report.steps.push('official-default-references-load-automatically');
+  const setupView = await readMapView();
+  assert.equal(setupView.view, 'setup');
+  assert.equal(setupView.main.visible, false, 'Before connection, the center must show setup rather than a blank/gameplay canvas');
+  assert.equal(setupView.sourcePanelVisible, false);
+  assert.equal(setupView.connect.visible, true, 'The main stage must offer the primary screen-connection action');
+  assert.equal(setupView.connect.disabled, false, 'Connection must be available once the engine is ready');
+  report.setupView = setupView;
+  await page.screenshot({path: path.join(evidence, 'initial-connection.png'), fullPage: true});
+  report.steps.push('initial-stage-shows-primary-connection-action-without-gameplay');
 
   const workerResults = await page.evaluate(async () => {
     const {createDemo} = await import('/app/demo.mjs');
@@ -117,8 +176,11 @@ async function main() {
   await page.locator('#load-demo').click();
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   assert.ok(await page.locator('#target-list tr').count() > 0);
+  const demoView = await readMapView();
+  assertCroppedMap(demoView);
   await page.screenshot({path: path.join(evidence, 'synthetic-demo.png'), fullPage: true});
   report.demoState = await page.evaluate(() => window.lootLizard.getState());
+  report.demoView = demoView;
   report.steps.push('demo-button-renders-real-cv-targets');
 
   const stale = await page.evaluate(async () => {
@@ -133,6 +195,7 @@ async function main() {
   assert.deepEqual(stale.points, []);
   assert.equal(stale.sharing, false);
   assert.equal(await page.locator('#target-list tr').count(), 0);
+  assertStoppedView(await readMapView());
   report.stoppedState = stale;
   report.steps.push('immediate-stop-cancels-async-session-start');
 
@@ -161,6 +224,7 @@ async function main() {
   assert.equal(inflight.reply, null);
   assert.equal(inflight.stopped.mapId, null);
   assert.deepEqual(inflight.stopped.points, []);
+  assertStoppedView(await readMapView());
   report.inflightStop = inflight;
   report.steps.push('posted-worker-request-cannot-restore-geometry-after-stop');
 
@@ -191,6 +255,11 @@ async function main() {
     return state.sharing && state.mapId === 'demo' && state.points.length > 0;
   }, null, {timeout: 60_000});
   report.passiveStreamState = await page.evaluate(() => window.lootLizard.getState());
+  const sharedMapView = await readMapView();
+  assertCroppedMap(sharedMapView);
+  assertSourcePreview(sharedMapView);
+  report.sharedMapView = sharedMapView;
+  report.steps.push('recognized-map-crops-registered-bounds-with-bounded-source-preview');
   await page.evaluate(() => {
     const fixture = window.__syntheticCapture;
     fixture.scans.length = 0;
@@ -205,12 +274,23 @@ async function main() {
   assert.ok(gameplayUI.scans.length > 0, 'Automatic stream must actually process the changed frame');
   assert.ok(gameplayUI.scans.every(state => state.mapId === null && state.points.length === 0), 'A newer displayed frame must never carry old geometry while scanning');
   assert.equal(await page.locator('#target-list tr').count(), 0);
+  const gameplayView = await readMapView();
+  assert.equal(gameplayView.view, 'waiting', 'Unrecognized gameplay must return the connected stage to waiting');
+  assert.equal(gameplayView.main.visible, false, 'Ordinary gameplay must never fill the central map stage');
+  assert.match(gameplayView.title, /open.*map/i, 'The connected waiting stage must ask the player to open the game map');
+  assertSourcePreview(gameplayView);
+  assert.deepEqual(gameplayView.preview.centerPixel, [31, 42, 48, 255],
+    'The small preview must update to the current gameplay frame rather than retaining the old map');
+  report.gameplayView = gameplayView;
+  await page.screenshot({path: path.join(evidence, 'connected-waiting.png'), fullPage: true});
+  report.steps.push('unrecognized-gameplay-stays-in-small-preview-and-main-stage-asks-for-map');
   await page.evaluate(() => {
     const fixture = window.__syntheticCapture;
     fixture.canvas.getContext('2d').putImageData(fixture.frames[2], 0, 0);
     fixture.stream.getVideoTracks()[0].requestFrame?.();
   });
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
+  assertCroppedMap(await readMapView());
   report.streamGameplay = gameplayUI;
   report.streamMapReturn = await page.evaluate(() => window.lootLizard.getState());
   report.steps.push('automatic-stream-map-gameplay-map-and-no-old-geometry-while-scanning');
@@ -228,7 +308,11 @@ async function main() {
   assert.deepEqual(ended.points, []);
   assert.equal(ended.position, null);
   assert.equal(ended.zone, null);
+  const endedView = await readMapView();
+  assertStoppedView(endedView);
+  assert.equal(await page.locator('#target-list tr').count(), 0);
   report.endedState = ended;
+  report.endedView = endedView;
   report.steps.push('synthetic-stream-automatic-scan-and-ended-clears-state');
 
   await page.bringToFront();
@@ -265,6 +349,9 @@ async function main() {
   assert.equal(modeCleared.state.position, null);
   assert.equal(modeCleared.state.zone, null);
   assert.equal(await page.locator('#target-list tr').count(), 0);
+  const modeView = await readMapView();
+  assert.equal(modeView.main.visible, false, 'Pausing recognition must remove the former map from the main stage');
+  assert.notEqual(modeView.view, 'map');
 
   await page.locator('#capture-work').selectOption('full');
   const inflightMode = await page.evaluate(async () => {
@@ -300,6 +387,7 @@ async function main() {
   assert.equal(inflightMode.state.position, null);
   assert.equal(inflightMode.state.zone, null);
   assert.equal(await page.locator('#target-list tr').count(), 0);
+  assert.equal((await readMapView()).main.visible, false, 'An invalidated late reply must not restore the main map canvas');
   report.modeCleared = modeCleared;
   report.inflightMode = inflightMode;
   report.steps.push('diagnostic-mode-clears-map-and-rejects-in-flight-worker-geometry');
@@ -351,12 +439,18 @@ async function main() {
     assert.equal(Object.hasOwn(scan, 'python'), false);
   }
   assert.equal(await page.locator('#target-list tr').count(), 0);
+  const noReferenceView = await readMapView();
+  assert.equal(noReferenceView.main.visible, false, 'Missing references must not promote a source screenshot into the map stage');
+  assert.notEqual(noReferenceView.view, 'map');
+  assertSourcePreview(noReferenceView);
   await page.evaluate(() => {
     window.lootLizard.stop();
     Worker.prototype.postMessage = window.__noReferenceCapture.originalPost;
     delete window.__noReferenceCapture;
   });
+  assertStoppedView(await readMapView());
   report.noReferences = noReferences;
+  report.noReferenceView = noReferenceView;
   report.steps.push('empty-reference-screen-fast-path-samples-without-worker-transfer-or-stale-geometry');
   assert.ok(report.requests.every(request => ['GET', 'HEAD'].includes(request.method)), 'No image upload request may be issued');
   assert.deepEqual(report.pageErrors, [], 'No unhandled main-page error');
