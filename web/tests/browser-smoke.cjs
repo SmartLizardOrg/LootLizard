@@ -391,6 +391,7 @@ async function main() {
   const sharedMapView = await readMapView();
   assertCroppedMap(sharedMapView);
   assertCollapsedSource(sharedMapView);
+  await page.screenshot({path: path.join(evidence, 'recognized-map-collapsed-source.png'), fullPage: true});
   assert.equal(sharedMapView.reset.disabled, false);
   assert.equal(sharedMapView.retainedBannerVisible, false, 'A current recognized map needs no retained-map notice');
   report.sharedMapView = sharedMapView;

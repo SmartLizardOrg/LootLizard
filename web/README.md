@@ -79,11 +79,12 @@ Hidden tabs can be throttled. Browser portability does not establish tested capt
 on every OS or a console/mobile integration.
 
 The small source preview is at most 240×135 and updates only when sampled. The main
-canvas uses the registered map crop and matching frame, with explicit last-known
-map/position/circle ages. Ordinary gameplay, inventory, unknown frames and temporary
+canvas uses the registered map crop and matching frame, with its last-update age.
+Ordinary gameplay, inventory, unknown frames and temporary
 capture pauses retain that paired map; they never draw old geometry onto gameplay.
-Opening a recognized map refreshes available fields. A missing position/circle keeps
-its older normalized value and age, rather than pretending it was freshly detected.
+Opening a recognized map refreshes that held map. After the first successful screen
+recognition, the small game preview collapses automatically and can be reopened.
+The prominent Reset match button remains available outside the collapsed preview.
 
 The first verified map locks recognition to that map for the current match.
 Subsequent frames search its cached reference instead of comparing eleven maps.
@@ -91,17 +92,20 @@ Confirmed lobby/results, Reset match, or Stop clears the lock; the next match ag
 searches all eleven. If an end transition is missed, use Reset match before a new
 match, including another match on the same map. No manual map selector is required.
 
-Capture requests 1 FPS and at most 2400 pixels per side; samples are at most four
-million pixels. The default pause between completed scans is three seconds. One
-scan runs at once, so actual cadence also includes CV/OCR time; long processing
-never builds a frame queue. Initial all-map recognition can take seconds. Reused
+Intervals are 500/1000/2000/5000/10000 ms, with 1000 ms the default. Language and
+interval persist through the browser preference store. Capture requests
+`1000 / intervalMs` FPS and at most 2400 pixels per side; samples are at most four
+million pixels. Scheduling is start-to-start with one scan in flight: the next
+delay is `max(0, intervalMs - elapsedSinceScanStart)`. Effective spacing is therefore
+at least `max(processingTime, requestedInterval)`, subject to browser scheduling.
+Long work never queues frames. Initial all-map matching can take seconds. Reused
 canvases, retained owned buffers and unchanged-view checks avoid unnecessary copies.
 
-A viewing cone is only an experimental player estimate, not verified identity.
-Plane markers, occlusion, teammate overlap and unfamiliar icons can abstain. A
-white ring is reported only when the circle detector's geometry checks pass.
-Unknown position/circle fields stay unknown; there is no game memory, packet,
-telemetry or hidden-position source.
+The player application submits the explicit `map-only` context. It runs map
+registration and room-point projection; player-marker/view-cone and safe-zone
+processing are skipped. Portable marker/zone algorithms remain in developer CV
+modules and tests, but are disabled in this player interface. There is no game
+memory, packet, telemetry or hidden-position source.
 
 ## Conservative context reset
 
@@ -125,9 +129,10 @@ not reveal whether PUBG exited or the user briefly switched applications.
 
 ## Diagnostics and limitations
 
-On loopback only, `?diagnostics=1` exposes temporary capture-rate and processing-mode
-controls. Mode changes invalidate old guidance. Exported timings contain at most
-128 dimension/duration/status events, never pixels, labels, words or device ids.
+Developer processing controls and timing access exist only behind the loopback
+`?test=1` hook used by synthetic tests; they are not player settings. Test-mode
+changes invalidate old guidance. Timing records contain at most 128
+dimension/duration/status events, never pixels, labels, words or device ids.
 Track settings report negotiated output, not delivery frequency, physical GPU work
 or guaranteed FPS impact. Synthetic/native CV timings are not game FPS benchmarks.
 

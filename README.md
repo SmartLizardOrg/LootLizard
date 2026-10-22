@@ -1,8 +1,8 @@
 # LootLizard
 
-A browser companion that keeps the PUBG map on your second monitor and estimates
-your position when the in-game map is visible. Open the website, connect the game
-window, then return to PUBG. Image processing runs on your computer.
+A browser companion that keeps the PUBG map and community room markers on your
+second monitor. Open the website, connect the game window, then return to PUBG.
+Map recognition and point projection run on your computer.
 
 **Web alpha · 0.9.0.** English by default; Hungarian is available. No desktop
 installation, account, API key, manual reference download or global hotkey.
@@ -18,13 +18,13 @@ installation, account, API key, manual reference download or global hotkey.
 2. Select **Connect PUBG window**, choose the game window or its monitor in the
    browser picker, then return focus to PUBG.
 3. Open the complete in-game map. LootLizard identifies it automatically and shows
-   its map and any recognizable player position/circle. No per-scan browser click
-   is needed; the app does not press PUBG's map key for you.
+   the map with available room markers. No per-scan browser click is needed; the
+   app does not press PUBG's map key for you. After the first recognition, the
+   game preview collapses automatically and can be reopened when needed.
 4. Keep playing. The last recognized map remains visible through gameplay,
-   inventory and temporary capture pauses. Reopen PUBG's map to update it. Position
-   and circle have separate last-known ages; an estimate is not live tracking
-   while the map is closed.
-5. **Reset match** clears the held map while keeping sharing active. **Stop**,
+   inventory and temporary capture pauses. Reopen PUBG's map to refresh the held
+   image; its last-update age remains visible.
+5. The prominent **Reset match** button clears the held map while keeping sharing active. **Stop**,
    browser Stop sharing, or closing the page ends capture and clears the view.
 
 Gameplay appears only in a small sampled source preview. The main view contains
@@ -51,8 +51,8 @@ additional memory. PNG sizes and SHA-256 are checked before use.
 Community room coordinates remain available for **15 Erangel** and **12 Taego**
 locations. They are unverified; Taego is incomplete. Other maps intentionally have
 empty point lists, which does not mean no secret rooms exist. No room locations
-were invented to make a map appear supported. Distances are approximate,
-straight-line estimates, not routes or verified entrance positions.
+were invented to make a map appear supported. Verify listed locations and their
+entrances in the game.
 
 The current match stays associated with its first verified map until a confirmed
 match end, **Reset match**, or sharing interruption. Subsequent scans check that
@@ -60,11 +60,9 @@ map rather than repeatedly comparing all eleven references. Initial recognition
 searches the complete library. **Reset match** before a new match if its transition
 was missed, including when the next match uses the same map.
 
-An unknown or ambiguous player marker remains unknown. A unique viewing cone is
-an experimental position estimate, not proof of own-player identity. Plane-phase
-symbols, occlusion, small markers, teammate overlap, changed map artwork and zoom
-can prevent detection. A circle is reported only when its required white-ring
-geometry is recognizable. Check PUBG before acting on an estimate.
+The player app performs map registration and room projection only. Player-position,
+view-cone and safe-circle detection do not run in this interface. Changed artwork,
+extreme zoom and occlusion can prevent map recognition.
 
 ## Platforms and performance
 
@@ -74,11 +72,14 @@ source. Other platforms require validation. This does not make the PUBG game
 itself available on another OS; console/mobile image capture is not integrated.
 Keep LootLizard visible on the second monitor because hidden tabs can be throttled.
 
-Capture requests **1 FPS** and at most 2400 pixels per side/four million sampled
-pixels. Recognition is serial: only one scan runs at once, followed by the chosen
-interval. A slow operation extends the effective interval and never creates a
-queue of screenshots. Initial all-map matching can take several seconds. Known
-map matching, reused canvases and unchanged-view checks reduce repeated work.
+Choose a map-check interval of **0.5, 1, 2, 5 or 10 seconds**; **1 second** is the
+default. Language and interval are saved in this browser. Capture requests follow
+that selection: `FPS = 1000 / intervalMs`, with at most 2400 pixels per side/four
+million sampled pixels. Recognition is serial and scheduled start-to-start:
+effective spacing is at least the greater of processing time and the requested
+interval. Slow work never queues screenshots. Initial all-map matching can take
+several seconds. Known-map matching, reused canvases and unchanged-view checks
+reduce repeated work.
 
 There is no FPS guarantee. Earlier 3 FPS sharing measurements on one PC showed
 small mean-FPS changes and larger slow-frame effects. The current optimized path,
@@ -88,7 +89,7 @@ measurement. Functional tests do not establish an insignificant performance cost
 ## Privacy and updates
 
 There is no image-upload endpoint, account, telemetry or AI service. Screen pixels,
-position results and local OCR remain in memory. Preferences can use localStorage;
+map results and local OCR remain in memory. Preferences can use localStorage;
 there is no custom-reference import/storage flow or runtime coordinate-feed cache.
 The website serves its app, map catalog and reference images. Initial runtime and
 optional English OCR packages are fetched from pinned public CDN URLs and execute

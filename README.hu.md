@@ -1,8 +1,8 @@
 # LootLizard
 
 Böngészős PUBG-társalkalmazás második monitorra. A megnyitott játéktérképet
-helyben felismeri, és kísérleti játékospozíciót, felismerhető kört, valamint a
-rendelkezésre álló közösségi pincepontokat mutatja. Képernyőképet nem tölt fel.
+helyben felismeri, és a rendelkezésre álló közösségi pincepontokkal együtt
+megtartja. Képernyőképet nem tölt fel.
 
 **Webes alfa · 0.9.0.** Alapnyelv angol, a magyar választható. Nincs telepítő,
 fiók, API-kulcs, külön térképletöltés/import vagy globális gyorsbillentyű.
@@ -19,9 +19,9 @@ fiók, API-kulcs, külön térképletöltés/import vagy globális gyorsbillenty
 3. Nyisd meg a teljes játéktérképet. A helyi felismerés automatikus; vizsgálatonként
    nem kell átkattintani. A térképnyitás játékbillentyűjét az oldal nem nyomja meg.
 4. A felismert térkép játék és inventory közben megmarad. Új térképnyitáskor
-   frissül; a pozíció és a kör mellett külön látszik az utolsó felismerés kora.
-   Zárt térkép mellett nincs folyamatos, aktuális pozíciókövetés.
-5. A **Reset match** törli az előző meccs térképét, de megtartja a megosztást.
+   frissül, és látszik az utolsó térképfelismerés kora. Az első felismerés után
+   a játék-előnézet automatikusan összecsukódik; szükség esetén újranyitható.
+5. A jól látható **Reset match** törli az előző meccs térképét, de megtartja a megosztást.
    A **Stop**, a böngésző megosztásleállítása vagy az oldal bezárása mindent töröl.
 
 A főnézet csak a felismert térképet mutatja. A játék képe kis, mintavételezett
@@ -40,10 +40,10 @@ Közösségi pinceadat 15 erangeli és 12 taegói ponthoz van. Még ellenőrizet
 a taegói lista hiányos. A többi térkép pontlistája szándékosan üres; ebből nem
 következik, hogy ott nincs titkos helyiség. Kitalált pontok nem kerültek be.
 
-A saját jelölő iránytölcséréből becsült helyzet kísérleti, nem bizonyítja a játékos
-azonosságát. Repülőfázis, takarás, kis ikon vagy csapattársak átfedése esetén
-ismeretlen maradhat. A körhöz felismerhető fehér körvonal kell. A távolságok
-közelítő, légvonalbeli értékek; a játékban ellenőrizd az eredményt.
+A játékosoknak szánt felület térképet ismer fel és pincepontokat vetít rá.
+Játékospozíció-, iránytölcsér- és körfelismerés nem fut benne. Térképváltozás,
+erős zoom vagy takarás megakadályozhatja a térkép felismerését. A helyeket és a
+bejáratokat a játékban ellenőrizd.
 
 Az első felismert térképet az aktuális meccshez rögzíti, hogy ne hasonlítsa össze
 mind a 11 mintát minden vizsgálatnál. Megerősített lobby/eredmény, **Reset match**
@@ -58,9 +58,12 @@ menünél kézi visszaállítás kellhet. Teljes monitor képéből a játék ki
 
 ## Teljesítmény és adatkezelés
 
-A kérés 1 FPS, legfeljebb 2400 képpontos oldal és négymillió mintavett pixel.
-Egyszerre egy vizsgálat fut, majd a választott szünet következik; a tényleges
-frissítésbe a feldolgozás ideje is beleszámít. Nem keletkezik képkockasor.
+A vizsgálati időköz **0,5 / 1 / 2 / 5 / 10 másodperc** lehet; alapértéke **1 másodperc**.
+A nyelvet és az időközt a böngésző megjegyzi. A képrögzítési kérés ehhez igazodik:
+`FPS = 1000 / időközMs`, legfeljebb 2400 képpontos oldallal és négymillió mintavett
+pixellel. Egyszerre egy vizsgálat fut. A kezdések távolsága legalább a feldolgozási
+idő és a választott időköz közül a hosszabb; nem külön szünet adódik a feldolgozáshoz.
+Lassabb feldolgozásnál sem keletkezik képkockasor.
 Az első, 11 mintás keresés több másodpercig tarthat. FPS-garanciát nem ígérünk;
 a teljes, optimalizált működés játékbeli képkockaidő-terhelését külön kell mérni.
 
