@@ -108,6 +108,21 @@ Opening a recognized map refreshes that held map. After the first successful scr
 recognition, the small game preview collapses automatically and can be reopened.
 The prominent Reset match button remains available outside the collapsed preview.
 
+### Map navigation
+
+Scroll over the recognized map to zoom toward the pointer from 100% fitted size
+to 800% (8×), then drag to pan. The **+ / −** toolbar buttons zoom around the
+centre; **Fit map** restores the whole map. With the map focused, arrow keys pan,
+**+ / −** zoom and **0** fits the map. Icons and coordinate anchors retain their
+CSS-pixel size as the map enlarges, so they remain readable in dense areas.
+Magnification remains limited by the source capture's image resolution.
+
+`map-canvas.mjs` owns the cropped saved bitmap and redraws it with the view from
+`map-navigation.mjs`. Pointer and keyboard navigation do not capture another
+frame or invoke CV; the ordinary capture schedule continues separately. A fresh
+capture of the same map retains the zoom and normalized focus. A confirmed new
+match/reset, changed map or Stop clears the view and starts fitted again.
+
 The first verified map locks recognition to that map for the current match.
 Subsequent frames search its cached reference instead of comparing eleven maps.
 Confirmed lobby/results, Reset match, or Stop clears the lock; the next match again

@@ -1,4 +1,4 @@
-import {CaptureSession,project} from './session.mjs';
+import {CaptureSession} from './session.mjs';
 import {validateCatalog,readBoundedJSON} from './metadata.mjs';
 import {createDemo} from './demo.mjs';
 import {applyLanguage,translate} from './i18n.mjs';
@@ -9,14 +9,16 @@ import {mapViewport,sourcePreviewSize} from './map-view.mjs';
 import {MatchMapMemory} from './match-memory.mjs';
 import {NonMatchGate,createFooterDescriptor,matchFooterDescriptor} from './match-context.mjs';
 import {createMatchContextReader} from './match-context-reader.mjs';
-import {locationKind,locationLabel,locationIconSVG,presentLocationKinds,layoutLocationMarkers,drawLocationMarkers} from './location-markers.mjs';
+import {locationKind,locationLabel,locationIconSVG,presentLocationKinds} from './location-markers.mjs';
+import {MapCanvas} from './map-canvas.mjs';
 
 const $=id=>document.getElementById(id);
 const testing=['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('test')==='1';
 // Synthetic fixtures and processing controls have no player-facing controls.
 const demo=testing?createDemo():null,session=new CaptureSession(),references=new Map();
 const matchMemory=new MatchMapMemory(),nonMatchGate=new NonMatchGate(),contextReader=createMatchContextReader();
-const canvas=$('map-canvas'),ctx=canvas.getContext('2d'),video=$('capture-video');
+const canvas=$('map-canvas'),video=$('capture-video');
+const mapCanvas=new MapCanvas({canvas,stage:$('map-stage'),zoomIn:$('map-zoom-in'),zoomOut:$('map-zoom-out'),fit:$('map-fit'),zoomLevel:$('map-zoom-level')});
 const sourcePreview=$('source-preview'),previewContext=sourcePreview.getContext('2d');
 const sampler=document.createElement('canvas'),sample=sampler.getContext('2d',{willReadFrequently:true});
 const worker=new Worker(new URL('./vision-worker.js',import.meta.url),{type:'module'});
@@ -72,6 +74,7 @@ function renderStage(map){
   const viewport=snapshot?mapViewport(snapshot.result.registration.matrix,snapshot.frame.width,snapshot.frame.height):null;
   const view=map&&viewport?'map':phase==='error'?'error':connecting?'connecting':connected?'waiting':'setup';
   $('map-stage').dataset.view=view;canvas.hidden=view!=='map';$('canvas-empty').hidden=!canvas.hidden;
+  $('map-navigation').hidden=view!=='map';
   $('setup-steps').hidden=view!=='setup';$('stage-hint').hidden=view!=='setup';
   $('connect-source').hidden=connected||connecting||view==='map';$('connect-source').disabled=$('start-sharing').disabled;
   $('retained-banner').hidden=view!=='map'||phase==='recognized';$('reset-match').disabled=!snapshot;
@@ -116,15 +119,8 @@ function draw(points=targets(),force=false){
   if(!force&&drawnFrame===mapFrame&&drawnResult===overlay&&drawnLanguage===language)return;
   drawnFrame=mapFrame;drawnResult=overlay;drawnLanguage=language;
   const viewport=mapFrame&&overlay?mapViewport(overlay.registration.matrix,mapFrame.width,mapFrame.height):null;
-  if(!viewport){setSamplerSize(canvas,1,1);ctx.clearRect(0,0,1,1);return;}
-  setSamplerSize(canvas,viewport.width,viewport.height);
-  ctx.putImageData(mapFrame,-viewport.x,-viewport.y,viewport.x,viewport.y,viewport.width,viewport.height);
-  const box=canvas.getBoundingClientRect(),unit=1/Math.max(.05,Math.min(box.width/canvas.width,box.height/canvas.height));
-  const projectedPoints=points.flatMap((point,index)=>{
-    if(!point.visible)return[];const projected=project(overlay.registration.matrix,point.x,point.y);if(!projected)return[];
-    return[{id:point.id,index:index+1,kind:locationKind(point),x:(projected[0]-viewport.x)/unit,y:(projected[1]-viewport.y)/unit}];
-  });
-  ctx.save();ctx.scale(unit,unit);drawLocationMarkers(ctx,layoutLocationMarkers(projectedPoints,canvas.width/unit,canvas.height/unit));ctx.restore();
+  if(!viewport){mapCanvas.clear();return;}
+  mapCanvas.setMap({frame:mapFrame,registration:overlay.registration,viewport,points});
 }
 function updatePreview(image,{sampled=false}={}){
   if(!image||!$('source-details').open)return;

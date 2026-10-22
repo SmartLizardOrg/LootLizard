@@ -27,6 +27,23 @@ fiók, API-kulcs, külön térképletöltés/import vagy globális gyorsbillenty
 A főnézet csak a felismert térképet mutatja. A játék képe kis, mintavételezett
 előnézetben látszik. Az alkalmazás nem rajzol régi jelölőket új játékkép fölé.
 
+## Nagyítás és mozgatás
+
+A felismert térképen görgetve az egérmutató felé nagyíthatsz, **100%-tól
+(teljes térkép) 800%-ig (8×)**. Húzással mozgathatod a nézetet, hogy a sűrűbb
+részeket, például Destont, közelebbről megnézhesd. A **+** és **−** gomb középre
+nagyít, a **Fit map / Teljes térkép** visszaállítja az egész térképet. Tabulátorral
+vagy kattintással fókuszáld a térképet: a nyilak mozgatják, a **+ / −** nagyítja,
+a **0** pedig visszaállítja a teljes nézetet.
+
+Az ikonok képernyőn látható mérete nagyításkor is állandó, az apró középpontok
+továbbra is a pontos koordinátát jelzik. Azonos térkép új beolvasása megtartja a
+nagyítást és a nézet helyét. Új meccs, **Reset match / Meccs alaphelyzetbe** vagy a
+megosztás leállítása visszaállítja a teljes nézetet. A mozgatás és nagyítás a
+megőrzött térképet rajzolja újra, nem indít külön képrögzítést vagy felismerést;
+a szokásos térképellenőrzés ettől függetlenül folytatódik. A nagyítás nem ad a
+rögzített térképkép felbontásán túli részleteket.
+
 ## Mellékelt térképek és korlátok
 
 A webes kiadás 11 hivatalos fejlesztői referenciaképet tartalmaz: Erangel,
