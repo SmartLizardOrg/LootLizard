@@ -7,18 +7,18 @@
  */
 const normalize = value => String(value).normalize('NFKC').toUpperCase().replace(/[^A-Z0-9#]+/g, ' ').trim();
 
-function textWords(observation) {
+function textWords(observation, minConfidence = 70) {
   const {words, width, height} = observation || {};
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0 ||
       !Array.isArray(words) || words.length > 1000) return null;
   return words.filter(word => {
     const box = word?.bbox;
     return typeof word?.text === 'string' && word.text.length <= 160 &&
-      Number.isFinite(word.confidence) && word.confidence >= 70 &&
+      Number.isFinite(word.confidence) && word.confidence >= minConfidence &&
       box && [box.x0, box.y0, box.x1, box.y1].every(Number.isFinite) &&
       0 <= box.x0 && box.x0 < box.x1 && box.x1 <= width &&
       0 <= box.y0 && box.y0 < box.y1 && box.y1 <= height;
-  }).map(word => ({text: normalize(word.text),
+  }).map(word => ({text: normalize(word.text), confidence: word.confidence,
     x: (word.bbox.x0 + word.bbox.x1) / (2 * width),
     y: (word.bbox.y0 + word.bbox.y1) / (2 * height)}));
 }
@@ -39,11 +39,44 @@ export function classifyMatchContext(observation) {
   const navigation = tokens(words.filter(word => word.y <= .14));
   const nav = ['PLAY', 'CAREER', 'CUSTOMIZE', 'WORKSHOP', 'STORE'].filter(token => navigation.has(token));
   const actions = tokens(words.filter(word => word.x <= .35 && word.y >= .77));
-  const modes = tokens(words.filter(word => word.x <= .45 && word.y >= .40));
+  const leftModeWords = words.filter(word => word.x <= .45 && word.y >= .40);
+  const modes = tokens(leftModeWords);
+  const namedModes = ['NORMAL', 'CASUAL', 'RANKED', 'TRAINING'];
+  const lowerNamedMode = namedModes.some(token => modes.has(token));
+  // Some PUBG lobby layouts put NORMAL/RANKED in a second top tab row. Their
+  // independent lower-left perspective/queue selectors still distinguish the
+  // lobby from a web page, inventory or an in-match pause menu.
+  const topModes = tokens(words.filter(word => word.y >= .075 && word.y <= .20 && word.x <= .75));
+  const perspective = modes.has('FPP') || modes.has('TPP');
+  const queueChoice = hasPhrase(leftModeWords, 'QUICK JOIN') || namedModes.some(token => topModes.has(token));
+  const modeEvidence = lowerNamedMode || (perspective && queueChoice);
   if (nav.length >= 3 && navigation.has('PLAY') &&
       ['PLAY', 'START', 'CANCEL'].some(token => actions.has(token)) &&
-      ['NORMAL', 'CASUAL', 'RANKED', 'TRAINING'].some(token => modes.has(token))) {
-    return {context: 'lobby', cues: ['top-lobby-navigation', 'bottom-left-queue-action', 'left-match-mode'], reason: 'positive-menu-evidence'};
+      modeEvidence) {
+    return {context: 'lobby', cues: ['top-lobby-navigation', 'bottom-left-queue-action',
+      lowerNamedMode ? 'left-match-mode' : 'left-perspective-and-match-mode'], reason: 'positive-menu-evidence'};
+  }
+
+  // Dark, thin lobby navigation has low OCR confidence even when the exact long
+  // menu words are correct. This fallback changes ONLY that region's threshold;
+  // independent action/mode groups must be higher confidence than the primary
+  // path. Repeated observations remain mandatory in NonMatchGate.
+  const fallback = textWords(observation, 30);
+  const expectedNavigation = ['CAREER', 'CUSTOMIZE', 'HIDEOUT', 'WORKSHOP', 'STORE'];
+  const byName = new Map();
+  for (const word of fallback) if (word.y < .075 && expectedNavigation.includes(word.text)) {
+    if (!byName.has(word.text) || word.confidence > byName.get(word.text).confidence) byName.set(word.text, word);
+  }
+  const layoutNavigation = [...byName.values()].sort((a, b) => a.x - b.x);
+  const aligned = layoutNavigation.length >= 3 &&
+    Math.max(...layoutNavigation.map(word => word.y)) - Math.min(...layoutNavigation.map(word => word.y)) <= .025;
+  const ordered = layoutNavigation.every((word, index) => !index ||
+    expectedNavigation.indexOf(word.text) > expectedNavigation.indexOf(layoutNavigation[index - 1].text));
+  const spread = layoutNavigation.length >= 3 && layoutNavigation.at(-1).x - layoutNavigation[0].x >= .15;
+  const strongAction = fallback.some(word => word.confidence >= 85 && word.x <= .35 && word.y >= .77 && ['PLAY', 'START'].includes(word.text));
+  const strongMode = fallback.some(word => word.confidence >= 75 && word.x <= .65 && word.y >= .075 && word.y <= .20 && ['NORMAL', 'RANKED', 'TRAINING'].includes(word.text));
+  if (aligned && ordered && spread && strongAction && strongMode) {
+    return {context: 'lobby', cues: ['aligned-lobby-navigation-layout', 'high-confidence-bottom-left-play', 'high-confidence-top-match-mode'], reason: 'positive-menu-evidence'};
   }
 
   const upper = words.filter(word => word.y <= .60);

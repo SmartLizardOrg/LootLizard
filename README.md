@@ -53,7 +53,8 @@ rooms are demo data, not real secret-room locations.
   through the pinned Pyodide runtime. Screenshots and reference pixels are not
   uploaded for recognition.
 - Public point-data updates from this GitHub repository, checked at startup and
-  roughly every 60 seconds. Invalid updates retain the last good data.
+  roughly every 60 seconds. Invalid updates retain the last good data. Changed
+  anchors reproject onto a held map without resetting its match or field ages.
 - Optional browser storage for preferences and map references.
 
 Before the first verified map, unknown frames show no targets. After recognition,

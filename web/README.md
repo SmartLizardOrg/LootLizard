@@ -134,7 +134,7 @@ trace is collected. Synthetic tests establish functionality; fresh controlled
 game measurements are needed for performance claims with full recognition.
 
 Context fallback uses pinned Tesseract.js/core 7.0.0 and a SHA-256-verified English
-model. Recognition is lazy, serial with CV, bounded to 700,000 crop pixels, and normally
+model. Recognition is lazy, serial with CV, bounded to 770,000 crop pixels, and normally
 throttled to 12 seconds (six seconds while confirming positive menu cues). A
 matching footer skips OCR. Initialization/read deadlines terminate a failed
 worker and retain the map. First download/initialization runs in the background

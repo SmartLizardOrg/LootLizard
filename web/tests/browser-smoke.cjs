@@ -493,6 +493,95 @@ async function main() {
   report.steps.push('diagnostic-mode-clears-map-and-rejects-in-flight-worker-geometry');
 
   await page.locator('#capture-work').selectOption('full');
+  // Exercise the production match-context path: demo streams intentionally skip
+  // OCR. Use the already-reviewed official reference, never a private capture.
+  await page.evaluate(async () => {
+    const {AUTOMATIC_REFERENCES, fetchReference} = await import('/app/automatic-references.mjs');
+    const record = AUTOMATIC_REFERENCES.find(item => item.mapId === 'erangel');
+    const bitmap = await createImageBitmap(await fetchReference(record));
+    const canvas = document.createElement('canvas');
+    canvas.width = 960; canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#111820'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 160, 40, 640, 640); bitmap.close();
+    const mapFrame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const stream = canvas.captureStream(2);
+    window.__contextCapture = {canvas, stream, mapFrame};
+    const paint = () => {ctx.putImageData(mapFrame, 0, 0); stream.getVideoTracks()[0].requestFrame?.();};
+    const repaint = setInterval(paint, 200);
+    let timeout;
+    try {
+      const started = window.lootLizard.startTestStream(stream, {demo: false});
+      paint();
+      await Promise.race([started, new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(Error('Official-reference synthetic stream produced no playable frame')), 30_000);
+      })]);
+    } finally {clearInterval(repaint); clearTimeout(timeout);}
+  });
+  await page.waitForFunction(() => {
+    const state = window.lootLizard.getState();
+    return state.sharing && state.phase === 'recognized' && state.mapId === 'erangel';
+  }, null, {timeout: 60_000});
+  const officialMapState = await page.evaluate(() => window.lootLizard.getState());
+  const officialMapView = await readMapView();
+  assertCroppedMap(officialMapView);
+  await page.evaluate(() => {
+    const fixture = window.__contextCapture, ctx = fixture.canvas.getContext('2d');
+    fixture.unknownStartedAt = Date.now();
+    ctx.fillStyle = '#29363d'; ctx.fillRect(0, 0, fixture.canvas.width, fixture.canvas.height);
+    fixture.stream.getVideoTracks()[0].requestFrame?.();
+  });
+  await page.waitForFunction(() => {
+    const fixture = window.__contextCapture, state = window.lootLizard.getState();
+    const unknownScans = window.lootLizard.getPerformance().events.filter(event =>
+      event.type === 'scan' && event.path === 'worker' && event.epochMs >= fixture.unknownStartedAt);
+    return state.sharing && state.phase === 'unknown' && state.mapId === 'erangel' && unknownScans.length >= 2;
+  }, null, {timeout: 45_000});
+  const unknownContextState = await page.evaluate(() => window.lootLizard.getState());
+  assert.equal(unknownContextState.mapUpdatedAt, officialMapState.mapUpdatedAt,
+    'Missing map/footer pixels alone must not age-reset or discard the retained match');
+  const unknownContextView = await readMapView();
+  assertCroppedMap(unknownContextView);
+  assert.equal(unknownContextView.main.pixelHash, officialMapView.main.pixelHash);
+  assert.equal(unknownContextView.retainedBannerVisible, true);
+  await page.evaluate(() => {
+    const fixture = window.__contextCapture, ctx = fixture.canvas.getContext('2d');
+    fixture.lobbyStartedAt = Date.now();
+    ctx.fillStyle = '#111820'; ctx.fillRect(0, 0, fixture.canvas.width, fixture.canvas.height);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px Arial';
+    ctx.fillText('PLAY    CAREER    CUSTOMIZE    WORKSHOP    STORE', 32, 64);
+    ctx.fillText('NORMAL', 32, fixture.canvas.height * .7);
+    ctx.fillText('PLAY', 32, fixture.canvas.height * .9);
+    fixture.stream.getVideoTracks()[0].requestFrame?.();
+  });
+  await page.waitForFunction(() => {
+    const state = window.lootLizard.getState();
+    return state.sharing && state.mapId === null && state.mapUpdatedAt === null;
+  }, null, {timeout: 90_000});
+  const automaticContextReset = await page.evaluate(() => {
+    const fixture = window.__contextCapture;
+    return {state: window.lootLizard.getState(),
+      sameStream: document.querySelector('#capture-video').srcObject === fixture.stream,
+      trackState: fixture.stream.getVideoTracks()[0].readyState,
+      contextEvents: window.lootLizard.getPerformance().events.filter(event =>
+        event.type === 'match-context' && event.epochMs >= fixture.lobbyStartedAt)};
+  });
+  assert.equal(automaticContextReset.sameStream, true);
+  assert.equal(automaticContextReset.trackState, 'live');
+  assert.equal(automaticContextReset.state.sharing, true);
+  assert.deepEqual(automaticContextReset.state.points, []);
+  assert.equal(automaticContextReset.state.position, null);
+  assert.equal(automaticContextReset.state.zone, null);
+  assert.ok(automaticContextReset.contextEvents.filter(event => event.status === 'ok' && event.context === 'lobby').length >= 3,
+    'Actual OCR must provide a positive lobby quorum before automatic reset');
+  const automaticResetView = await readMapView();
+  assert.equal(automaticResetView.main.visible, false);
+  assert.equal(automaticResetView.retainedBannerVisible, false);
+  assertSourcePreview(automaticResetView);
+  report.automaticContextReset = {officialMapState, unknownContextState, ...automaticContextReset};
+  report.steps.push('real-ocr-lobby-quorum-clears-retained-official-map-without-stopping-stream');
+  await page.evaluate(() => {window.lootLizard.stop(); delete window.__contextCapture;});
+
   await page.locator('#load-demo').click();
   await page.waitForFunction(() => window.lootLizard.getState().mapId === 'demo', null, {timeout: 60_000});
   await page.evaluate(async () => {

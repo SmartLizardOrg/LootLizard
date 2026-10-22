@@ -149,3 +149,66 @@ test('a result without a frame or usable timestamp cannot replace the paired map
   assert.equal(memory.update(recognized(), frame('bad clock'), NaN), false);
   assert.equal(memory.current, before);
 });
+
+test('community anchor refresh adds, removes and moves IDs without refreshing map or field ages', () => {
+  const memory = new MatchMapMemory();
+  const source = frame('held map');
+  const oldPoints = [{id: 'moved', visible: true, imageX: 400, imageY: 400},
+    {id: 'removed', visible: true, imageX: 500, imageY: 500}];
+  memory.update(recognized({registration: {mapId: 'erangel', matrix: firstMatrix, viewport: [0, 0, 960, 720]}, points: oldPoints}), source, 100);
+  memory.update(recognized({registration: {mapId: 'erangel', matrix: firstMatrix, viewport: [0, 0, 960, 720]}, position: null, points: oldPoints}), source, 250);
+  const before = memory.current;
+  const metadata = {id: 'erangel', points: [{id: 'moved', x: .1, y: .2}, {id: 'added', x: .75, y: .25}]};
+  assert.equal(memory.refreshPoints(metadata), true);
+  const after = memory.current;
+  assert.notEqual(after.result, before.result, 'New anchors must trigger a redraw');
+  assert.equal(after.frame, before.frame);
+  assert.equal(after.result.registration, before.result.registration);
+  assert.equal(after.result.position, before.result.position);
+  assert.equal(after.result.zone, before.result.zone);
+  assert.deepEqual([after.mapUpdatedAt, after.positionUpdatedAt, after.zoneUpdatedAt], [250, 100, 250]);
+  assert.deepEqual(after.result.points, [
+    {id: 'moved', visible: true, imageX: 224, imageY: 168},
+    {id: 'added', visible: true, imageX: 640, imageY: 200},
+  ]);
+  assert.deepEqual(before.result.points.map(point => point.id), ['moved', 'removed']);
+  assert.equal(memory.refreshPoints({id: 'erangel', points: []}), true);
+  assert.deepEqual(memory.current.result.points, []);
+  assert.equal(memory.current.frame, source);
+  assert.equal(memory.current.mapUpdatedAt, 250);
+});
+
+test('community anchor refresh clips both registration viewport and actual retained frame bounds', () => {
+  const memory = new MatchMapMemory();
+  const matrix = [[1000, 0, -100], [0, 1000, -100], [0, 0, 1]];
+  memory.update(recognized({registration: {mapId: 'erangel', matrix, viewport: [50, 50, 1200, 900]}}), frame('held map'), 100);
+  memory.refreshPoints({id: 'erangel', points: [
+    {id: 'inside', x: .5, y: .5},
+    {id: 'left-of-viewport', x: .12, y: .5},
+    {id: 'top-of-frame', x: .5, y: 0},
+    {id: 'bottom-of-frame', x: .5, y: .9},
+    {id: 'invalid-world', x: 1.1, y: .5},
+  ]});
+  assert.deepEqual(memory.current.result.points, [
+    {id: 'inside', visible: true, imageX: 400, imageY: 400},
+    ...['left-of-viewport', 'top-of-frame', 'bottom-of-frame', 'invalid-world'].map(id =>
+      ({id, visible: false, imageX: null, imageY: null})),
+  ]);
+});
+
+test('community anchor refresh ignores absent snapshots and different map IDs', () => {
+  const memory = new MatchMapMemory();
+  assert.equal(memory.refreshPoints({id: 'erangel', points: []}), false);
+  memory.update(recognized(), frame('held map'), 100);
+  const before = memory.current;
+  assert.equal(memory.refreshPoints({id: 'taego', points: []}), false);
+  assert.equal(memory.refreshPoints(null), false);
+  assert.equal(memory.current, before);
+});
+
+test('community anchor refresh cannot expose coordinates from invalid projection geometry', () => {
+  const memory = new MatchMapMemory();
+  memory.update(recognized({registration: {mapId: 'erangel', matrix: null}}), frame('held map'), 100);
+  assert.equal(memory.refreshPoints({id: 'erangel', points: [{id: 'hidden', x: .2, y: .3}]}), true);
+  assert.deepEqual(memory.current.result.points, [{id: 'hidden', visible: false, imageX: null, imageY: null}]);
+});

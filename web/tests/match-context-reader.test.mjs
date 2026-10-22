@@ -27,12 +27,12 @@ test('import and construction are lazy; a reusable reader performs bounded seque
   assert.equal(factories, 0);
   const first = await reader.read(frame());
   assert.equal(first.status, 'ok');
-  assert.equal(first.words.length, 4);
-  assert.equal(images.length, 4);
+  assert.equal(first.words.length, 5);
+  assert.equal(images.length, 5);
   assert.equal(maxConcurrent, 1);
   await reader.read(frame());
   assert.equal(factories, 1, 'Later reads must reuse the same worker');
-  assert.equal(images.length, 8);
+  assert.equal(images.length, 10);
   reader.terminate();
   assert.equal(stops, 1);
   assert.equal(reader.getState().initialized, false);
@@ -51,7 +51,7 @@ test('a concurrent read is skipped rather than queueing frames or creating anoth
   recognized.resolve(nested([]));
   await first;
   assert.equal(factories, 1);
-  assert.equal(reads, 4);
+  assert.equal(reads, 5);
   reader.terminate();
 });
 
@@ -78,7 +78,7 @@ test('preparation is lazy, single-flight startup without image processing and on
   assert.equal(reads, 0, 'Warmup never invokes recognition');
   assert.equal((await reader.read(frame())).status, 'ok');
   assert.equal(factories, 1, 'A prepared worker is reused by the first actual read');
-  assert.equal(reads, 4);
+  assert.equal(reads, 5);
   reader.terminate();
   assert.equal(reader.getState().ready, false);
 });
@@ -129,22 +129,56 @@ test('stopping before the lazy factory starts avoids creating an obsolete worker
   assert.equal(reader.getState().ready, false);
 });
 
-test('crop geometry covers classification regions and native footer without overlap or unbounded allocations', () => {
+test('crop geometry preserves small navigation and bounds menu/result/footer allocations', () => {
   for (const [width, height] of [[320, 240], [1920, 1080], [2400, 1600], [1600, 2400]]) {
     const plan = contextCropPlan(width, height);
-    assert.deepEqual(plan.map(crop => crop.id), ['upper', 'mode', 'actions', 'footer']);
-    assert.ok(plan.reduce((sum, crop) => sum + crop.width * crop.height, 0) <= 700000);
+    assert.deepEqual(plan.map(crop => crop.id), ['navigation', 'results', 'left-actions', 'right-actions', 'footer']);
+    assert.ok(plan.reduce((sum, crop) => sum + crop.width * crop.height, 0) <= 770000);
     for (const crop of plan) {
       assert.ok(crop.x0 >= 0 && crop.y0 >= 0 && crop.x1 <= width && crop.y1 <= height);
       assert.ok(crop.x1 > crop.x0 && crop.y1 > crop.y0);
       assert.ok(crop.width <= crop.x1 - crop.x0 && crop.height <= crop.y1 - crop.y0, 'No upscaling');
     }
-    for (let i = 1; i < plan.length; i++) assert.equal(plan[i - 1].y1, plan[i].y0, 'Text bands must not overlap and duplicate words');
-    assert.equal(plan[3].y1, height);
-    assert.ok(plan[3].y0 >= height * .965);
+    assert.equal(plan[0].y1, plan[1].y0);
+    assert.equal(plan[0].x0, 0); assert.equal(plan[0].x1, width);
+    assert.ok(plan[2].y0 <= height * .55 && plan[2].y1 >= height * .965);
+    assert.equal(plan[2].x1, plan[3].x0);
+    assert.equal(plan[4].y1, height);
+    assert.ok(plan[4].y0 >= height * .965);
+    assert.ok(plan[4].x0 >= width * .695);
+  }
+  for (const [width, height] of [[1920, 1080], [2400, 1350]]) {
+    const navigation = contextCropPlan(width, height)[0];
+    assert.ok(navigation.width >= 1450, 'Navigation must retain more horizontal glyph detail than the old broad upper crop');
+    assert.ok(navigation.width * navigation.height <= 200000);
   }
   for (const dimensions of [[0, 240], [320, Infinity], [2401, 100], [2400, 2400], [true, 240]])
     assert.throws(() => contextCropPlan(...dimensions), /invalid-frame/);
+});
+
+test('overlapping crop words are deduplicated and spatially ordered without lowering confidence', async () => {
+  const image = frame(1000, 1000), plan = contextCropPlan(image.width, image.height);
+  const entries = {
+    navigation: [word('CAREER', {x0: 200, y0: 60, x1: 290, y1: 80}), word('PLAY', {x0: 30, y0: 61, x1: 100, y1: 80})],
+    results: [word('TEAM', {x0: 100, y0: 560, x1: 170, y1: 580}, 80)],
+    'left-actions': [word('RANK', {x0: 200, y0: 562, x1: 270, y1: 580}), word('TEAM', {x0: 100, y0: 560, x1: 170, y1: 580}, 95)],
+    'right-actions': [word('CONTINUE', {x0: 500, y0: 800, x1: 650, y1: 820})],
+    footer: [word('BUILD', {x0: 750, y0: 980, x1: 830, y1: 995})],
+  };
+  let index = 0;
+  const reader = createMatchContextReader({workerFactory: () => ({terminate() {}, recognize() {
+    const crop = plan[index++];
+    return nested(entries[crop.id].map(entry => ({...entry, bbox: {
+      x0: (entry.bbox.x0 - crop.x0) * crop.width / (crop.x1 - crop.x0),
+      y0: (entry.bbox.y0 - crop.y0) * crop.height / (crop.y1 - crop.y0),
+      x1: (entry.bbox.x1 - crop.x0) * crop.width / (crop.x1 - crop.x0),
+      y1: (entry.bbox.y1 - crop.y0) * crop.height / (crop.y1 - crop.y0),
+    }})));
+  }})});
+  const result = await reader.read(image);
+  assert.deepEqual(result.words.map(entry => entry.text), ['PLAY', 'CAREER', 'TEAM', 'RANK', 'CONTINUE', 'BUILD']);
+  assert.equal(result.words.find(entry => entry.text === 'TEAM').confidence, 95);
+  reader.terminate();
 });
 
 test('word boxes map from each downsampled crop into full capture pixels and retain reading order', async () => {

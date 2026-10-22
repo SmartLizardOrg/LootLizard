@@ -24,6 +24,71 @@ test('lobby requires top navigation, lower queue action, and a left-side match m
     bbox: {...item.bbox, y0: item.bbox.y0 + (item.bbox.y0 < 100 ? 200 : 0), y1: item.bbox.y1 + (item.bbox.y0 < 100 ? 200 : 0)}})))).context, 'unknown');
 });
 
+test('top-mode lobby layout needs independent lower perspective and queue evidence', () => {
+  // Original synthetic boxes model the observed layout without screenshot text
+  // or player-name fixtures: navigation, a second tab row, then queue selectors.
+  const data = observation([
+    word('PLAY', .04, .03), word('CAREER', .19, .03), word('CUSTOMIZE', .31, .03),
+    word('WORKSHOP', .47, .03), word('STORE', .60, .03),
+    word('NORMAL', .05, .10), word('FPP', .05, .61), word('QUICK', .05, .67),
+    // Keep the action below the separate fallback's 85 threshold, so this test
+    // specifically exercises the unchanged primary perspective/queue path.
+    word('JOIN', .10, .67), word('PLAY', .06, .90, 80),
+  ]);
+  assert.equal(classifyMatchContext(data).context, 'lobby');
+  // A spatially separate top mode plus FPP also supports the same lobby layout.
+  assert.equal(classifyMatchContext({...data, words: data.words.filter(item => !['QUICK', 'JOIN'].includes(item.text))}).context, 'lobby');
+  // Quick Join plus FPP can replace a weak/unreadable second-row mode label.
+  assert.equal(classifyMatchContext({...data, words: data.words.filter(item => item.text !== 'NORMAL')}).context, 'lobby');
+  for (const excluded of [
+    ['FPP'], ['NORMAL', 'QUICK', 'JOIN'], ['PLAY'],
+  ]) assert.equal(classifyMatchContext({...data, words: data.words.filter(item => !excluded.includes(item.text))}).context, 'unknown');
+  // Perspective elsewhere in a screenshot is not the lower-left lobby selector.
+  const moved = {...data, words: data.words.map(item => item.text === 'FPP' ? word('FPP', .8, .5) : item)};
+  assert.equal(classifyMatchContext(moved).context, 'unknown');
+});
+
+function darkNavigationLobby() {
+  return observation([
+    word('CAREER', .20, .03, 33), word('CUSTOMIZE', .35, .03, 33), word('STORE', .65, .03, 31),
+    word('NORMAL', .05, .10, 80), word('PLAY', .06, .90, 96),
+  ]);
+}
+
+test('dark lobby navigation fallback uses exact ordered spatial cues and stronger action/mode confidence', () => {
+  const data = darkNavigationLobby();
+  const result = classifyMatchContext(data);
+  assert.equal(result.context, 'lobby');
+  assert.deepEqual(result.cues, ['aligned-lobby-navigation-layout', 'high-confidence-bottom-left-play', 'high-confidence-top-match-mode']);
+  // FPP and top PLAY are not required in this explicitly separate fallback.
+  assert.equal(data.words.some(item => ['FPP', 'TPP'].includes(item.text)), false);
+  const gate = new NonMatchGate();
+  assert.equal(gate.observe(data, 0).shouldClear, false);
+  assert.equal(gate.observe(data, 3000).shouldClear, false);
+  assert.equal(gate.observe(data, 6000).shouldClear, true);
+});
+
+test('dark navigation fallback rejects weak, incomplete, unordered, clustered and misaligned evidence', () => {
+  const base = darkNavigationLobby();
+  const cases = [
+    {...base, words: base.words.filter(item => item.text !== 'CAREER')},
+    {...base, words: base.words.map(item => item.text === 'CAREER' ? word('CAREER', .70, .03, 33) : item)},
+    {...base, words: base.words.map((item, index) => index < 3 ? word(item.text, .20 + index * .03, .03, item.confidence) : item)},
+    {...base, words: base.words.map((item, index) => index < 3 ? word(item.text, .20 + index * .2, .01 + index * .025, item.confidence) : item)},
+    {...base, words: base.words.map(item => item.text === 'PLAY' ? {...item, confidence: 84} : item)},
+    {...base, words: base.words.map(item => item.text === 'NORMAL' ? {...item, confidence: 74} : item)},
+    {...base, words: base.words.map(item => item.text === 'STORE' ? {...item, text: 'STOREHOUSE'} : item)},
+    {...base, words: base.words.map(item => item.text === 'CAREER' ? {...item, confidence: 29} : item)},
+    {...base, words: base.words.map(item => item.text === 'PLAY' ? word('PLAY', .75, .90, 96) : item)},
+    {...base, words: base.words.map(item => item.text === 'NORMAL' ? word('NORMAL', .05, .40, 80) : item)},
+    {...base, words: base.words.map(item => ['CAREER', 'CUSTOMIZE', 'STORE'].includes(item.text) ? word(item.text, .20, .40, item.confidence) : item)},
+  ];
+  for (const data of cases) assert.equal(classifyMatchContext(data).context, 'unknown');
+  for (const token of ['RESUME', 'INVENTORY', 'SYSTEM MENU']) {
+    assert.equal(classifyMatchContext({...base, words: [...base.words, word(token, .4, .4, 90)]}).context, 'unknown');
+  }
+});
+
 test('results require an upper final-result headline, summary, and lower exit action', () => {
   const data = results();
   assert.equal(classifyMatchContext(data).context, 'results');

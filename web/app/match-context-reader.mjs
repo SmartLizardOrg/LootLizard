@@ -21,13 +21,16 @@ export const OCR_ASSETS = Object.freeze({
 });
 
 const MAX_INPUT_SIDE = 2400, MAX_INPUT_PIXELS = 4000000, MAX_WORDS = 192;
-// Disjoint bands cover result headings/statistics, lobby modes/actions, and the
-// small right footer. The middle-right scene is intentionally not OCR input.
+// Preserve small navigation glyphs with a narrow high-resolution band. Other
+// crops target result headings and left menu/right result actions separately.
+// The small overlap around left-menu headings is deduplicated before returning.
+// Summed output budgets never exceed 770,000 pixels, with no image upscaling.
 const REGIONS = Object.freeze([
-  Object.freeze({id: 'upper', x0: 0, y0: 0, x1: 1, y1: .60, pixels: 360000, side: 1200}),
-  Object.freeze({id: 'mode', x0: 0, y0: .60, x1: .45, y1: .77, pixels: 100000, side: 720}),
-  Object.freeze({id: 'actions', x0: 0, y0: .77, x1: 1, y1: .97, pixels: 160000, side: 1200}),
-  Object.freeze({id: 'footer', x0: .35, y0: .97, x1: 1, y1: 1, pixels: 80000, side: 1600}),
+  Object.freeze({id: 'navigation', x0: 0, y0: 0, x1: 1, y1: .16, pixels: 200000, side: 2000}),
+  Object.freeze({id: 'results', x0: 0, y0: .16, x1: 1, y1: .60, pixels: 250000, side: 1200}),
+  Object.freeze({id: 'left-actions', x0: 0, y0: .55, x1: .4, y1: .97, pixels: 160000, side: 900}),
+  Object.freeze({id: 'right-actions', x0: .4, y0: .65, x1: 1, y1: .97, pixels: 140000, side: 1200}),
+  Object.freeze({id: 'footer', x0: .70, y0: .97, x1: 1, y1: 1, pixels: 20000, side: 1200}),
 ]);
 
 /** Also used inside the OCR worker, so this function has no module dependencies
@@ -125,6 +128,31 @@ function mappedWords(result, crop, frame) {
     } else for (const key of ['blocks', 'paragraphs', 'lines', 'words']) if (node[key]) pending.push(node[key]);
   }
   return words;
+}
+
+function readingOrder(words) {
+  const unique = [];
+  for (const word of words) {
+    const a = word.bbox, key = word.text.toUpperCase();
+    const duplicate = unique.findIndex(other => {
+      if (other.text.toUpperCase() !== key) return false;
+      const b = other.bbox;
+      const intersection = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) *
+        Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+      return intersection / Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0)) >= .65;
+    });
+    if (duplicate === -1) unique.push(word);
+    else if (word.confidence > unique[duplicate].confidence) unique[duplicate] = word;
+  }
+  const lines = [];
+  for (const word of unique.sort((a, b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0)) {
+    const box = word.bbox;
+    const line = lines.find(row => Math.min(row.y1, box.y1) - Math.max(row.y0, box.y0) >=
+      Math.min(row.y1 - row.y0, box.y1 - box.y0) * .5);
+    if (line) {line.words.push(word); line.y0 = Math.min(line.y0, box.y0); line.y1 = Math.max(line.y1, box.y1);}
+    else lines.push({y0: box.y0, y1: box.y1, words: [word]});
+  }
+  return lines.sort((a, b) => a.y0 - b.y0).flatMap(line => line.words.sort((a, b) => a.bbox.x0 - b.bbox.x0));
 }
 
 async function encodeCrop(image) {
@@ -279,7 +307,7 @@ export function createMatchContextReader({workerFactory = createPinnedWorker, in
           words.push(...mappedWords(result, crop, frame));
           if (words.length >= MAX_WORDS) break;
         }
-        return words.slice(0, MAX_WORDS);
+        return readingOrder(words).slice(0, MAX_WORDS);
       })();
       const words = await bounded(work, timeoutMs, 'ocr-read-timeout');
       if (token !== generation) return empty('ocr-cancelled');

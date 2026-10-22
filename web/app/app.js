@@ -225,6 +225,7 @@ async function checkMatchContext(image,ticket){
     const epoch=session.epoch;
     contextReader.prepare().then(ready=>{
       if(generation!==sourceGeneration||epoch!==session.epoch||!matchMemory.current)return;
+      recordPerformance({type:'match-context-startup',epochMs:Date.now(),durationMs:performance.now()-started,status:ready?'ready':'unavailable'});
       contextUnavailable=!ready;render();
     });return;
   }
@@ -334,10 +335,13 @@ async function updateMetadata(){
   try{snapshot=validateSnapshot(await readBoundedJSON(await fetch(FEED_URL,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(8000)})));}
   catch{metadataKey='Using saved coordinates';render();return;}
   if(JSON.stringify(snapshot.maps)===JSON.stringify(maps)){revision=snapshot.revision;metadataKey='GitHub coordinates';render();return;}
-  configuring++;clearGuidance();const previous=maps;maps=snapshot.maps;
+  // Coordinate refreshes are not match boundaries. Keep the verified pixels,
+  // position/circle and their ages while replacing the worker's catalog.
+  configuring++;session.invalidate();nonMatchGate.reset();contextReader.terminate();const previous=maps;maps=snapshot.maps;
   try{
     await request('init',{maps:[...maps,demo.map]});for(const id of references.keys())if(!maps.some(m=>m.id===id))references.delete(id);
     await loadDefaults();await setWorkerReferences();revision=snapshot.revision;
+    if(matchMemory.current){const map=currentMap();if(map)matchMemory.refreshPoints(map);else clearGuidance();}
     if(remember)try{localStorage.setItem(CATALOG,JSON.stringify(snapshot));}catch{}
     metadataKey='GitHub coordinates';
   }catch(error){maps=previous;status('error',errorText(error));}
