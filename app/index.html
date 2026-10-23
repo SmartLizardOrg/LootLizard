@@ -18,7 +18,7 @@
       <span>Loot<span class="brand-accent">Lizard</span></span>
     </a>
     <span class="preview-badge" data-i18n="Web alpha">Web alpha</span>
-    <div class="sharing-actions" aria-label="Game connection" data-i18n-aria-label="Game connection">
+    <div id="auto-controls" class="sharing-actions" aria-label="Game connection" data-i18n-aria-label="Game connection" hidden>
       <span id="capture-status" class="capture-status" role="status" data-i18n="Not connected">Not connected</span>
       <button id="start-sharing" class="button button-primary" type="button">
         <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg>
@@ -35,11 +35,29 @@
       <div class="map-heading">
         <div class="map-title">
           <span class="eyebrow" data-i18n="YOUR MAP">YOUR MAP</span>
-          <h1 id="map-name" data-i18n="Waiting for a map">Waiting for a map</h1>
+          <h1 id="map-name" data-i18n="Your maps">Your maps</h1>
+        </div>
+        <div class="map-heading-actions">
+          <div class="mode-switch" role="group" aria-label="Map mode" data-i18n-aria-label="Map mode">
+            <button id="mode-manual" type="button" aria-pressed="true" data-i18n="Manual maps">Manual maps</button>
+            <button id="mode-auto" type="button" aria-pressed="false" data-i18n="Automatic recognition">Automatic recognition</button>
+          </div>
+          <button id="reset-map" class="button button-outline reset-map" type="button" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg><span data-i18n="Reset map">Reset map</span></button>
         </div>
       </div>
 
-      <div id="map-stage" class="map-stage" data-view="setup">
+      <div id="map-stage" class="map-stage" data-view="picker">
+        <section id="map-picker" class="map-picker" aria-labelledby="map-picker-title">
+          <div class="map-picker-heading">
+            <div>
+              <h2 id="map-picker-title" data-i18n="Choose your map">Choose your map</h2>
+              <p data-i18n="Explore locations without sharing your screen.">Explore locations without sharing your screen.</p>
+            </div>
+            <button id="choose-auto" class="button button-outline picker-auto-action" type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4m0-14v7m-3-4 3-3 3 3"/></svg><span data-i18n="Connect PUBG for automatic recognition">Connect PUBG for automatic recognition</span></button>
+          </div>
+          <p id="map-picker-message" role="status" hidden></p>
+          <div id="map-grid" class="map-grid" aria-label="Available maps" data-i18n-aria-label="Available maps"></div>
+        </section>
         <canvas id="map-canvas" width="1200" height="900" tabindex="0" role="img" aria-label="Your map and marked locations" data-i18n-aria-label="Your map and marked locations" aria-describedby="map-navigation-hint map-keyboard-hint" hidden></canvas>
         <video id="capture-video" muted playsinline autoplay hidden aria-hidden="true"></video>
         <div id="map-navigation" class="map-navigation" role="group" aria-label="Map navigation" data-i18n-aria-label="Map navigation" hidden>
@@ -52,7 +70,7 @@
           <p id="map-navigation-hint" class="map-navigation-hint" data-i18n="Scroll to zoom · drag to move">Scroll to zoom · drag to move</p>
           <span id="map-keyboard-hint" class="visually-hidden" data-i18n="Use arrow keys to move, plus and minus to zoom, and 0 to fit the map.">Use arrow keys to move, plus and minus to zoom, and 0 to fit the map.</span>
         </div>
-        <div id="canvas-empty" class="map-empty">
+        <div id="canvas-empty" class="map-empty" hidden>
           <span class="empty-reticle" aria-hidden="true"><i></i></span>
           <div class="stage-message" role="status" aria-live="polite">
             <h2 id="stage-title" data-i18n="Start PUBG">Start PUBG</h2>
@@ -71,7 +89,7 @@
         </div>
         <div id="retained-banner" class="retained-banner" role="status" hidden data-i18n="Last map · open the map in PUBG to refresh">Last map · open the map in PUBG to refresh</div>
       </div>
-      <div class="map-footer">
+      <div id="auto-map-footer" class="map-footer" hidden>
         <span id="snapshot-age" class="snapshot-age" data-i18n="No map yet">No map yet</span>
         <span class="map-update"><span data-i18n="Map updated">Map updated</span> <span id="last-update">—</span></span>
       </div>
@@ -79,7 +97,7 @@
     </section>
 
     <aside class="sidebar" aria-label="Locations and settings" data-i18n-aria-label="Locations and settings">
-      <section class="status-card" aria-labelledby="recognition-status">
+      <section id="auto-status-card" class="status-card" aria-labelledby="recognition-status" hidden>
         <div class="status-eyebrow"><span id="recognition-indicator" class="status-indicator" aria-hidden="true"></span><span data-i18n="YOUR NEXT STOP">YOUR NEXT STOP</span></div>
         <h2 id="recognition-status" role="status" data-i18n="Getting ready…">Getting ready…</h2>
         <p id="recognition-detail" data-i18n="We’re getting your maps ready. Connect PUBG when you’re ready to play.">We’re getting your maps ready. Connect PUBG when you’re ready to play.</p>
@@ -92,7 +110,7 @@
             <thead><tr><th scope="col" class="rank-column"><span class="visually-hidden" data-i18n="Rank">Rank</span>#</th><th scope="col" data-i18n="Location">Location</th></tr></thead>
             <tbody id="target-list"></tbody>
           </table>
-          <div id="empty-targets" class="empty-targets"><span class="empty-target-line" aria-hidden="true"></span><p data-i18n="Open the map in PUBG to see its locations here.">Open the map in PUBG to see its locations here.</p></div>
+          <div id="empty-targets" class="empty-targets"><span class="empty-target-line" aria-hidden="true"></span><p data-i18n="Choose a map to see its locations.">Choose a map to see its locations.</p></div>
         </div>
         <p class="community-note" data-i18n="Community locations · check them in game">Community locations · check them in game</p>
         <p id="paramo-note" class="community-note paramo-note" data-i18n="Paramo landmarks can change between matches. Check these locations on your current map." hidden>Paramo landmarks can change between matches. Check these locations on your current map.</p>
@@ -116,15 +134,17 @@
         <div class="settings-body">
           <label for="language-select" data-i18n="Language">Language</label>
           <select id="language-select"><option value="en">English</option><option value="hu">Magyar</option></select>
-          <label for="scan-interval" data-i18n="Map check interval">Map check interval</label>
-          <select id="scan-interval"><option value="500" data-i18n="0.5 seconds">0.5 seconds</option><option value="1000" selected data-i18n="1 second">1 second</option><option value="2000" data-i18n="2 seconds">2 seconds</option><option value="5000" data-i18n="5 seconds">5 seconds</option><option value="10000" data-i18n="10 seconds">10 seconds</option></select>
-          <p class="field-help" data-i18n="Shorter intervals refresh sooner. Longer intervals do less work.">Shorter intervals refresh sooner. Longer intervals do less work.</p>
+          <div id="scan-settings" class="scan-settings" hidden>
+            <label for="scan-interval" data-i18n="Map check interval">Map check interval</label>
+            <select id="scan-interval"><option value="500" data-i18n="0.5 seconds">0.5 seconds</option><option value="1000" selected data-i18n="1 second">1 second</option><option value="2000" data-i18n="2 seconds">2 seconds</option><option value="5000" data-i18n="5 seconds">5 seconds</option><option value="10000" data-i18n="10 seconds">10 seconds</option></select>
+            <p class="field-help" data-i18n="Shorter intervals refresh sooner. Longer intervals do less work.">Shorter intervals refresh sooner. Longer intervals do less work.</p>
+          </div>
         </div>
       </details>
     </aside>
   </main>
 
-  <footer class="privacy-bar"><span class="privacy-icon" aria-hidden="true">◇</span><p data-i18n="Your screen stays on this device. Stop sharing whenever you want.">Your screen stays on this device. Stop sharing whenever you want.</p></footer>
+  <footer class="privacy-bar"><span class="privacy-icon" aria-hidden="true">◇</span><p id="privacy-message" data-i18n="Choose a map or connect PUBG for automatic recognition.">Choose a map or connect PUBG for automatic recognition.</p></footer>
   <p class="asset-notice"><span data-i18n="Independent community project.">Independent community project.</span> PUBG, PLAYERUNKNOWN’S BATTLEGROUNDS and all related logos are trademarks of PUBG Corporation or its affiliates. <a href="https://github.com/molnard-labs/LootLizard/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer" data-i18n="Credits & asset terms">Credits &amp; asset terms</a></p>
   <noscript><div class="noscript-note">Please enable JavaScript to use LootLizard. Your screen stays on your device.</div></noscript>
 </body>

@@ -3,7 +3,7 @@ import {validateCatalog,readBoundedJSON} from './metadata.mjs';
 import {createDemo} from './demo.mjs';
 import {applyLanguage,translate} from './i18n.mjs';
 import {displayMediaOptions,readCaptureSettings,applyCaptureRate,boundedFrameSize,setSamplerSize} from './capture.mjs';
-import {loadAutomaticReferences} from './automatic-references.mjs';
+import {AUTOMATIC_REFERENCES,fetchReference,loadAutomaticReferences} from './automatic-references.mjs';
 import {browserPreferenceStorage,loadPreferences,savePreferences,SCAN_INTERVALS,nextScanDelay,captureRateForInterval} from './preferences.mjs';
 import {mapViewport,sourcePreviewSize} from './map-view.mjs';
 import {MatchMapMemory} from './match-memory.mjs';
@@ -11,6 +11,7 @@ import {NonMatchGate,createFooterDescriptor,matchFooterDescriptor} from './match
 import {createMatchContextReader} from './match-context-reader.mjs';
 import {locationKind,locationLabel,locationIconSVG,presentLocationKinds} from './location-markers.mjs';
 import {MapCanvas} from './map-canvas.mjs';
+import {ManualMapSelection} from './manual-map.mjs';
 
 const $=id=>document.getElementById(id);
 const testing=['127.0.0.1','localhost'].includes(location.hostname)&&new URLSearchParams(location.search).get('test')==='1';
@@ -21,42 +22,60 @@ const canvas=$('map-canvas'),video=$('capture-video');
 const mapCanvas=new MapCanvas({canvas,stage:$('map-stage'),zoomIn:$('map-zoom-in'),zoomOut:$('map-zoom-out'),fit:$('map-fit'),zoomLevel:$('map-zoom-level')});
 const sourcePreview=$('source-preview'),previewContext=sourcePreview.getContext('2d');
 const sampler=document.createElement('canvas'),sample=sampler.getContext('2d',{willReadFrequently:true});
-const worker=new Worker(new URL('./vision-worker.js',import.meta.url),{type:'module'});
+let worker=null,mode='manual',modeGeneration=0,automaticReady=null,automaticAbort=null;
 let nextId=0,queue=Promise.resolve(),pending=new Map(),workerFailed=false;
 let maps=[],engine=null,prepared=false,frame=null,stream=null,timer=null,scanning=false;
 let phase='loading',detail='',sourceGeneration=0,connecting=false,hasSourcePreview=false,sourceRecognized=false;
 let footerDescriptor=null,lastContextCheck=0,waitingForMatch=false,dimensions='',demoMode=false;
 let drawnFrame=null,drawnResult=null,drawnLanguage='',lastScanAt=null,diagnosticMode='full';
+let catalogFailed=false;
 const preferenceStorage=browserPreferenceStorage(window);
 let {language,interval}=loadPreferences(preferenceStorage);
 let captureFps=captureRateForInterval(interval),lastCaptureSettings={},lastConstraintResult=null,rateQueue=Promise.resolve();
 const performanceEvents=[],t=key=>translate(key,language),put=(id,value)=>{$(id).textContent=String(value);};
 const allMaps=()=>demo?[...maps,demo.map]:maps;
+const manualSelection=new ManualMapSelection({load:async(map,signal)=>{
+  const reference=AUTOMATIC_REFERENCES.find(record=>record.mapId===map.id);
+  return decodeImage(await fetchReference(reference,{signal}));
+},onChange:()=>render()});
 function recordPerformance(event){performanceEvents.push(event);if(performanceEvents.length>128)performanceEvents.shift();}
 function performanceSnapshot(){return{requestedFrameRate:captureFps,settings:stream?readCaptureSettings(stream.getVideoTracks()[0]):lastCaptureSettings,mode:diagnosticMode,active:!!stream,events:performanceEvents.slice()};}
 function request(type,payload={},transfer=[]){
+  const activeWorker=worker;
   const run=()=>new Promise((resolve,reject)=>{
-    if(workerFailed){reject(Error('Recognition unavailable'));return;}
+    if(!activeWorker||worker!==activeWorker||mode!=='auto'||workerFailed){reject(Error('Recognition unavailable'));return;}
     const id=++nextId,timeout=setTimeout(()=>{
-      pending.delete(id);workerFailed=true;worker.terminate();
+      if(worker!==activeWorker)return;
+      pending.delete(id);workerFailed=true;activeWorker.terminate();
       for(const item of pending.values()){clearTimeout(item.timeout);item.reject(Error('Recognition unavailable'));}
       pending.clear();stop();status('error','LootLizard stopped responding. Refresh this page to try again.');reject(Error('Recognition unavailable'));
     },type==='init'?240000:60000);
-    pending.set(id,{resolve,reject,timeout});worker.postMessage({id,type,...payload},transfer);
+    pending.set(id,{resolve,reject,timeout});activeWorker.postMessage({id,type,...payload},transfer);
   });
   const result=queue.then(run);queue=result.catch(()=>{});return result;
 }
-worker.onmessage=({data})=>{
+function createWorker(){
+  const activeWorker=new Worker(new URL('./vision-worker.js',import.meta.url),{type:'module'});worker=activeWorker;
+  activeWorker.onmessage=({data})=>{
+  if(worker!==activeWorker)return;
   if(data.type==='progress')return;
   const item=pending.get(data.id);if(!item)return;pending.delete(data.id);clearTimeout(item.timeout);
   data.type==='error'?item.reject(Error(data.reason)):item.resolve(data);
-};
-worker.onerror=()=>{
+  };
+  activeWorker.onerror=()=>{
+  if(worker!==activeWorker||mode!=='auto')return;
   workerFailed=true;for(const item of pending.values()){clearTimeout(item.timeout);item.reject(Error('Recognition unavailable'));}pending.clear();
   stop();status('error','LootLizard stopped responding. Refresh this page to try again.');
-};
-function displayResult(){return matchMemory.current?.result||null;}
-function currentMap(){return allMaps().find(map=>map.id===displayResult()?.registration?.mapId)||null;}
+  };
+}
+function releaseEngine(){
+  automaticAbort?.abort();automaticAbort=null;worker?.terminate();worker=null;
+  for(const item of pending.values()){clearTimeout(item.timeout);item.reject(Error('Recognition cancelled'));}
+  pending.clear();queue=Promise.resolve();automaticReady=null;references.clear();prepared=false;engine=null;workerFailed=false;
+}
+function displaySnapshot(){return mode==='manual'?manualSelection.current:matchMemory.current;}
+function displayResult(){return displaySnapshot()?.result||null;}
+function currentMap(){return mode==='manual'?manualSelection.current?.map||null:allMaps().find(map=>map.id===displayResult()?.registration?.mapId)||null;}
 function targets(){
   const map=currentMap(),result=displayResult();if(!map)return[];
   const visible=new Map((result.points||[]).map(point=>[point.id,point]));
@@ -70,6 +89,20 @@ function updateAge(){
   put('snapshot-age',snapshot?`${Math.max(0,Math.floor((Date.now()-snapshot.mapUpdatedAt)/1000))} s ${t('ago')}`:t('No map yet'));
 }
 function renderStage(map){
+  const manual=mode==='manual';
+  $('auto-controls').hidden=manual;$('auto-status-card').hidden=manual;$('auto-map-footer').hidden=manual;$('scan-settings').hidden=manual;
+  $('mode-manual').setAttribute('aria-pressed',String(manual));$('mode-auto').setAttribute('aria-pressed',String(!manual));
+  $('reset-map').hidden=!manual||(!manualSelection.current&&!manualSelection.loadingMapId);
+  put('privacy-message',t(manual?'Choose a map or connect PUBG for automatic recognition.':'Your screen stays on this device. Stop sharing whenever you want.'));
+  $('map-picker').hidden=!manual||!!map;
+  if(manual){
+    const view=map?'map':'picker';$('map-stage').dataset.view=view;canvas.hidden=!map;
+    $('canvas-empty').hidden=true;$('map-navigation').hidden=!map;$('retained-banner').hidden=true;$('source-panel').hidden=true;
+    const message=catalogFailed?'Could not prepare LootLizard. Refresh this page to try again.':manualSelection.phase==='error'?'Map could not be opened. Choose another map or try again.':manualSelection.phase==='loading'?'Loading map…':'';
+    put('map-picker-message',t(message));$('map-picker-message').hidden=!message;
+    for(const tile of $('map-grid').children)tile.setAttribute('aria-busy',String(tile.dataset.mapId===manualSelection.loadingMapId));
+    return;
+  }
   const connected=!!stream,snapshot=matchMemory.current;
   const viewport=snapshot?mapViewport(snapshot.result.registration.matrix,snapshot.frame.width,snapshot.frame.height):null;
   const view=map&&viewport?'map':phase==='error'?'error':connecting?'connecting':connected?'waiting':'setup';
@@ -95,7 +128,7 @@ function render(){
   put('recognition-status',t(retained?'Map saved':names[phase]||phase));
   put('recognition-detail',t(retained?'Your map stays here while you play. Open it in game to refresh.':detail||'Connect PUBG, then open the full map in game.'));
   $('recognition-indicator').className=`status-indicator ${map?'is-ready':phase==='error'?'is-error':phase==='scanning'?'is-warning':''}`;
-  put('map-name',map?.name||t('Waiting for a map'));put('room-count',points.length);
+  put('map-name',map?.name||t(mode==='manual'?'Your maps':'Waiting for a map'));put('room-count',points.length);
   put('capture-status',t(stream?'Connected':'Not sharing'));
   put('last-update',matchMemory.current?new Date(matchMemory.current.mapUpdatedAt).toLocaleTimeString(language==='hu'?'hu-HU':'en-GB'):'—');updateAge();
   $('start-sharing').disabled=!prepared||workerFailed||connecting||!!stream;
@@ -107,7 +140,7 @@ function render(){
     const item=document.createElement('li'),icon=document.createElement('span'),label=document.createElement('span');
     icon.className='location-icon';icon.innerHTML=locationIconSVG(kind);label.textContent=t(locationLabel(kind));item.append(icon,label);return item;
   });$('location-legend').replaceChildren(...legend);$('location-legend').hidden=!legend.length;
-  const empty=$('empty-targets').querySelector('p');if(empty)empty.textContent=t(map?'No locations listed for this map yet.':'Locations appear here when your map is recognized.');
+  const empty=$('empty-targets').querySelector('p');if(empty)empty.textContent=t(map?'No locations listed for this map yet.':mode==='manual'?'Choose a map to see its locations.':'Locations appear here when your map is recognized.');
   const rows=points.map((point,index)=>{
     const row=document.createElement('tr'),rank=document.createElement('td'),cell=document.createElement('td'),icon=document.createElement('span'),name=document.createElement('span');
     rank.textContent=String(index+1);icon.className='location-icon';icon.innerHTML=locationIconSVG(locationKind(point));icon.setAttribute('role','img');icon.setAttribute('aria-label',t(locationLabel(locationKind(point))));
@@ -115,7 +148,7 @@ function render(){
   });$('target-list').replaceChildren(...rows);draw(points);
 }
 function draw(points=targets(),force=false){
-  const overlay=displayResult(),mapFrame=matchMemory.current?.frame;
+  const overlay=displayResult(),mapFrame=displaySnapshot()?.frame;
   if(!force&&drawnFrame===mapFrame&&drawnResult===overlay&&drawnLanguage===language)return;
   drawnFrame=mapFrame;drawnResult=overlay;drawnLanguage=language;
   const viewport=mapFrame&&overlay?mapViewport(overlay.registration.matrix,mapFrame.width,mapFrame.height):null;
@@ -139,7 +172,7 @@ function stop(){
   $('source-details').open=true;previewContext.clearRect(0,0,sourcePreview.width,sourcePreview.height);
   dimensions='';phase='stopped';detail='';render();
 }
-function schedule(){clearTimeout(timer);timer=null;if(session.active&&session.source==='screen'&&!scanning)timer=setTimeout(scanScreen,nextScanDelay(interval,lastScanAt,performance.now()));}
+function schedule(){clearTimeout(timer);timer=null;if(mode==='auto'&&session.active&&session.source==='screen'&&!scanning)timer=setTimeout(scanScreen,nextScanDelay(interval,lastScanAt,performance.now()));}
 function capture(){
   if(!video.videoWidth||!video.videoHeight||video.readyState<2)return null;
   const native=`${video.videoWidth}x${video.videoHeight}`;
@@ -171,7 +204,7 @@ async function analyze(image,{owned=false,captureMetrics={}}={}){
     stage=performance.now();status(result.registration?'recognized':'unknown',result.registration?'Small markers show the listed locations.':'Open the full map in game.');
     if(!result.registration)await checkMatchContext(frame,ticket);
     Object.assign(metrics,{path:'worker',python:result.timings,resultRenderMs:performance.now()-stage,totalMs:performance.now()-started});recordPerformance(metrics);return result;
-  }catch(error){if(session.accepts(ticket)){session.accept(ticket,null);status('error','Could not read the map. Keep it open and try again.');}throw error;}
+  }catch(error){if(session.accepts(ticket)){session.accept(ticket,null);status('error','Could not read the map. Keep it open and try again.');throw error;}return null;}
 }
 async function checkMatchContext(image,ticket){
   if(session.source!=='screen'||demoMode||!matchMemory.current)return;
@@ -190,7 +223,7 @@ async function checkMatchContext(image,ticket){
   if(evidence.shouldClear)resetMatch();
 }
 async function scanScreen(){
-  if(!session.active||session.source!=='screen'||scanning)return;
+  if(mode!=='auto'||!session.active||session.source!=='screen'||scanning)return;
   const track=stream?.getVideoTracks()[0];if(!track||track.readyState!=='live'){stop();return;}
   lastScanAt=performance.now();
   if(track.muted){session.invalidate();status('unknown','Sharing is paused.');schedule();return;}
@@ -209,7 +242,7 @@ async function setWorkerReferences(useDemo=demoMode){
   return request('references',{references:payload},transfer);
 }
 async function attachStream(media,token,useDemo=false){
-  if(token!==sourceGeneration){media.getTracks().forEach(track=>track.stop());return;}
+  if(mode!=='auto'||token!==sourceGeneration){media.getTracks().forEach(track=>track.stop());return;}
   stream=media;video.srcObject=media;const track=media.getVideoTracks()[0];if(!track){stop();throw Error('No video track selected');}
   lastConstraintResult=null;lastCaptureSettings=readCaptureSettings(track);recordPerformance({type:'capture-start',epochMs:Date.now(),requestedFrameRate:captureFps,settings:lastCaptureSettings});
   track.addEventListener('ended',()=>{if(stream===media)stop();});
@@ -221,6 +254,7 @@ async function attachStream(media,token,useDemo=false){
   }catch(error){if(stream===media)stop();throw error;}
 }
 function startSharing(){
+  if(mode!=='auto'||!prepared||workerFailed)return;
   stop();const token=sourceGeneration;
   if(!navigator.mediaDevices?.getDisplayMedia){status('error','Screen sharing needs a supported desktop browser.');return;}
   connecting=true;let picked;
@@ -246,33 +280,66 @@ function changeInterval(value){
     lastConstraintResult=result;lastCaptureSettings=result.settings;recordPerformance({type:'capture-rate',epochMs:Date.now(),requestedFrameRate:requestedFps,result});
   });
 }
+function renderMapPicker(){
+  $('map-grid').replaceChildren(...maps.flatMap(map=>{
+    const reference=AUTOMATIC_REFERENCES.find(record=>record.mapId===map.id);if(!reference)return[];
+    const tile=document.createElement('button'),image=document.createElement('img'),name=document.createElement('span'),count=document.createElement('span');
+    tile.type='button';tile.className='map-tile';tile.dataset.mapId=map.id;
+    image.className='map-tile-image';image.src=reference.url;image.alt='';image.loading='lazy';image.decoding='async';image.width=reference.width;image.height=reference.height;
+    name.className='map-tile-name';name.textContent=map.name;count.className='map-tile-count';count.textContent=`${map.points.length} ${t('locations')}`;
+    tile.append(image,name,count);tile.addEventListener('click',()=>{if(mode==='manual')manualSelection.select(map);});return[tile];
+  }));
+}
+function selectMode(next){
+  if(next!=='manual'&&next!=='auto')return Promise.resolve(null);
+  if(mode===next)return next==='auto'?ensureAutomaticEngine():Promise.resolve(null);
+  modeGeneration++;stop();releaseEngine();mode=next;manualSelection.reset();phase=next==='auto'?'loading':'idle';detail='';render();
+  return next==='auto'?ensureAutomaticEngine():Promise.resolve(null);
+}
+function ensureAutomaticEngine(){
+  if(mode!=='auto')return Promise.resolve(null);
+  if(automaticReady)return automaticReady;
+  const generation=modeGeneration,abort=new AbortController();automaticAbort=abort;
+  const active=()=>mode==='auto'&&generation===modeGeneration&&!abort.signal.aborted;
+  automaticReady=(async()=>{
+    await catalogReady;if(!active())return null;
+    createWorker();const response=await request('init',{maps:allMaps()});if(!active())return null;
+    engine=response.capabilities;
+    const result=await loadAutomaticReferences({knownMapIds:maps.map(map=>map.id),existingMapIds:[],decode:decodeImage,signal:abort.signal});
+    if(!active())return null;
+    for(const record of result.loaded)references.set(record.mapId,{image:record.image});
+    if(result.failures.length||references.size!==maps.length)throw Error('Incomplete bundled maps');
+    await setWorkerReferences(false);if(!active())return null;
+    prepared=true;status('idle','Connect PUBG, then open the full map in game.');return response;
+  })().catch(error=>{if(active()){status('error','Could not prepare LootLizard. Refresh this page to try again.');throw error;}return null;});
+  automaticReady.catch(()=>{});return automaticReady;
+}
 $('start-sharing').addEventListener('click',startSharing);$('connect-source').addEventListener('click',startSharing);$('stop-sharing').addEventListener('click',stop);$('reset-match').addEventListener('click',resetMatch);
+$('mode-manual').addEventListener('click',()=>selectMode('manual'));$('mode-auto').addEventListener('click',()=>selectMode('auto'));$('choose-auto').addEventListener('click',()=>selectMode('auto'));
+$('reset-map').addEventListener('click',()=>{if(mode==='manual'){manualSelection.reset();$('map-grid').querySelector('button')?.focus();}});
 $('source-details').addEventListener('toggle',()=>{if($('source-details').open&&stream)updatePreview(frame);});
 $('language-select').value=language;$('scan-interval').value=String(interval);
-$('language-select').addEventListener('change',()=>{language=$('language-select').value==='hu'?'hu':'en';applyLanguage(language);savePreferences(preferenceStorage,{language,interval});render();});
+$('language-select').addEventListener('change',()=>{language=$('language-select').value==='hu'?'hu':'en';applyLanguage(language);savePreferences(preferenceStorage,{language,interval});renderMapPicker();render();});
 $('scan-interval').addEventListener('change',()=>changeInterval(Number($('scan-interval').value)));
-window.addEventListener('pagehide',stop);new ResizeObserver(()=>draw(undefined,true)).observe($('map-stage'));setInterval(updateAge,1000);
+window.addEventListener('pagehide',()=>{modeGeneration++;stop();releaseEngine();manualSelection.reset();});new ResizeObserver(()=>draw(undefined,true)).observe($('map-stage'));setInterval(()=>{if(mode==='auto')updateAge();},1000);
+window.addEventListener('pageshow',event=>{if(event.persisted&&mode==='auto'){status('loading');ensureAutomaticEngine();}});
 
-const ready=(async()=>{
+const catalogReady=(async()=>{
   applyLanguage(language);render();
   const catalog=validateCatalog(await readBoundedJSON(await fetch('../data/maps.json')));maps=catalog.maps;
-  const response=await request('init',{maps:allMaps()});engine=response.capabilities;
-  const result=await loadAutomaticReferences({knownMapIds:maps.map(map=>map.id),existingMapIds:[],decode:decodeImage});
-  for(const record of result.loaded)references.set(record.mapId,{image:record.image});
-  if(result.failures.length||references.size!==maps.length)throw Error('Incomplete bundled maps');
-  await setWorkerReferences(false);prepared=true;status('idle','Connect PUBG, then open the full map in game.');return response;
+  renderMapPicker();render();return catalog;
 })();
-ready.catch(()=>status('error','Could not prepare LootLizard. Refresh this page to try again.'));
+catalogReady.catch(()=>{catalogFailed=true;status('error','Could not prepare LootLizard. Refresh this page to try again.');});
 
 if(testing){
   async function analyzeImageData(image,{source='image'}={}){
-    stop();const token=sourceGeneration;await ready;if(token!==sourceGeneration)return null;demoMode=source==='demo';
+    if(mode!=='auto')selectMode('auto');stop();const token=sourceGeneration;await ensureAutomaticEngine();if(token!==sourceGeneration||mode!=='auto')return null;demoMode=source==='demo';
     await setWorkerReferences(demoMode);if(token!==sourceGeneration)return null;session.begin(source);return analyze(image);
   }
-  window.lootLizard=Object.freeze({ready,demo:()=>analyzeImageData(demo.mapFrame,{source:'demo'}),analyzeImageData,stop,
-    getState:()=>({...session.snapshot(),phase,mapId:currentMap()?.id||null,points:targets(),position:null,zone:null,mapUpdatedAt:matchMemory.current?.mapUpdatedAt||null,positionUpdatedAt:null,zoneUpdatedAt:null,referenceCount:references.size,interval,engine}),
+  window.lootLizard=Object.freeze({get ready(){return mode==='auto'?ensureAutomaticEngine():catalogReady;},demo:()=>analyzeImageData(demo.mapFrame,{source:'demo'}),analyzeImageData,stop,
+    getState:()=>({...session.snapshot(),mode,manualMapId:manualSelection.current?.map.id||null,workerActive:!!worker,phase:mode==='manual'?manualSelection.phase:phase,mapId:currentMap()?.id||null,points:targets(),position:null,zone:null,mapUpdatedAt:mode==='auto'?matchMemory.current?.mapUpdatedAt||null:null,positionUpdatedAt:null,zoneUpdatedAt:null,referenceCount:references.size,interval,engine}),
     getPerformance:performanceSnapshot,
     configureTestProcessing:mode=>{if(!['full','capture-only','preview-only'].includes(mode))throw Error('Invalid mode');diagnosticMode=mode;clearGuidance();status('idle');schedule();},
-    startTestStream:async(media,{demo:synthetic=false,withoutReferences=false}={})=>{stop();const token=sourceGeneration;await ready;if(withoutReferences){references.clear();await request('references',{references:[]});}await attachStream(media,token,synthetic);},
+    startTestStream:async(media,{demo:synthetic=false,withoutReferences=false}={})=>{if(mode!=='auto')selectMode('auto');stop();const token=sourceGeneration;await ensureAutomaticEngine();if(token!==sourceGeneration||mode!=='auto'){media.getTracks().forEach(track=>track.stop());return;}if(withoutReferences){references.clear();await request('references',{references:[]});}await attachStream(media,token,synthetic);},
   });
 }
