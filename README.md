@@ -1,8 +1,8 @@
 # LootLizard
 
-A browser companion that keeps the PUBG map and community room markers on your
-second monitor. Open the website, connect the game window, then return to PUBG.
-Map recognition and point projection run on your computer.
+A browser companion that keeps the PUBG map and community location markers on
+your second monitor. Choose a map yourself, or connect the game window for
+automatic map recognition. Both modes run on your computer.
 
 **Web alpha · 0.9.0.** English by default; Hungarian is available. No desktop
 installation, account, API key, manual reference download or global hotkey.
@@ -13,8 +13,15 @@ installation, account, API key, manual reference download or global hotkey.
 
 ## Use the companion
 
-1. Open the site in desktop Chrome or Edge on your second monitor. Wait for the
-   local recognition engine and bundled map images to load.
+The page starts in **Manual maps** mode. Choose one of the eleven map-preview
+tiles to see the complete bundled map with its available locations. No screen
+sharing permission, capture stream or recognition engine is needed. Use
+**Reset map** to return to the tiles and choose your next map.
+
+For **Automatic recognition**:
+
+1. Choose **Automatic recognition** in desktop Chrome or Edge on your second monitor.
+   This prepares the local recognition engine and bundled map references.
 2. Select **Connect PUBG window**, choose the game window or its monitor in the
    browser picker, then return focus to PUBG.
 3. Open the complete in-game map. LootLizard identifies it automatically and shows
@@ -27,7 +34,12 @@ installation, account, API key, manual reference download or global hotkey.
 5. The prominent **Reset match** button clears the held map while keeping sharing active. **Stop**,
    browser Stop sharing, or closing the page ends capture and clears the view.
 
-Gameplay appears only in a small sampled source preview. The main view contains
+Only one mode is active at a time. Switching to Manual map stops sharing and
+clears the previous automatic result. Switching to Auto recognition clears the
+manual selection. Sharing, match reset, recognition status and scan settings
+appear only in automatic mode; language remains available in both modes.
+
+In automatic mode, gameplay appears only in a small sampled source preview. The main view contains
 recognized map pixels, never old geometry placed over a newer gameplay frame.
 Positive English lobby/results evidence must repeat before automatic reset.
 Other languages and unfamiliar menus can remain uncertain; use **Reset match**
@@ -36,7 +48,7 @@ from briefly switching to the desktop.
 
 ## Inspect the map
 
-Scroll over the recognized map to zoom toward the pointer, from **100% (fit)** to
+Scroll over the selected or recognized map to zoom toward the pointer, from **100% (fit)** to
 **800% (8×)**. Drag the map to move around a crowded area, such as Deston. The
 **+** and **−** buttons zoom around the centre; **Fit map** shows the complete map
 again. Focus the map with Tab or click it to use arrow keys for movement,
@@ -44,10 +56,11 @@ again. Focus the map with Tab or click it to use arrow keys for movement,
 
 Location icons keep their screen size while the map enlarges, and their small
 centre points continue to mark the exact coordinates. New captures of the same
-map preserve your zoom and focus. A new match, **Reset match** or stopping sharing
-restores the fitted view. Moving or zooming redraws the saved map without an
-extra screenshot or recognition pass; normal map checks continue independently.
-Zoom cannot reveal image detail beyond the captured map's resolution.
+map preserve your zoom and focus. Choosing another map, **Reset map**, **Reset match**
+or stopping sharing restores the fitted view. Moving or zooming redraws the saved
+map without an extra screenshot or recognition pass; automatic map checks continue
+independently when enabled. Zoom cannot reveal image detail beyond the source
+map's resolution.
 
 ## Bundled maps and coordinates
 
@@ -92,13 +105,13 @@ map and in the list. Small center points mark the coordinates; offset badges use
 short leader lines. In crowded areas, badges move into free space or leave the
 anchor visible without a number. The legend shows only types present on the map.
 
-The current match stays associated with its first verified map until a confirmed
+In automatic mode, the current match stays associated with its first verified map until a confirmed
 match end, **Reset match**, or sharing interruption. Subsequent scans check that
 map rather than repeatedly comparing all eleven references. Initial recognition
 searches the complete library. **Reset match** before a new match if its transition
 was missed, including when the next match uses the same map.
 
-The player app performs map registration and room projection only. Player-position,
+Automatic recognition performs map registration and room projection only. Player-position,
 view-cone and safe-circle detection do not run in this interface. Changed artwork,
 extreme zoom and occlusion can prevent map recognition.
 
@@ -110,7 +123,7 @@ source. Other platforms require validation. This does not make the PUBG game
 itself available on another OS; console/mobile image capture is not integrated.
 Keep LootLizard visible on the second monitor because hidden tabs can be throttled.
 
-Choose a map-check interval of **0.5, 1, 2, 5 or 10 seconds**; **1 second** is the
+In automatic mode, choose a map-check interval of **0.5, 1, 2, 5 or 10 seconds**; **1 second** is the
 default. Language and interval are saved in this browser. Capture requests follow
 that selection: `FPS = 1000 / intervalMs`, with at most 2400 pixels per side/four
 million sampled pixels. Recognition is serial and scheduled start-to-start:
@@ -129,9 +142,11 @@ measurement. Functional tests do not establish an insignificant performance cost
 There is no image-upload endpoint, account, telemetry or AI service. Screen pixels,
 map results and local OCR remain in memory. Preferences can use localStorage;
 there is no custom-reference import/storage flow or runtime coordinate-feed cache.
-The website serves its app, map catalog and reference images. Initial runtime and
-optional English OCR packages are fetched from pinned public CDN URLs and execute
-locally; those hosts see normal asset requests, never recognition screenshots.
+The website serves its app, map catalog and reference images. Manual mode loads
+the map images from this origin without starting the CV or OCR workers. Selecting
+automatic mode loads the pinned recognition runtime; optional English OCR packages
+are fetched when needed. These packages execute locally, and their public CDN
+hosts see normal asset requests, never recognition screenshots.
 
 A learned bottom-right footer provides positive continued-play evidence and can
 skip OCR. Its changing suffix is ignored. A missing/changed footer or missing map

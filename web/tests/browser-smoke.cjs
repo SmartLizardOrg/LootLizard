@@ -130,6 +130,25 @@ async function main() {
   assert.ok(up, 'Loopback server did not become ready');
   browser = await chromium.launch({headless: true});
   context = await browser.newContext({viewport: {width: 1440, height: 1000}});
+  await context.addInitScript(() => {
+    const originalWorker = window.Worker;
+    const probe = {workers: [], displayMediaCalls: 0};
+    window.__modeProbe = probe;
+    window.Worker = new Proxy(originalWorker, {
+      construct(target, args) {
+        probe.workers.push(String(args[0]));
+        return Reflect.construct(target, args);
+      },
+    });
+    const media = navigator.mediaDevices;
+    if (media?.getDisplayMedia) {
+      const originalGetDisplayMedia = media.getDisplayMedia;
+      Object.defineProperty(media, 'getDisplayMedia', {configurable: true, value: function() {
+        probe.displayMediaCalls++;
+        return Reflect.apply(originalGetDisplayMedia, this, arguments);
+      }});
+    }
+  });
   await context.tracing.start({screenshots: true, snapshots: true, sources: true});
   page = await context.newPage();
   page.setDefaultTimeout(30_000);
@@ -138,6 +157,76 @@ async function main() {
   context.on('request', request => report.requests.push({method: request.method(), url: request.url()}));
   await page.goto(base + '/app/?test=1', {waitUntil: 'domcontentloaded'});
   await page.waitForFunction(() => Boolean(window.lootLizard), null, {timeout: 30_000});
+  await page.evaluate(async () => window.lootLizard.ready);
+  const modeControls = ['#auto-controls', '#auto-status-card', '#auto-map-footer', '#scan-settings'];
+  const assertManualControls = async () => {
+    assert.equal(await page.locator('#mode-manual').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#mode-auto').getAttribute('aria-pressed'), 'false');
+    for (const selector of modeControls) {
+      assert.equal(await page.locator(selector).evaluate(node => node.hidden), true, `${selector} must be hidden in manual mode`);
+      assert.equal(await page.locator(selector).isVisible(), false);
+    }
+    const state = await page.evaluate(() => window.lootLizard.getState());
+    assert.equal(state.mode, 'manual');
+    assert.equal(state.sharing, false);
+    assert.equal(state.workerActive, false);
+  };
+  const assertManualWithoutEngine = async () => {
+    assert.deepEqual(await page.evaluate(() => window.__modeProbe), {workers: [], displayMediaCalls: 0});
+    assert.equal((await page.evaluate(() => window.lootLizard.getPerformance())).events.filter(event => event.type === 'scan').length, 0);
+    assert.ok(report.requests.every(request => !/vision-worker|pyodide|opencv|tesseract|traineddata/i.test(request.url)),
+      'Manual map browsing must not request recognition/OCR workers or runtime assets');
+  };
+  await assertManualControls();
+  assert.equal(await page.locator('#map-picker').isVisible(), true);
+  const manualTiles = await page.locator('#map-grid button[data-map-id]').evaluateAll(buttons => buttons.map(button => ({
+    id: button.dataset.mapId, image: button.querySelector('img')?.getAttribute('src'), label: button.textContent.trim(),
+  })));
+  assert.equal(manualTiles.length, 11, 'Every bundled map needs a manual preview tile');
+  assert.equal(new Set(manualTiles.map(tile => tile.id)).size, 11);
+  assert.ok(manualTiles.every(tile => tile.label && tile.image && new URL(tile.image, base + '/app/').hostname === '127.0.0.1'));
+  await assertManualWithoutEngine();
+  await page.screenshot({path: path.join(evidence, 'manual-map-picker.png'), fullPage: true});
+  report.manualTiles = manualTiles;
+  report.steps.push('default-manual-picker-offers-eleven-local-map-previews-without-capture-or-cv');
+
+  await page.locator('#map-grid button[data-map-id="erangel"]').click();
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'erangel');
+  const manualErangel = await readMapView();
+  assertCroppedMap(manualErangel);
+  assert.equal(manualErangel.targetCount, 22);
+  assert.equal(await page.locator('#map-picker').isVisible(), false);
+  assert.equal(await page.locator('#reset-map').isVisible(), true);
+  await assertManualControls();
+  await page.locator('#map-zoom-in').click();
+  await page.locator('#map-canvas').press('ArrowRight');
+  await nextPaint();
+  const manualZoomed = await readMapView();
+  assert.ok(parseInt(manualZoomed.navigation.zoom) > 100);
+  assert.notEqual(manualZoomed.main.pixelHash, manualErangel.main.pixelHash);
+  await assertManualWithoutEngine();
+  await page.screenshot({path: path.join(evidence, 'manual-erangel-zoom.png'), fullPage: true});
+  report.manualSelectedMap = {view: manualErangel, zoomed: manualZoomed.navigation};
+  report.steps.push('manual-map-shows-static-locations-and-navigates-without-permission-worker-or-scans');
+
+  await page.locator('#reset-map').click();
+  await assertManualControls();
+  assert.equal(await page.locator('#map-picker').isVisible(), true);
+  assert.equal((await readMapView()).main.visible, false);
+  assert.equal(await page.locator('#target-list tr').count(), 0);
+  assert.equal(await page.locator('#reset-map').isVisible(), false);
+  assert.equal((await page.evaluate(() => window.lootLizard.getState())).mapId, null);
+  await page.locator('#map-grid button[data-map-id="sanhok"]').click();
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'sanhok');
+  assertCroppedMap(await readMapView());
+  assert.equal(await page.locator('#target-list tr').count(), 0);
+  assert.equal(await page.locator('#empty-targets').isVisible(), true);
+  assert.equal(await page.locator('#map-zoom-level').textContent(), '100%');
+  await assertManualWithoutEngine();
+  report.steps.push('manual-reset-returns-to-picker-and-maps-with-no-listed-locations-still-render');
+
+  await page.locator('#reset-map').click();
+  await page.locator('#choose-auto').click();
   page.setDefaultTimeout(240_000);
   const engine = await page.evaluate(async () => window.lootLizard.ready);
   page.setDefaultTimeout(30_000);
@@ -150,6 +239,15 @@ async function main() {
   assert.equal(report.defaultReferences, 11, 'All ten battle-royale maps and Training must load from bundled assets');
   assert.equal(capabilities.maxReferences, 32);
   report.steps.push('eleven-bundled-map-references-load-without-external-image-downloads');
+  assert.equal(await page.locator('#mode-auto').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('#mode-manual').getAttribute('aria-pressed'), 'false');
+  assert.equal((await page.evaluate(() => window.lootLizard.getState())).mode, 'auto');
+  assert.equal((await page.evaluate(() => window.lootLizard.getState())).mapId, null, 'Automatic mode must clear the manual map');
+  assert.equal(await page.locator('#map-picker').isVisible(), false);
+  assert.equal(await page.locator('#reset-map').isVisible(), false);
+  for (const selector of modeControls) assert.equal(await page.locator(selector).evaluate(node => node.hidden), false,
+    `${selector} must be enabled for automatic mode, even inside closed Settings`);
+  report.steps.push('explicit-auto-mode-loads-real-engine-and-isolates-automatic-controls');
   assert.equal(await page.locator('#scan-interval').inputValue(), '1000');
   assert.equal((await page.evaluate(() => window.lootLizard.getState())).interval, 1000);
   const intervals = await page.locator('#scan-interval option').evaluateAll(options => options.map(option => option.value));
@@ -169,6 +267,11 @@ async function main() {
   await page.reload({waitUntil: 'domcontentloaded'});
   await page.waitForFunction(() => Boolean(window.lootLizard), null, {timeout: 30_000});
   await page.evaluate(async () => window.lootLizard.ready);
+  await assertManualControls();
+  await page.locator('#mode-auto').click();
+  page.setDefaultTimeout(240_000);
+  await page.evaluate(async () => window.lootLizard.ready);
+  page.setDefaultTimeout(30_000);
   assert.equal(await page.locator('#scan-interval').inputValue(), '10000');
   assert.equal(await page.locator('#language-select').inputValue(), 'hu');
   assert.equal(await page.locator('html').getAttribute('lang'), 'hu');
@@ -181,7 +284,11 @@ async function main() {
   const production = await context.newPage();
   try {
     await production.goto(base + '/app/', {waitUntil: 'domcontentloaded'});
-    await production.waitForFunction(() => !document.querySelector('#connect-source').disabled, null, {timeout: 240_000});
+    await production.waitForFunction(() => document.querySelectorAll('#map-grid button[data-map-id]').length === 11);
+    assert.equal(await production.locator('#map-picker').isVisible(), true);
+    assert.equal(await production.locator('#auto-controls').isVisible(), false);
+    assert.deepEqual(await production.evaluate(() => window.__modeProbe), {workers: [], displayMediaCalls: 0},
+      'A normal player page must also stay free of recognition workers and capture requests until automatic mode is chosen');
     assert.equal(await production.evaluate(() => typeof window.lootLizard), 'undefined', 'The synthetic test API must not be exposed on a normal player page');
     assert.equal(await production.locator('#load-demo, #open-image, #reference-file, #reference-map, #replay-mode, #capture-work, #performance-diagnostics, #engine-status, #metadata-status, #position-status, #inside-count').count(), 0);
     assert.equal(await production.locator('.targets-table th').count(), 2);
@@ -393,6 +500,42 @@ async function main() {
   assertStoppedView(await readMapView());
   report.inflightStop = inflight;
   report.steps.push('posted-worker-request-cannot-restore-geometry-after-stop');
+
+  const inflightManual = await page.evaluate(async () => {
+    const {createDemo} = await import('/app/demo.mjs');
+    let scanningState;
+    const switched = new Promise(resolve => {
+      const observer = new MutationObserver(() => {
+        if (window.lootLizard.getState().phase !== 'scanning') return;
+        observer.disconnect();
+        scanningState = window.lootLizard.getState();
+        // Switch after the already-enqueued worker post but before its reply.
+        queueMicrotask(() => {
+          document.querySelector('#mode-manual').click();
+          document.querySelector('#map-grid button[data-map-id="karakin"]').click();
+          resolve();
+        });
+      });
+      observer.observe(document.querySelector('#recognition-status'), {childList: true, characterData: true, subtree: true});
+    });
+    const pending = window.lootLizard.analyzeImageData(createDemo().mapFrame, {source: 'demo'});
+    await Promise.race([switched, new Promise((_, reject) => setTimeout(() => reject(Error('No in-flight manual switch observed')), 15_000))]);
+    const reply = await pending;
+    return {scanningState, reply};
+  });
+  assert.equal(inflightManual.scanningState.mode, 'auto');
+  assert.equal(inflightManual.scanningState.phase, 'scanning');
+  assert.equal(inflightManual.reply, null, 'Changing to manual mode must discard the posted automatic result');
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'karakin');
+  await assertManualControls();
+  assertCroppedMap(await readMapView());
+  assert.equal(await page.locator('#target-list tr').count(), 22);
+  report.inflightManual = inflightManual;
+  report.steps.push('manual-selection-disposes-automatic-worker-and-rejects-in-flight-map-reply');
+  await page.locator('#mode-auto').click();
+  page.setDefaultTimeout(240_000);
+  await page.evaluate(async () => window.lootLizard.ready);
+  page.setDefaultTimeout(30_000);
 
   // A real synthetic MediaStream follows the same controller path without
   // granting or bypassing getDisplayMedia permission. Available only on the
@@ -836,12 +979,30 @@ async function main() {
   assert.equal(noReferenceView.main.visible, false, 'Missing references must not promote a source screenshot into the map stage');
   assert.notEqual(noReferenceView.view, 'map');
   assertSourcePreview(noReferenceView);
+  await page.bringToFront();
+  await page.locator('#mode-manual').click();
+  const manualAfterCapture = await page.evaluate(() => ({
+    trackState: window.__noReferenceCapture.stream.getVideoTracks()[0].readyState,
+    attachedVideo: Boolean(document.querySelector('#capture-video').srcObject),
+    state: window.lootLizard.getState(),
+  }));
+  assert.equal(manualAfterCapture.trackState, 'ended', 'Leaving automatic mode must stop its live source track');
+  assert.equal(manualAfterCapture.attachedVideo, false);
+  await assertManualControls();
+  assert.equal(await page.locator('#map-picker').isVisible(), true);
+  assert.equal(manualAfterCapture.state.mapId, null);
   await page.evaluate(() => {
-    window.lootLizard.stop();
     Worker.prototype.postMessage = window.__noReferenceCapture.originalPost;
     delete window.__noReferenceCapture;
   });
   assertStoppedView(await readMapView());
+  await page.locator('#map-grid button[data-map-id="deston"]').click();
+  await page.waitForFunction(() => window.lootLizard.getState().mapId === 'deston');
+  assertCroppedMap(await readMapView());
+  assert.equal(await page.locator('#target-list tr').count(), 39);
+  await assertManualControls();
+  report.manualAfterCapture = manualAfterCapture;
+  report.steps.push('leaving-auto-stops-live-sharing-and-manual-map-renders-with-isolated-controls');
   report.noReferences = noReferences;
   report.noReferenceView = noReferenceView;
   report.steps.push('empty-reference-screen-fast-path-samples-without-worker-transfer-or-stale-geometry');

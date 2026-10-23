@@ -1,8 +1,8 @@
 # LootLizard
 
-Böngészős PUBG-társalkalmazás második monitorra. A megnyitott játéktérképet
-helyben felismeri, és a rendelkezésre álló közösségi pincepontokkal együtt
-megtartja. Képernyőképet nem tölt fel.
+Böngészős PUBG-társalkalmazás második monitorra. Válaszd ki kézzel a térképet,
+vagy csatlakoztasd a játék ablakát az automatikus felismeréshez. A térképet és a
+közösségi helyjelölőket helyben jeleníti meg. Képernyőképet nem tölt fel.
 
 **Webes alfa · 0.9.0.** Alapnyelv angol, a magyar választható. Nincs telepítő,
 fiók, API-kulcs, külön térképletöltés/import vagy globális gyorsbillentyű.
@@ -12,8 +12,16 @@ fiók, API-kulcs, külön térképletöltés/import vagy globális gyorsbillenty
 
 ## Használat
 
-1. Nyisd meg asztali Chrome-ban vagy Edge-ben a második monitoron. Várd meg a
-   felismerőmotor és a mellékelt térképek betöltését.
+A lap **Kézi térképválasztás** módban indul. A tizenegy térképelőnézet közül válassz egyet:
+megjelenik a teljes mellékelt térkép és a rendelkezésre álló pontok. Ehhez nincs
+szükség képernyőmegosztásra, engedélykérésre vagy felismerőmotorra. A **Reset map /
+Másik térkép** visszavisz a csempés választóhoz a következő pálya előtt.
+
+Az **Automatikus felismerés** használatához:
+
+1. Válaszd az **Automatic recognition / Automatikus felismerés** módot asztali
+   Chrome-ban vagy Edge-ben a második monitoron. Ekkor készül elő a helyi
+   felismerőmotor és a mellékelt referenciák.
 2. A **Connect PUBG window** gombbal válaszd ki a PUBG ablakát vagy monitorát,
    majd kattints vissza a játékra.
 3. Nyisd meg a teljes játéktérképet. A helyi felismerés automatikus; vizsgálatonként
@@ -24,12 +32,17 @@ fiók, API-kulcs, külön térképletöltés/import vagy globális gyorsbillenty
 5. A jól látható **Reset match** törli az előző meccs térképét, de megtartja a megosztást.
    A **Stop**, a böngésző megosztásleállítása vagy az oldal bezárása mindent töröl.
 
-A főnézet csak a felismert térképet mutatja. A játék képe kis, mintavételezett
+Egyszerre egy mód aktív. Kézi módra váltáskor a megosztás leáll, az automatikus
+eredmény törlődik. Automatikus módra váltáskor a kézi térképválasztás törlődik.
+A megosztás, meccsvisszaállítás, felismerési állapot és mintavételi beállítások
+csak automatikus módban látszanak; a nyelv mindkét módban választható.
+
+Automatikus módban a főnézet csak a felismert térképet mutatja. A játék képe kis, mintavételezett
 előnézetben látszik. Az alkalmazás nem rajzol régi jelölőket új játékkép fölé.
 
 ## Nagyítás és mozgatás
 
-A felismert térképen görgetve az egérmutató felé nagyíthatsz, **100%-tól
+A kiválasztott vagy felismert térképen görgetve az egérmutató felé nagyíthatsz, **100%-tól
 (teljes térkép) 800%-ig (8×)**. Húzással mozgathatod a nézetet, hogy a sűrűbb
 részeket, például Destont, közelebbről megnézhesd. A **+** és **−** gomb középre
 nagyít, a **Fit map / Teljes térkép** visszaállítja az egész térképet. Tabulátorral
@@ -38,11 +51,11 @@ a **0** pedig visszaállítja a teljes nézetet.
 
 Az ikonok képernyőn látható mérete nagyításkor is állandó, az apró középpontok
 továbbra is a pontos koordinátát jelzik. Azonos térkép új beolvasása megtartja a
-nagyítást és a nézet helyét. Új meccs, **Reset match / Meccs alaphelyzetbe** vagy a
-megosztás leállítása visszaállítja a teljes nézetet. A mozgatás és nagyítás a
+nagyítást és a nézet helyét. Másik térkép választása, **Reset map / Másik térkép**,
+**Reset match / Meccs alaphelyzetbe** vagy a megosztás leállítása visszaállítja a teljes nézetet. A mozgatás és nagyítás a
 megőrzött térképet rajzolja újra, nem indít külön képrögzítést vagy felismerést;
-a szokásos térképellenőrzés ettől függetlenül folytatódik. A nagyítás nem ad a
-rögzített térképkép felbontásán túli részleteket.
+az automatikus térképellenőrzés ettől függetlenül folytatódik, ha be van kapcsolva.
+A nagyítás nem ad a forráskép felbontásán túli részleteket.
 
 ## Mellékelt térképek és korlátok
 
@@ -81,12 +94,12 @@ Ajtó-, lakat-, barlang-, alagút- és ládajel különbözteti meg a helytípus
 vonal vezet. Sűrű területen az ikon szabad helyre kerülhet vagy szám nélkül
 jelenhet meg; ha nincs helye, a pontos középpont marad látható.
 
-A játékosoknak szánt felület térképet ismer fel és pincepontokat vetít rá.
+Az automatikus felismerés térképet ismer fel és pincepontokat vetít rá.
 Játékospozíció-, iránytölcsér- és körfelismerés nem fut benne. Térképváltozás,
 erős zoom vagy takarás megakadályozhatja a térkép felismerését. A helyeket és a
 bejáratokat a játékban ellenőrizd.
 
-Az első felismert térképet az aktuális meccshez rögzíti, hogy ne hasonlítsa össze
+Automatikus módban az első felismert térképet az aktuális meccshez rögzíti, hogy ne hasonlítsa össze
 mind a 11 mintát minden vizsgálatnál. Megerősített lobby/eredmény, **Reset match**
 vagy megosztásleállítás oldja fel. Ha kimaradt a meccsváltás felismerése, a következő
 meccs előtt használd a **Reset match** gombot, azonos térképnél is.
@@ -99,7 +112,7 @@ menünél kézi visszaállítás kellhet. Teljes monitor képéből a játék ki
 
 ## Teljesítmény és adatkezelés
 
-A vizsgálati időköz **0,5 / 1 / 2 / 5 / 10 másodperc** lehet; alapértéke **1 másodperc**.
+Automatikus módban a vizsgálati időköz **0,5 / 1 / 2 / 5 / 10 másodperc** lehet; alapértéke **1 másodperc**.
 A nyelvet és az időközt a böngésző megjegyzi. A képrögzítési kérés ehhez igazodik:
 `FPS = 1000 / időközMs`, legfeljebb 2400 képpontos oldallal és négymillió mintavett
 pixellel. Egyszerre egy vizsgálat fut. A kezdések távolsága legalább a feldolgozási
@@ -108,8 +121,10 @@ Lassabb feldolgozásnál sem keletkezik képkockasor.
 Az első, 11 mintás keresés több másodpercig tarthat. FPS-garanciát nem ígérünk;
 a teljes, optimalizált működés játékbeli képkockaidő-terhelését külön kell mérni.
 
-A térképek, pontadatok és programfájlok ugyanarról az oldalról érkeznek. A helyi
-futtatókörnyezet és az opcionális angol OCR rögzített verziójú CDN-fájlokat tölt le.
+A térképek, pontadatok és programfájlok ugyanarról az oldalról érkeznek. Kézi módban
+a CV- és OCR-munkafolyamatok nem indulnak el. A felismerőmotor az automatikus mód
+kiválasztásakor töltődik be, az opcionális angol OCR szükség esetén indul;
+mindkettő rögzített verziójú CDN-fájlokat használ, és helyben fut.
 Nincs képfeltöltés, telemetria vagy AI-szolgáltatás. Képek, eredmények, OCR-szöveg
 és láblécminta a memóriában marad; a beállításokat a böngésző helyben megjegyezheti.
 Nincs külön referencia-import vagy pontadatfrissítő gyorsítótár.
