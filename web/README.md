@@ -1,8 +1,10 @@
 # LootLizard browser application
 
 `web/landing/` provides `/`; `web/app/` provides `/app/`. The site contains its own
-map catalog and public reference PNGs. Pyodide/OpenCV runs on the client in a
-worker. There is no backend, screenshot upload, account or live metadata service.
+map catalog and public reference PNGs. Manual mode displays these assets without
+a capture stream or recognition worker. Explicitly selecting automatic mode
+starts the client-side Pyodide/OpenCV worker. There is no backend, screenshot
+upload, account or live metadata service.
 
 ## Build and preview
 
@@ -15,8 +17,8 @@ python scripts/serve_web.py --port 8766
 
 Open `http://127.0.0.1:8766/`. The loopback server exposes only the curated `dist/`
 site, refuses listings/escaping links/uploads, and never serves private captures.
-The first visit needs Internet for the pinned browser runtime and optional OCR;
-map PNGs and `data/maps.json` are same-origin release assets.
+Map PNGs and `data/maps.json` are same-origin release assets. Automatic mode's
+first initialization needs Internet for the pinned browser runtime and optional OCR.
 
 For tests:
 
@@ -28,7 +30,8 @@ node --test web/tests/*.test.mjs
 ```
 
 `browser-smoke.cjs` remains CI-only. It runs real WASM CV on original synthetic
-fixtures and exercises the automatic map library, map persistence, projection,
+fixtures and exercises worker-free manual map selection, map reset/navigation,
+exclusive mode switching, the automatic map library, map persistence, projection,
 late-reply rejection, Stop and positive-context reset. Its loopback test hook
 never bypasses a real browser's sharing permission. Local visual review uses an
 explicitly selected visible browser.
@@ -100,7 +103,28 @@ exact manifest/file correspondence and catalog/reference ids before writing outp
 It rejects an unlisted image in the map-assets directory. Private screenshots,
 custom references and evaluation profiles never enter the public build.
 
-## Capture, persistence and scan cadence
+## Manual and automatic modes
+
+Every page load starts in manual mode. The central picker offers eleven named
+map-preview tiles backed by the same bundled map manifest as recognition. Choosing
+a tile loads that complete map with its static points into the shared zoom/pan
+viewer. Empty point lists remain valid: Sanhok and Training still show their maps.
+**Reset map** clears the selection and returns to the picker.
+
+Manual mode does not create the vision worker, initialize CV/OCR, schedule scans
+or request `getDisplayMedia`. A stale map-image load cannot replace a later
+selection, reset picker or automatic view. The image hashes and local map catalog
+validation remain in effect. Language is available in both modes.
+
+Selecting **Automatic recognition** initializes the bundled references and local CV
+worker, then offers the normal connection flow. Sharing controls, match reset,
+recognition status, retained-map age and scan settings appear only in this mode.
+Selecting manual mode stops the capture track, invalidates pending work and
+disposes the automatic worker. Selecting automatic mode clears the manual map.
+At most one map source owns the viewer, and old asynchronous replies cannot
+restore the previous mode's map.
+
+## Automatic capture, persistence and scan cadence
 
 Use desktop Chrome/Edge on a second monitor. Start PUBG, connect its window or
 monitor through the browser picker, then return to the game and open its full map.
@@ -118,24 +142,25 @@ The prominent Reset match button remains available outside the collapsed preview
 
 ### Map navigation
 
-Scroll over the recognized map to zoom toward the pointer from 100% fitted size
+Scroll over the selected or recognized map to zoom toward the pointer from 100% fitted size
 to 800% (8×), then drag to pan. The **+ / −** toolbar buttons zoom around the
 centre; **Fit map** restores the whole map. With the map focused, arrow keys pan,
 **+ / −** zoom and **0** fits the map. Icons and coordinate anchors retain their
 CSS-pixel size as the map enlarges, so they remain readable in dense areas.
-Magnification remains limited by the source capture's image resolution.
+Magnification remains limited by the source map image's resolution.
 
 `map-canvas.mjs` owns the cropped saved bitmap and redraws it with the view from
 `map-navigation.mjs`. Pointer and keyboard navigation do not capture another
-frame or invoke CV; the ordinary capture schedule continues separately. A fresh
+frame or invoke CV; an enabled automatic capture schedule continues separately. A fresh
 capture of the same map retains the zoom and normalized focus. A confirmed new
-match/reset, changed map or Stop clears the view and starts fitted again.
+match/reset, changed map, manual Reset map or Stop clears the view and starts fitted again.
 
 The first verified map locks recognition to that map for the current match.
 Subsequent frames search its cached reference instead of comparing eleven maps.
 Confirmed lobby/results, Reset match, or Stop clears the lock; the next match again
 searches all eleven. If an end transition is missed, use Reset match before a new
-match, including another match on the same map. No manual map selector is required.
+match, including another match on the same map. The manual picker belongs to the
+separate manual mode and does not restrict automatic identification.
 
 Intervals are 500/1000/2000/5000/10000 ms, with 1000 ms the default. Language and
 interval persist through the browser preference store. Capture requests
